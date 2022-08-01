@@ -8,3 +8,8 @@ You need to install CORS Unblock Chrome extension before install this extension 
 You will also need Stereo Mix or Virtual Audio Cable recording device for best recognizing
 
 I just tested this on Edge and Chrome only
+
+https://user-images.githubusercontent.com/88623122/182182815-bea5539a-d9ad-4a2f-9c48-7b8d4e5b0906.mp4
+
+https://www.youtube.com/watch?v=cTldDhR7PCw
+
