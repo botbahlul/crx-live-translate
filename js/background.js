@@ -123,6 +123,7 @@ function onLoad() {
 				'color': 'yellow',
 				'border': 'none',
 				'display': 'block',
+				'overflow': 'hidden',
 				'z-index': '2147483647'
 			})
 			.offset({top:0.1*window.innerHeight, left:0.5*(window.innerWidth-0.5*window.innerWidth)})
@@ -167,6 +168,7 @@ function onLoad() {
 				'color': 'yellow',
 				'border': 'none',
 				'display': 'block',
+				'overflow': 'hidden',
 				'z-index': '2147483647'
 			})
 			.offset({top:0.65*window.innerHeight, left:0.5*(window.innerWidth-0.5*window.innerWidth)})
