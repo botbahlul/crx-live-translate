@@ -371,7 +371,12 @@ function onLoad() {
 					if (show_translation) {
 						var  t = final_transcript + interim_transcript;
 						if ((Date.now() - translate_time > 1000) && recognizing) {
-							simple_translate(t, langInput, langOutput);
+							if (t) var tt=translate(t,langInput,langOutput).then((result => {
+								document.querySelector("#dst_textarea_container").style.display = 'block';
+								document.querySelector("#dst_textarea").style.display = 'inline-block';
+								dst_textarea.value=result;
+								dst_textarea.scrollTop=dst_textarea.scrollHeight;
+							}));
 							translate_time = Date.now();
 						};
 					}
@@ -424,42 +429,32 @@ function onLoad() {
 			return s.replace(first_char, function(m) { return m.toUpperCase(); });
 		}
 
-		function load(url, callback) {
-			var xmlHttp = new XMLHttpRequest();
-			xmlHttp.onreadystatechange = function() { 
-				if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-					return callback(JSON.parse(xmlHttp.responseText));
+		var translate = async (t,src,dst) => {
+			var tt = new Promise(function(resolve) {
+				var i=0, len=0, r='', tt='';
+				const url = 'https://clients5.google.com/translate_a/';
+				var params = 'single?dj=1&dt=t&dt=sp&dt=ld&dt=bd&client=dict-chrome-ex&sl='+src+'&tl='+dst+'&q='+t;
+				var xmlHttp = new XMLHttpRequest();
+				var response;
+				xmlHttp.onreadystatechange = function(event) {
+					if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+						response = JSON.parse(xmlHttp.responseText);
+						for (var i = 0, len = response.sentences?.length; i < len; i++) {
+							var r=(((response.sentences[i].trans).replace('}/g','')).replace(')/g','')).replace('\%20/g', ' ');
+							r=((r.replace('}','')).replace(')','')).replace('\%20/g', ' ');
+							tt += r;
+						}
+						if (tt.includes('}'||')'||'%20')) {
+							tt=((tt.replace('}/g','')).replace(')/g','')).replace('\%20/g', ' ');
+						}
+						resolve(tt);
+					}
 				}
-			}
-			xmlHttp.open('GET', url, true);
-			xmlHttp.send(null);
-			return xmlHttp.onreadystatechange();
-		}
-
-		function simple_translate(text, langInput, langOutput) {
-			var i=0, r='', translation='';
-			const url = 'https://clients5.google.com/translate_a/';
-			var params = 'single?dj=1&dt=t&dt=sp&dt=ld&dt=bd&client=dict-chrome-ex&sl='+langInput+'&tl='+langOutput+'&q='+text;
-			var tr=load(url+params, function(response) {
-				//console.log(response);
-				for (i = 0, len = response.sentences.length; i < len; i++) {
-					r=(((response.sentences[i].trans).replace('}/g','')).replace(')/g','')).replace('\%20/g', ' ');
-					r=((r.replace('}','')).replace(')','')).replace('\%20/g', ' ');
-					translation += r;
-				};
-				if (translation.includes('}'||')'||'%20')) {
-					translation=((translation.replace('}/g','')).replace(')/g','')).replace('\%20/g', ' ');
-				}
-				if (recognizing) {
-					document.querySelector("#dst_textarea_container").style.display = 'block';
-					document.querySelector("#dst_textarea").innerHTML=translation;
-					document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
-				} else {
-					if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
-				}
-				return translation;
+				xmlHttp.open('GET', url+params, true);
+				xmlHttp.send(null);
+				xmlHttp.onreadystatechange();
 			});
-			return tr;
+			return await tt;
 		}
 	});
 }
