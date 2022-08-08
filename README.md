@@ -1,5 +1,5 @@
 # crx-live-translate
-Chrome/Edge extension to recognize any live audio/video streaming then translate it for free
+Chrome/Edge extension that can RECOGNIZE any live audio/video streaming then TRANSLATE it for FREE!
 
 Just clone or download this git then enable Chrome Developer Mode and install this extension by Load Unpacked and choose that cloned folder (folder that has manifest.json on it)
 
