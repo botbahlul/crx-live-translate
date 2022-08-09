@@ -374,8 +374,8 @@ function onLoad() {
 							if (t) var tt=translate(t,langInput,langOutput).then((result => {
 								document.querySelector("#dst_textarea_container").style.display = 'block';
 								document.querySelector("#dst_textarea").style.display = 'inline-block';
-								dst_textarea.value=result;
-								dst_textarea.scrollTop=dst_textarea.scrollHeight;
+								document.querySelector("#dst_textarea").value=result;
+								document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
 							}));
 							translate_time = Date.now();
 						};
