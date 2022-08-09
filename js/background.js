@@ -196,37 +196,41 @@ function onLoad() {
 		});
 
 		window.addEventListener('resize', function(event){
-			document.querySelector("#src_textarea_container").style.width = String(0.5*window.innerWidth)+'px';
-			document.querySelector("#src_textarea_container").style.height = String(0.1*window.innerHeight)+'px';
-			document.querySelector("#src_textarea_container").style.top = String(0.1*window.innerHeight)+'px';
-			document.querySelector("#src_textarea_container").style.left = String(0.5*(window.innerWidth-0.5*window.innerWidth))+'px';
+			if (document.querySelector("#src_textarea_container")) {
+				document.querySelector("#src_textarea_container").style.width = String(0.5*window.innerWidth)+'px';
+				document.querySelector("#src_textarea_container").style.height = String(0.1*window.innerHeight)+'px';
+				document.querySelector("#src_textarea_container").style.top = String(0.1*window.innerHeight)+'px';
+				document.querySelector("#src_textarea_container").style.left = String(0.5*(window.innerWidth-0.5*window.innerWidth))+'px';
 
-			document.querySelector("#src_textarea").style.width = String(0.5*window.innerWidth)+'px';
-			document.querySelector("#src_textarea").style.height = String(0.09*window.innerHeight)+'px';
+				document.querySelector("#src_textarea").style.width = String(0.5*window.innerWidth)+'px';
+				document.querySelector("#src_textarea").style.height = String(0.09*window.innerHeight)+'px';
 
-			src_h0 = $('#src_textarea').height();
-			document.querySelector("#src_textarea").style.fontSize=String(0.28*src_h0)+'px';
-			document.querySelector("#src_textarea").offsetParent.onresize = (function(){
-				src_h = $('#src_textarea').height();
-				document.querySelector("#src_textarea").style.fontSize=String(0.28*src_h)+'px';
-				document.querySelector("#src_textarea").scrollTop=document.querySelector("#src_textarea").scrollHeight;
-			});
+				src_h0 = $('#src_textarea').height();
+				document.querySelector("#src_textarea").style.fontSize=String(0.28*src_h0)+'px';
+				document.querySelector("#src_textarea").offsetParent.onresize = (function(){
+					src_h = $('#src_textarea').height();
+					document.querySelector("#src_textarea").style.fontSize=String(0.28*src_h)+'px';
+					document.querySelector("#src_textarea").scrollTop=document.querySelector("#src_textarea").scrollHeight;
+				});
+			}
 
-			document.querySelector("#dst_textarea_container").style.width = String(0.5*window.innerWidth)+'px';
-			document.querySelector("#dst_textarea_container").style.height = String(0.1*window.innerHeight)+'px';
-			document.querySelector("#dst_textarea_container").style.top = String(0.65*window.innerHeight)+'px';
-			document.querySelector("#dst_textarea_container").style.left = String(0.5*(window.innerWidth-0.5*window.innerWidth))+'px';
+			if (document.querySelector("#dst_textarea_container")) {
+				document.querySelector("#dst_textarea_container").style.width = String(0.5*window.innerWidth)+'px';
+				document.querySelector("#dst_textarea_container").style.height = String(0.1*window.innerHeight)+'px';
+				document.querySelector("#dst_textarea_container").style.top = String(0.65*window.innerHeight)+'px';
+				document.querySelector("#dst_textarea_container").style.left = String(0.5*(window.innerWidth-0.5*window.innerWidth))+'px';
 
-			document.querySelector("#dst_textarea").style.width = String(0.5*window.innerWidth)+'px';
-			document.querySelector("#dst_textarea").style.height = String(0.09*window.innerHeight)+'px';
+				document.querySelector("#dst_textarea").style.width = String(0.5*window.innerWidth)+'px';
+				document.querySelector("#dst_textarea").style.height = String(0.09*window.innerHeight)+'px';
 
-			dst_h0 = $('#dst_textarea').height();
-			document.querySelector("#dst_textarea").style.fontSize=String(0.28*src_h0)+'px';
-			document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
-				dst_h = $('#dst_textarea').height();
-				document.querySelector("#dst_textarea").style.fontSize=String(0.28*dst_h)+'px';
-				document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
-			});
+				dst_h0 = $('#dst_textarea').height();
+				document.querySelector("#dst_textarea").style.fontSize=String(0.28*src_h0)+'px';
+				document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
+					dst_h = $('#dst_textarea').height();
+					document.querySelector("#dst_textarea").style.fontSize=String(0.28*dst_h)+'px';
+					document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
+				});
+			}
 		});
 
 		if (!recognizing) {
