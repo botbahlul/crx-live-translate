@@ -189,7 +189,7 @@ function onLoad() {
 		document.querySelector("#dst_textarea").style.overflow = 'hidden';
 
 		dst_h0 = $('#dst_textarea').height();
-		document.querySelector("#dst_textarea").style.fontSize=String(0.28*src_h0)+'px';
+		document.querySelector("#dst_textarea").style.fontSize=String(0.28*dst_h0)+'px';
 		document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
 			dst_h = $('#dst_textarea').height();
 			document.querySelector("#dst_textarea").style.fontSize=String(0.28*dst_h)+'px';
