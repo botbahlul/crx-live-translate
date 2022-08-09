@@ -371,10 +371,10 @@ function onLoad() {
 						var  t = final_transcript + interim_transcript;
 						if ((Date.now() - translate_time > 1000) && recognizing) {
 							if (t) var tt=translate(t,langInput,langOutput).then((result => {
-								document.querySelector("#dst_textarea_container").style.display = 'block';
-								document.querySelector("#dst_textarea").style.display = 'inline-block';
-								document.querySelector("#dst_textarea").value=result;
-								document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
+								if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'block';
+								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").style.display = 'inline-block';
+								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value=result;
+								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
 							}));
 							translate_time = Date.now();
 						};
