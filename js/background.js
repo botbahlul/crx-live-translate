@@ -257,10 +257,10 @@ function onLoad() {
 			recognition.lang = dialect;
 
 			recognition.onstart = function() {
+				final_transcript = '';
+				interim_transcript = '';
 				if (!recognizing) {
 					recognizing = false;
-					final_transcript = '';
-					interim_transcript = '';
 					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
 					if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
 					console.log('recognition.onstart: stopping because recognizing =', recognizing);
@@ -319,10 +319,9 @@ function onLoad() {
 			};
 
 			recognition.onend = function() {
-
+				final_transcript='';
+				interim_transcript='';
 				if (!recognizing) {
-					final_transcript='';
-					interim_transcript='';
 					console.log('recognition.onend: stopping because recognizing =', recognizing);
 					return;
 				} else {
