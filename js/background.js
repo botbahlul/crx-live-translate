@@ -249,11 +249,13 @@ function onLoad() {
 
 				src_h0 = $('#src_textarea').height();
 				document.querySelector("#src_textarea").style.fontSize=String(0.28*src_h0)+'px';
-				document.querySelector("#src_textarea").offsetParent.onresize = (function(){
-					src_h = $('#src_textarea').height();
-					document.querySelector("#src_textarea").style.fontSize=String(0.28*src_h)+'px';
-					document.querySelector("#src_textarea").scrollTop=document.querySelector("#src_textarea").scrollHeight;
-				});
+				if (document.querySelector("#src_textarea").offsetParent) {
+					document.querySelector("#src_textarea").offsetParent.onresize = (function(){
+						src_h = $('#src_textarea').height();
+						document.querySelector("#src_textarea").style.fontSize=String(0.28*src_h)+'px';
+						document.querySelector("#src_textarea").scrollTop=document.querySelector("#src_textarea").scrollHeight;
+					});
+				}
 			}
 
 			if (document.querySelector("#dst_textarea_container")) {
@@ -297,11 +299,13 @@ function onLoad() {
 
 				dst_h0 = $('#dst_textarea').height();
 				document.querySelector("#dst_textarea").style.fontSize=String(0.28*src_h0)+'px';
-				document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
-					dst_h = $('#dst_textarea').height();
-					document.querySelector("#dst_textarea").style.fontSize=String(0.28*dst_h)+'px';
-					document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
-				});
+				if (document.querySelector("#dst_textarea").offsetParent) {
+					document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
+						dst_h = $('#dst_textarea').height();
+						document.querySelector("#dst_textarea").style.fontSize=String(0.28*dst_h)+'px';
+						document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
+					});
+				}
 			}
 		});
 
