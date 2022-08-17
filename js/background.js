@@ -55,6 +55,9 @@ chrome.action.onClicked.addListener((tab) => {
 			target:{tabId:tab.id},
 			files:['js/jquery-ui.min.js']}),
 		chrome.scripting.executeScript({
+			target:{tabId:tab.id},
+			files:['js/moment.min.js']}),
+		chrome.scripting.executeScript({
 			target: {tabId: tab.id},
 			func: 	onLoad
 		});
@@ -71,9 +74,18 @@ chrome.action.onClicked.addListener((tab) => {
 	}
 });
 
+
+
 function onLoad() {
 
 	var action, recognition, recognizing, langInput, langOutput, dialect, translate_dialect;
+	var srt_id = 0, srt_time = 0, speech_start_time = 0, speech_end_time = 0, srt_transcript = '';
+	var srt_time_hh = 0, srt_time_mm = 0, srt_time_ss = 0;
+	var speech_start_time_hh = 0, speech_start_time_mm = 0, speech_start_time_ss = 0;
+	var speech_end_time_hh = 0, speech_end_time_mm = 0, speech_end_time_ss = 0;
+	var srt_time = 0;
+	var a = '', b = '', c = '';
+	var transcript = [];
 
 	chrome.runtime.onMessage.addListener(function (response, sendResponse) {
 		console.log('onload: response =', response);
@@ -243,7 +255,7 @@ function onLoad() {
 		}
 
 
-		console.log('Initializing recognition: recognizing =', recognizing);
+		console.log('initializing recognition: recognizing =', recognizing);
 
 		var final_transcript = '';
 		var interim_transcript = '';
@@ -263,6 +275,16 @@ function onLoad() {
 			recognition.onstart = function() {
 				final_transcript = '';
 				interim_transcript = '';
+
+//---------------------------------------------------------------ONSTART--------------------------------------------------------------//
+
+				var now = Date.now();
+				var date = new Date(now);
+				srt_time = Date.now();
+				srt_time_hh = date.getHours();
+				srt_time_mm = date.getMinutes();
+				srt_time_ss = date.getSeconds();
+
 				if (!recognizing) {
 					recognizing = false;
 					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
@@ -338,6 +360,8 @@ function onLoad() {
 				if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
 			};
 
+//---------------------------------------------------------------ONRESULT--------------------------------------------------------------//
+
 			recognition.onresult = function(event) {
 				console.log('recognition.onresult: recognizing =', recognizing);
 
@@ -366,9 +390,65 @@ function onLoad() {
 					//console.log('show_original =', result.show_original);
 					if (show_original) {
 						document.querySelector("#src_textarea_container").style.display = 'block';
-						document.querySelector("#src_textarea").innerHTML=final_transcript + interim_transcript;
-						document.querySelector("#src_textarea").scrollTop=document.querySelector("#src_textarea").scrollHeight;
+						document.querySelector("#src_textarea").innerHTML = final_transcript + interim_transcript;
+						document.querySelector("#src_textarea").scrollTop = document.querySelector("#src_textarea").scrollHeight;
 					}
+
+					/*var now = Date.now();
+					var date = new Date(now);
+					speech_start_time_hh = date.getHours();
+					speech_start_time_mm = date.getMinutes();
+					speech_start_time_ss = date.getSeconds();
+					speech_start_time = ("0" + (speech_start_time_hh)).slice(-2) + ':' + ("0" + (speech_start_time_mm)).slice(-2) + ':' + ("0" + (speech_start_time_ss)).slice(-2);*/
+
+
+					if (Date.now() - srt_time > 5000) {
+
+						speech_start_time_hh = srt_time_hh;
+						speech_start_time_mm = srt_time_mm;
+						speech_start_time_ss = srt_time_ss;
+						speech_start_time = ("0" + (speech_start_time_hh)).slice(-2) + ':' + ("0" + (speech_start_time_mm)).slice(-2) + ':' + ("0" + (speech_start_time_ss)).slice(-2);
+
+						srt_id += 1;
+						now = Date.now();
+						date = new Date(now);
+						speech_end_time_hh = date.getHours();
+						speech_end_time_mm = date.getMinutes();
+						speech_end_time_ss = date.getSeconds();
+
+						//speech_end_time = ("0" + (speech_end_time_hh-srt_time_hh)).slice(-2) + ':' + ("0" + (speech_end_time_mm-srt_time_mm)).slice(-2) + ':' + ("0" + (speech_end_time_ss-srt_time_ss)).slice(-2);
+						speech_end_time = ("0" + (speech_end_time_hh)).slice(-2) + ':' + ("0" + (speech_end_time_mm)).slice(-2) + ':' + ("0" + (speech_end_time_ss)).slice(-2);
+
+						a = final_transcript + interim_transcript;
+						console.log('a =', a);
+						if (srt_id === 0) {
+							b = ' ';
+						}
+						if (srt_id > 0) {
+							b = transcript[srt_id-1];
+						}
+						console.log('b =', b);
+						transcript[srt_id] = a;
+						if (srt_id === 0) {
+							c = a;
+						}
+						if (srt_id > 0) {
+							c = a.substring(b.length);
+						}
+						console.log('c =', c);
+						srt_transcript = String(srt_id) + ' ' + String(speech_start_time) + ' ' + String(speech_end_time) + ' ' + c + '\n';
+						console.log(srt_transcript);
+
+						speech_start_time = speech_end_time;
+						//b = a;
+						//console.log('b =', b);
+
+						srt_time = Date.now();
+						srt_time_hh = date.getHours();
+						srt_time_mm = date.getMinutes();
+						srt_time_ss = date.getSeconds();
+					}
+
 
 					//console.log('show_translation =', show_translation);
 					if (show_translation) {
@@ -378,7 +458,7 @@ function onLoad() {
 								if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'block';
 								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").style.display = 'inline-block';
 								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value=result;
-								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
+								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").scrollTop = document.querySelector("#dst_textarea").scrollHeight;
 							}));
 							translate_time = Date.now();
 						};
@@ -400,7 +480,9 @@ function onLoad() {
 					recognizing=true;
 				}
 				if (response = 'stop') {
+					console.log('removing src_textarea_container from html body');
 					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").parentElement.removeChild(document.querySelector("#src_textarea_container"));
+					console.log('removing dst_textarea_container from html body');
 					if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").parentElement.removeChild(document.querySelector("#dst_textarea_container"));
 					recognizing=false;
 					final_transcript = '';
