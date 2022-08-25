@@ -78,7 +78,7 @@ chrome.action.onClicked.addListener((tab) => {
 
 function onLoad() {
 
-	var action, recognition, recognizing, langInput, langOutput, dialect, translate_dialect;
+	var action, recognition, recognizing, src, dst, src_dialect, dst_dialect;
 	var srt_id = 0, srt_time = 0, speech_start_time = 0, speech_end_time = 0, srt_transcript = '';
 	var srt_time_hh = 0, srt_time_mm = 0, srt_time_ss = 0;
 	var speech_start_time_hh = 0, speech_start_time_mm = 0, speech_start_time_ss = 0;
@@ -91,22 +91,46 @@ function onLoad() {
 		console.log('onload: response =', response);
 	});
 
-	chrome.storage.sync.get([ 'recognizing', 'dialect', 'translate_dialect', 'show_original', 'show_translation'], function(result) {
+	chrome.storage.sync.get([ 'recognizing', 'src_dialect', 'dst_dialect', 'show_original', 'show_translation'], function(result) {
 
 		recognizing = result.recognizing;
 		console.log('onLoad: recognizing =', recognizing);
 
-		dialect = result.dialect;
-		if (!dialect) dialect='en-US';
-		//console.log('dialect =',dialect);
-		langInput=dialect.split('-')[0];
-		//console.log('langInput = ', langInput);
+		src_dialect = result.src_dialect;
+		if (!src_dialect) src_dialect='en-US';
+		//console.log('src_dialect =',src_dialect);
+		src = src_dialect.split('-')[0];
+		if (src_dialect == "yue-Hant-HK") {
+			src = "zh-TW";
+		}
+		if (src_dialect == "cmn-Hans-CN") {
+			src = "zh-CN";
+		}
+		if (src_dialect == "cmn-Hans-HK") {
+			src = "zh-CN";
+		}
+		if (src_dialect == "cmn-Hant-TW") {
+			src = "zh-TW";
+		}
+		//console.log('src = ', src);
 
-		translate_dialect = result.translate_dialect;
-		if (!translate_dialect) translate_dialect='en-US';
-		//console.log('translate_dialect', translate_dialect);
-		langOutput=translate_dialect.split('-')[0];
-		//console.log('langOutput = ', langOutput);
+		dst_dialect = result.dst_dialect;
+		if (!dst_dialect) dst_dialect='en-US';
+		//console.log('dst_dialect', dst_dialect);
+		dst = dst_dialect.split('-')[0];
+		if (dst_dialect == "yue-Hant-HK") {
+			dst = "zh-TW";
+		}
+		if (dst_dialect == "cmn-Hans-CN") {
+			dst = "zh-CN";
+		}
+		if (dst_dialect == "cmn-Hans-HK") {
+			dst = "zh-CN";
+		}
+		if (dst_dialect == "cmn-Hant-TW") {
+			dst = "zh-TW";
+		}
+		//console.log('dst = ', dst);
 
 		show_original = result.show_original;
 		//console.log('show_original =', result.show_original);
@@ -114,7 +138,7 @@ function onLoad() {
 		//console.log('show_translation', result.show_translation);
 
 
-		var icon_text_listening = langInput.toUpperCase()+':'+langOutput.toUpperCase();
+		var icon_text_listening = src.toUpperCase()+':'+dst.toUpperCase();
 		chrome.runtime.sendMessage({ cmd: 'icon_text_listening', data: { value: icon_text_listening } })
 
 		var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
@@ -334,7 +358,7 @@ function onLoad() {
 			var recognition = new webkitSpeechRecognition() || new SpeechRecognition();
 			recognition.continuous = true;
 			recognition.interimResults = true;
-			recognition.lang = dialect;
+			recognition.lang = src_dialect;
 
 			recognition.onstart = function() {
 				final_transcript = '';
@@ -357,7 +381,7 @@ function onLoad() {
 					return;
 				} else {
 					console.log('recognition.onstart: recognizing =', recognizing);
-					recognition.lang = dialect;
+					recognition.lang = src_dialect;
 				}
 			};
 
@@ -437,7 +461,7 @@ function onLoad() {
 					console.log('recognition.onresult: stopping because recognizing =', recognizing);
 					return;
 				} else {
-					recognition.lang=dialect;
+					recognition.lang=src_dialect;
 					var interim_transcript = '';
 					for (var i = event.resultIndex; i < event.results.length; ++i) {
 						if (event.results[i].isFinal) {
@@ -518,7 +542,7 @@ function onLoad() {
 					if (show_translation) {
 						var  t = final_transcript + interim_transcript;
 						if ((Date.now() - translate_time > 1000) && recognizing) {
-							if (t) var tt=translate(t,langInput,langOutput).then((result => {
+							if (t) var tt=translate(t,src,dst).then((result => {
 								if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'block';
 								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").style.display = 'inline-block';
 								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value=result;

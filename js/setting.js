@@ -1,4 +1,4 @@
-var langInput, langOutput, language_index, translate_language_index, dialect, translate_dialect, dialect_index, translate_dialect_index, show_original, show_translation;
+var src, dst, language_index, translate_language_index, src_dialect, dst_dialect, dialect_index, translate_dialect_index, show_original, show_translation;
 
 document.addEventListener('DOMContentLoaded', (event) => {
 	CheckStoredValues();
@@ -6,9 +6,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
 function CheckStoredValues() {
 
-	chrome.storage.sync.get(['langInput'], function(result) {
-		langInput = result.langInput;
-		console.log('langInput =', langInput);
+	chrome.storage.sync.get(['src'], function(result) {
+		src = result.src;
+		console.log('src =', src);
 	});
 
 	chrome.storage.sync.get(['language_index'], function(result) {
@@ -19,13 +19,13 @@ function CheckStoredValues() {
 		update_Country();
 	});
 
-	chrome.storage.sync.get(['dialect'], function(result) {
-		dialect = result.dialect;
-		console.log('dialect =', dialect);
-		if (!dialect) dialect='en-US';
+	chrome.storage.sync.get(['src_dialect'], function(result) {
+		src_dialect = result.src_dialect;
+		console.log('src_dialect =', src_dialect);
+		if (!src_dialect) src_dialect='en-US';
 		if (langs[language_index].length>2)
 			for (j=0;j<select_dialect.length;j++) {
-				if (select_dialect[j].value===dialect) {
+				if (select_dialect[j].value===src_dialect) {
 					dialect_index = j;
 					break;
 				}
@@ -33,9 +33,9 @@ function CheckStoredValues() {
 		select_dialect.selectedIndex = dialect_index;
 	});
 
-	chrome.storage.sync.get(['langOutput'], function(result) {
-		langOutput = result.langOutput;
-		console.log('langOutput =', langOutput);
+	chrome.storage.sync.get(['dst'], function(result) {
+		dst = result.dst;
+		console.log('dst =', dst);
 	});
 
 	chrome.storage.sync.get(['translate_language_index'], function(result) {
@@ -46,13 +46,13 @@ function CheckStoredValues() {
 		update_tr_Country();
 	});
 
-	chrome.storage.sync.get(['translate_dialect'], function(result) {
-		translate_dialect = result.translate_dialect;
-		console.log('translate_dialect =', translate_dialect);
-		if (!translate_dialect) translate_dialect='en-US';
+	chrome.storage.sync.get(['dst_dialect'], function(result) {
+		dst_dialect = result.dst_dialect;
+		console.log('dst_dialect =', dst_dialect);
+		if (!dst_dialect) dst_dialect='en-US';
 		if (tr_langs[translate_language_index].length>2)
 			for (j=0;j<select_translate_dialect.length;j++) {
-				if (select_translate_dialect[j].value===translate_dialect) {
+				if (select_translate_dialect[j].value===dst_dialect) {
 					translate_dialect_index = j;
 					break;
 				}
@@ -75,32 +75,32 @@ function CheckStoredValues() {
 
 select_language.addEventListener('change', function(){
 	update_Country()
-	chrome.storage.sync.set({'langInput' : langInput},(()=>{}));
-	//chrome.runtime.sendMessage({ cmd: "langInput", data: { value: langInput } })
-	console.log('langInput =', langInput);
+	chrome.storage.sync.set({'src' : src},(()=>{}));
+	//chrome.runtime.sendMessage({ cmd: "src", data: { value: src } })
+	console.log('src =', src);
 	chrome.storage.sync.set({'language_index' : select_language.value},(()=>{}));
 });
 
 select_dialect.addEventListener('change', function(){
-	chrome.storage.sync.set({'langInput' : langInput},(()=>{}));
-	chrome.storage.sync.set({'dialect' : select_dialect.value},(()=>{}));
-	//chrome.runtime.sendMessage({ cmd: "dialect", data: { value: dialect } })
-	console.log('dialect =', dialect);
+	chrome.storage.sync.set({'src' : src},(()=>{}));
+	chrome.storage.sync.set({'src_dialect' : select_dialect.value},(()=>{}));
+	//chrome.runtime.sendMessage({ cmd: "src_dialect", data: { value: src_dialect } })
+	console.log('src_dialect =', src_dialect);
 });
 
 select_translate_language.addEventListener('change', function(){
 	update_tr_Country();
-	chrome.storage.sync.set({'langOutput' : langOutput},(()=>{}));
-	//chrome.runtime.sendMessage({ cmd: "langOutput", data: { value: langOutput } })
+	chrome.storage.sync.set({'dst' : dst},(()=>{}));
+	//chrome.runtime.sendMessage({ cmd: "dst", data: { value: dst } })
 	chrome.storage.sync.set({'translate_language_index' : select_translate_language.value},(()=>{}));
 });
 
 select_translate_dialect.addEventListener('change', function(){
-	chrome.storage.sync.set({'langOutput' : langOutput},(()=>{}));
-	console.log('langOutput =', langOutput);
-	chrome.storage.sync.set({'translate_dialect' : select_translate_dialect.value},(()=>{}));
-	//chrome.runtime.sendMessage({ cmd: "translate_dialect", data: { value: translate_dialect } })
-	console.log('translate_dialect =', translate_dialect);
+	chrome.storage.sync.set({'dst' : dst},(()=>{}));
+	console.log('dst =', dst);
+	chrome.storage.sync.set({'dst_dialect' : select_translate_dialect.value},(()=>{}));
+	//chrome.runtime.sendMessage({ cmd: "dst_dialect", data: { value: dst_dialect } })
+	console.log('dst_dialect =', dst_dialect);
 });
 
 checkbox_show_original.addEventListener('change', function(){
@@ -115,21 +115,21 @@ checkbox_show_translation.addEventListener('change', function(){
 
 save_button.addEventListener('click', function(){
 	chrome.storage.sync.set({
-		'langInput': langInput,
-		'langOutput': langOutput,
+		'src': src,
+		'dst': dst,
 		'language_index': select_language.value,
-		'dialect': select_dialect.value,
+		'src_dialect': select_dialect.value,
 		'translate_language_index': select_translate_language.value,
-		'translate_dialect': select_translate_dialect.value,
+		'dst_dialect': select_translate_dialect.value,
 		'show_original': checkbox_show_original.checked,
 		'show_translation': checkbox_show_translation.checked
 	}, function() {
-		console.log('save langInput = ', langInput);
-		console.log('save langOutput = ', langOutput);
+		console.log('save src = ', src);
+		console.log('save dst = ', dst);
 		console.log('save language_index = ', select_language.value);
-		console.log('save dialect = ', select_dialect.value);
+		console.log('save src_dialect = ', select_dialect.value);
 		console.log('save translate_language_index = ', select_translate_language.value);
-		console.log('save translate_dialect = ', select_translate_dialect.value);
+		console.log('save dst_dialect = ', select_translate_dialect.value);
 		console.log('save show_original = ', checkbox_show_original.checked);
 		console.log('save show_translation = ', checkbox_show_translation.checked);
 	});
@@ -257,7 +257,7 @@ function update_Country() {
 	//console.log(select_dialect);
 	//select_dialect_value=document.getElementById('select_dialect').value;
 	//console.log('select_dialect_value =', select_dialect_value);
-    langInput=select_dialect.value.split('-')[0];
+    src=select_dialect.value.split('-')[0];
 }
 
 var tr_langs =
@@ -366,8 +366,8 @@ var tr_langs =
 
 for (var j = 0; j < tr_langs.length; j++) {
     select_translate_language.options[j] = new Option(tr_langs[j][0], j);
-	if(select_translate_dialect.value.split('-')[0]==langOutput)
-		langOutputIndex=j;
+	if(select_translate_dialect.value.split('-')[0]==dst)
+		dstIndex=j;
 }
 
 function update_tr_Country() {
@@ -379,6 +379,6 @@ function update_tr_Country() {
         select_translate_dialect.options.add(new Option(list[j][1], list[j][0]));
     }
     select_translate_dialect.style.visibility = list[1].length == 1 ? 'hidden' : 'visible';
-    langOutput=select_translate_dialect.value.split('-')[0];
+    dst=select_translate_dialect.value.split('-')[0];
 }
 
