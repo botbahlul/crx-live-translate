@@ -14,3 +14,5 @@ https://user-images.githubusercontent.com/88623122/182270149-420fe789-814c-4a0d-
 
 https://www.youtube.com/watch?v=cTldDhR7PCw
 
+
+Check my other SPEECH RECOGNITIION + TRANSLATE PROJECTS in https://github.com/botbahlul/botbahlul.github.io
