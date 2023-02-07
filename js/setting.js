@@ -318,6 +318,7 @@ var tr_langs =
  ['Malay',           ['ms-MY']],
  ['Malayalam',       ['ml-IN']],
  ['Marathi',         ['mr-IN']],
+ ['Myanmar',         ['my-MM']],
  ['Nepali',          ['ne-NP']],
  ['Norwegian Bokmål',['nb-NO']],
  ['Polish',          ['pl-PL']],
