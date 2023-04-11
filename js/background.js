@@ -374,7 +374,7 @@ function onLoad() {
 				srt_time_ss = date.getSeconds();
 
 				if (!recognizing) {
-					recognizing = false;
+					//recognizing = false;
 					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
 					if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
 					console.log('recognition.onstart: stopping because recognizing =', recognizing);
