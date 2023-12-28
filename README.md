@@ -3,7 +3,7 @@ Chrome/Edge extension that can RECOGNIZE any live audio/video streaming then TRA
 
 Just clone or download this git then enable Chrome Developer Mode and install this extension by Load Unpacked and choose that cloned folder (folder that has manifest.json on it)
 
-You need to install CORS Unblock Chrome extension before install this extension to avoid default CORS Blocking Policy of Chrome and Edge. After install it you need to ACTIVATE IT.
+You need to install CORS Unblock Chrome extension before install this extension to avoid default CORS Blocking Policy of Chrome and Edge. After installing it you need to ACTIVATE IT (TURN IT ON).
 
 ![image](https://github.com/botbahlul/crx-live-translate/assets/88623122/059b5ce2-2c4f-4ebf-ad06-6916bbfa73dd)
 
