@@ -2,7 +2,7 @@
 	"name": "Live Audio/Video Translate",
 	"options_page": "settings.html",
 	"description": "Recognize any LIVE audio/video streaming and TRANSLATE it for FREE!",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"manifest_version": 3,
 	"permissions": ["scripting", "background", "tabs", "activeTab", "storage", "contextMenus", "declarativeContent", "declarativeNetRequest", "declarativeNetRequestFeedback"],
 	"host_permissions": ["*://*/*"],
