@@ -78,7 +78,7 @@ chrome.action.onClicked.addListener((tab) => {
 
 function onLoad() {
 
-	var action, recognition, recognizing, src, dst, src_dialect, dst_dialect;
+	var action, recognition, recognizing, src, dst, src_dialect, dst_dialect, selectedFont, fontSize, fontColor;
 	var srt_id = 0, srt_time = 0, speech_start_time = 0, speech_end_time = 0, srt_transcript = '';
 	var srt_time_hh = 0, srt_time_mm = 0, srt_time_ss = 0;
 	var speech_start_time_hh = 0, speech_start_time_mm = 0, speech_start_time_ss = 0;
@@ -91,7 +91,9 @@ function onLoad() {
 		console.log('onload: response =', response);
 	});
 
-	chrome.storage.sync.get([ 'recognizing', 'src_dialect', 'dst_dialect', 'show_original', 'show_translation'], function(result) {
+
+
+	chrome.storage.sync.get([ 'recognizing', 'src_dialect', 'dst_dialect', 'show_original', 'show_translation', 'selectedFont', 'fontSize', 'fontColor'], function(result) {
 
 		recognizing = result.recognizing;
 		console.log('onLoad: recognizing =', recognizing);
@@ -137,13 +139,21 @@ function onLoad() {
 		show_translation = result.show_translation;
 		//console.log('show_translation', result.show_translation);
 
+		selectedFont = result.selectedFont
+		console.log('selectedFont =', result.selectedFont);
+
+		fontSize = result.fontSize
+		console.log('fontSize =', result.fontSize);
+
+		fontColor = result.fontColor
+		console.log('fontColor =', result.fontColor);
 
 		var icon_text_listening = src.toUpperCase()+':'+dst.toUpperCase();
 		chrome.runtime.sendMessage({ cmd: 'icon_text_listening', data: { value: icon_text_listening } })
 
 		var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
-			.width(0.5*window.innerWidth)
-			.height(0.09*window.innerHeight)
+			.width(0.8*window.innerWidth)
+			.height(0.075*window.innerHeight)
 			.resizable().draggable({
 				cancel: 'text',
 				start: function (){
@@ -155,14 +165,16 @@ function onLoad() {
 			})
 			.css({
 				'position': 'absolute',
+				'font': selectedFont,
+				'fontSize': fontSize,
+				'color': fontColor,
 				'background-color': 'rgba(0,0,0,0.3)',
-				'color': 'yellow',
 				'border': 'none',
 				'display': 'block',
 				'overflow': 'hidden',
 				'z-index': '2147483647'
 			})
-			.offset({top:0.1*window.innerHeight, left:0.5*(window.innerWidth-0.5*window.innerWidth)})
+			.offset({top:0.1*window.innerHeight, left:0.2*(window.innerWidth-0.5*window.innerWidth)})
 
 		if (!document.querySelector("#src_textarea_container")) {
 			console.log('appending src_textarea_container to html body');
@@ -173,22 +185,25 @@ function onLoad() {
 
 		document.querySelector("#src_textarea").style.width = '100%';
 		document.querySelector("#src_textarea").style.height = '100%';
-		document.querySelector("#src_textarea").style.color = 'yellow';
+		//document.querySelector("#src_textarea").style.color = 'yellow';
+		document.querySelector("#src_textarea").style.color = fontColor;
 		document.querySelector("#src_textarea").style.backgroundColor = 'rgba(0,0,0,0.3)';
 		document.querySelector("#src_textarea").style.border = 'none';
 		document.querySelector("#src_textarea").style.display = 'inline-block';
 		document.querySelector("#src_textarea").style.overflow = 'hidden';
 
-		src_h0 = $('#src_textarea').height();
-		document.querySelector("#src_textarea").style.fontSize=String(0.28*src_h0)+'px';
-		document.querySelector("#src_textarea").offsetParent.onresize = (function(){
-			src_h = $('#src_textarea').height();
-			document.querySelector("#src_textarea").style.fontSize=String(0.28*src_h)+'px';
-		});
+		//src_h0 = $('#src_textarea').height();
+		//document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h0)+'px';
+		document.querySelector("#src_textarea").style.fontSize=String(fontSize)+'px';
+		
+		//document.querySelector("#src_textarea").offsetParent.onresize = (function(){
+		//	src_h = $('#src_textarea').height();
+		//	document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h)+'px';
+		//});
 
 		var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
-			.width(0.5*window.innerWidth)
-			.height(0.09*window.innerHeight)
+			.width(0.8*window.innerWidth)
+			.height(0.075*window.innerHeight)
 			.resizable().draggable({
 				cancel: 'text',
 				start: function (){
@@ -200,14 +215,16 @@ function onLoad() {
 			})
 			.css({
 				'position': 'absolute',
+				'font': selectedFont,
+				'fontSize': fontSize,
+				'color': fontColor,
 				'background-color': 'rgba(0,0,0,0.3)',
-				'color': 'yellow',
 				'border': 'none',
 				'display': 'block',
 				'overflow': 'hidden',
 				'z-index': '2147483647'
 			})
-			.offset({top:0.65*window.innerHeight, left:0.5*(window.innerWidth-0.5*window.innerWidth)})
+			.offset({top:0.65*window.innerHeight, left:0.2*(window.innerWidth-0.5*window.innerWidth)})
 
 		if (!document.querySelector("#dst_textarea_container")) {
 			console.log('appending dst_textarea_container to html body');
@@ -218,29 +235,31 @@ function onLoad() {
 
 		document.querySelector("#dst_textarea").style.width = '100%';
 		document.querySelector("#dst_textarea").style.height = '100%';
-		document.querySelector("#dst_textarea").style.color = 'yellow';
+		//document.querySelector("#dst_textarea").style.color = 'yellow';
+		document.querySelector("#dst_textarea").style.color = fontColor;
 		document.querySelector("#dst_textarea").style.backgroundColor = 'rgba(0,0,0,0.3)';
 		document.querySelector("#dst_textarea").style.border = 'none';
 		document.querySelector("#dst_textarea").style.display = 'inline-block';
 		document.querySelector("#dst_textarea").style.overflow = 'hidden';
 
-		dst_h0 = $('#dst_textarea').height();
-		document.querySelector("#dst_textarea").style.fontSize=String(0.28*dst_h0)+'px';
-		document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
-			dst_h = $('#dst_textarea').height();
-			document.querySelector("#dst_textarea").style.fontSize=String(0.28*dst_h)+'px';
-		});
+		//dst_h0 = $('#dst_textarea').height();
+		//document.querySelector("#dst_textarea").style.fontSize=String(0.35*dst_h0)+'px';
+		document.querySelector("#dst_textarea").style.fontSize=String(fontSize)+'px';
+		//document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
+		//	dst_h = $('#dst_textarea').height();
+		//	document.querySelector("#dst_textarea").style.fontSize=String(0.35*dst_h)+'px';
+		//});
 
 		window.addEventListener('resize', function(event){
 			if (document.querySelector("#src_textarea_container")) {
-				document.querySelector("#src_textarea_container").style.width = String(0.5*window.innerWidth)+'px';
-				document.querySelector("#src_textarea_container").style.height = String(0.1*window.innerHeight)+'px';
+				document.querySelector("#src_textarea_container").style.width = String(0.8*window.innerWidth)+'px';
+				document.querySelector("#src_textarea_container").style.height = String(0.075*window.innerHeight)+'px';
 				document.querySelector("#src_textarea_container").style.top = String(0.1*window.innerHeight)+'px';
-				document.querySelector("#src_textarea_container").style.left = String(0.5*(window.innerWidth-0.5*window.innerWidth))+'px';
+				document.querySelector("#src_textarea_container").style.left = String(0.2*(window.innerWidth-0.5*window.innerWidth))+'px';
 
 				var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
-					.width(0.5*window.innerWidth)
-					.height(0.09*window.innerHeight)
+					.width(0.8*window.innerWidth)
+					.height(0.075*window.innerHeight)
 					.resizable().draggable({
 						cancel: 'text',
 						start: function (){
@@ -252,45 +271,49 @@ function onLoad() {
 					})
 					.css({
 						'position': 'absolute',
+						'font': selectedFont,
+						'fontSize': fontSize,
+						'color': fontColor,
 						'background-color': 'rgba(0,0,0,0.3)',
-						'color': 'yellow',
 						'border': 'none',
 						'display': 'block',
 						'overflow': 'hidden',
 						'z-index': '2147483647'
 					})
-					.offset({top:0.1*window.innerHeight, left:0.5*(window.innerWidth-0.5*window.innerWidth)})
+					.offset({top:0.1*window.innerHeight, left:0.2*(window.innerWidth-0.5*window.innerWidth)})
 
-				document.querySelector("#src_textarea").style.width = String(0.5*window.innerWidth)+'px';
-				document.querySelector("#src_textarea").style.height = String(0.09*window.innerHeight)+'px';
+				document.querySelector("#src_textarea").style.width = String(0.8*window.innerWidth)+'px';
+				document.querySelector("#src_textarea").style.height = String(0.075*window.innerHeight)+'px';
 				document.querySelector("#src_textarea").style.width = '100%';
 				document.querySelector("#src_textarea").style.height = '100%';
-				document.querySelector("#src_textarea").style.color = 'yellow';
+				//document.querySelector("#src_textarea").style.color = 'yellow';
+				document.querySelector("#src_textarea").style.color = fontColor;
 				document.querySelector("#src_textarea").style.backgroundColor = 'rgba(0,0,0,0.3)';
 				document.querySelector("#src_textarea").style.border = 'none';
 				document.querySelector("#src_textarea").style.display = 'inline-block';
 				document.querySelector("#src_textarea").style.overflow = 'hidden';
 
-				src_h0 = $('#src_textarea').height();
-				document.querySelector("#src_textarea").style.fontSize=String(0.28*src_h0)+'px';
-				if (document.querySelector("#src_textarea").offsetParent) {
-					document.querySelector("#src_textarea").offsetParent.onresize = (function(){
-						src_h = $('#src_textarea').height();
-						document.querySelector("#src_textarea").style.fontSize=String(0.28*src_h)+'px';
-						document.querySelector("#src_textarea").scrollTop=document.querySelector("#src_textarea").scrollHeight;
-					});
-				}
+				//src_h0 = $('#src_textarea').height();
+				//document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h0)+'px';
+				document.querySelector("#src_textarea").style.fontSize=String(fontSize)+'px';
+				//if (document.querySelector("#src_textarea").offsetParent) {
+					//document.querySelector("#src_textarea").offsetParent.onresize = (function(){
+					//	src_h = $('#src_textarea').height();
+					//	document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h)+'px';
+					//	document.querySelector("#src_textarea").scrollTop=document.querySelector("#src_textarea").scrollHeight;
+					//});
+				//}
 			}
 
 			if (document.querySelector("#dst_textarea_container")) {
-				document.querySelector("#dst_textarea_container").style.width = String(0.5*window.innerWidth)+'px';
-				document.querySelector("#dst_textarea_container").style.height = String(0.1*window.innerHeight)+'px';
+				document.querySelector("#dst_textarea_container").style.width = String(0.8*window.innerWidth)+'px';
+				document.querySelector("#dst_textarea_container").style.height = String(0.075*window.innerHeight)+'px';
 				document.querySelector("#dst_textarea_container").style.top = String(0.65*window.innerHeight)+'px';
-				document.querySelector("#dst_textarea_container").style.left = String(0.5*(window.innerWidth-0.5*window.innerWidth))+'px';
+				document.querySelector("#dst_textarea_container").style.left = String(0.2*(window.innerWidth-0.5*window.innerWidth))+'px';
 
 				var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
-					.width(0.5*window.innerWidth)
-					.height(0.09*window.innerHeight)
+					.width(0.8*window.innerWidth)
+					.height(0.075*window.innerHeight)
 					.resizable().draggable({
 						cancel: 'text',
 						start: function (){
@@ -302,34 +325,38 @@ function onLoad() {
 					})
 					.css({
 						'position': 'absolute',
+						'font': selectedFont,
+						'fontSize': fontSize,
+						'color': fontColor,
 						'background-color': 'rgba(0,0,0,0.3)',
-						'color': 'yellow',
 						'border': 'none',
 						'display': 'block',
 						'overflow': 'hidden',
 						'z-index': '2147483647'
 					})
-					.offset({top:0.65*window.innerHeight, left:0.5*(window.innerWidth-0.5*window.innerWidth)})
+					.offset({top:0.65*window.innerHeight, left:0.2*(window.innerWidth-0.5*window.innerWidth)})
 
-				document.querySelector("#dst_textarea").style.width = String(0.5*window.innerWidth)+'px';
-				document.querySelector("#dst_textarea").style.height = String(0.09*window.innerHeight)+'px';
+				document.querySelector("#dst_textarea").style.width = String(0.8*window.innerWidth)+'px';
+				document.querySelector("#dst_textarea").style.height = String(0.075*window.innerHeight)+'px';
 				document.querySelector("#dst_textarea").style.width = '100%';
 				document.querySelector("#dst_textarea").style.height = '100%';
-				document.querySelector("#dst_textarea").style.color = 'yellow';
+				//document.querySelector("#dst_textarea").style.color = 'yellow';
+				document.querySelector("#dst_textarea").style.color = fontColor;
 				document.querySelector("#dst_textarea").style.backgroundColor = 'rgba(0,0,0,0.3)';
 				document.querySelector("#dst_textarea").style.border = 'none';
 				document.querySelector("#dst_textarea").style.display = 'inline-block';
 				document.querySelector("#dst_textarea").style.overflow = 'hidden';
 
-				dst_h0 = $('#dst_textarea').height();
-				document.querySelector("#dst_textarea").style.fontSize=String(0.28*src_h0)+'px';
-				if (document.querySelector("#dst_textarea").offsetParent) {
-					document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
-						dst_h = $('#dst_textarea').height();
-						document.querySelector("#dst_textarea").style.fontSize=String(0.28*dst_h)+'px';
-						document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
-					});
-				}
+				//dst_h0 = $('#dst_textarea').height();
+				//document.querySelector("#dst_textarea").style.fontSize=String(0.35*src_h0)+'px';
+				document.querySelector("#dst_textarea").style.fontSize=String(fontSize)+'px';
+				//if (document.querySelector("#dst_textarea").offsetParent) {
+					//document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
+					//	dst_h = $('#dst_textarea').height();
+					//	document.querySelector("#dst_textarea").style.fontSize=String(0.35*dst_h)+'px';
+					//	document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
+					//});
+				//}
 			}
 		});
 
@@ -520,7 +547,7 @@ function onLoad() {
 						if (srt_id === 0) {
 							c = a;
 						}
-						if (srt_id > 0) {
+						if (srt_id > 0 && b != null) {
 							c = a.substring(b.length);
 						}
 						console.log('c =', c);
@@ -629,5 +656,9 @@ function onLoad() {
 			});
 			return await tt;
 		}
+
+
 	});
+
+
 }

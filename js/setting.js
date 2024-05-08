@@ -1,4 +1,15 @@
-var src, dst, language_index, translate_language_index, src_dialect, dst_dialect, dialect_index, translate_dialect_index, show_original, show_translation;
+var src, dst, language_index, translate_language_index, src_dialect, dst_dialect, dialect_index, translate_dialect_index, show_original, show_translation, selectedFontIndex, selectedFont, fontSize, fontColor, fontSelect, fontSizeInput, fontColorInput, sampleText, fonts;
+
+fontSelect = document.getElementById("fontSelect");
+fontSizeInput = document.getElementById("fontSize");
+fontColorInput = document.getElementById("fontColor");
+sampleText = document.getElementById("sampleText");
+fonts = getAvailableFonts();
+fonts.forEach(function(font) {
+	var option = document.createElement("option");
+    option.textContent = font;
+    fontSelect.appendChild(option);
+});
 
 document.addEventListener('DOMContentLoaded', (event) => {
 	CheckStoredValues();
@@ -71,6 +82,51 @@ function CheckStoredValues() {
 		console.log('show_translation =', show_translation);
 		if (show_translation) checkbox_show_translation.checked=true;
 	});
+
+	chrome.storage.sync.get(['selectedFontIndex'], function(result) {
+		selectedFontIndex = result.selectedFontIndex;
+		console.log('CheckStoredValues before if: selectedFontIndex =', selectedFontIndex);
+		if (!selectedFontIndex) selectedFontIndex=8;
+		fontSelect.selectedIndex = selectedFontIndex;
+		console.log('CheckStoredValues after if: selectedFontIndex =', selectedFontIndex);
+	});
+
+
+	chrome.storage.sync.get(['selectedFont'], function(result) {
+		selectedFont = result.selectedFont;
+		console.log('CheckStoredValues before if: selectedFont =', selectedFont);
+		if (result.selectedFont) {
+			fontSelect.value = selectedFont;
+		}
+		updateSampleText()
+		console.log('CheckStoredValues after if: selectedFont =', selectedFont);
+	});
+
+
+	chrome.storage.sync.get(['fontSize'], function(result) {
+		//if (!fontSize) fontSize=16;
+		fontSize = result.fontSize;
+		console.log('CheckStoredValues before if: fontSize =', fontSize);
+		if (result.fontSize) {
+			fontSizeInput.value = fontSize;
+		}
+		console.log('CheckStoredValues after if: fontSize =', fontSize);
+		//getAvailableFonts()
+		updateSampleText()
+	});
+
+	chrome.storage.sync.get(['fontColor'], function(result) {
+		//if (!fontColor) fontColor="yellow";
+		fontColor = result.fontColor;
+		console.log('CheckStoredValues before if: fontColor =', fontColor);
+		if (result.fontColor) {
+			fontColorInput.value = fontColor;
+		}
+		//getAvailableFonts()
+		updateSampleText()
+		console.log('CheckStoredValues after if: fontColor =', fontColor);
+	});
+
 }
 
 select_language.addEventListener('change', function(){
@@ -113,6 +169,13 @@ checkbox_show_translation.addEventListener('change', function(){
 	console.log('checkbox_show_translation.checked =', checkbox_show_translation.checked);
 });
 
+// Add event listeners for changes in font select and font size input
+fontSelect.addEventListener("change", updateSampleText);
+fontSizeInput.addEventListener("input", updateSampleText);
+fontColorInput.addEventListener("input", updateSampleText);
+
+document.getElementById("updateSampleText_button").addEventListener("click", updateSampleText);
+
 save_button.addEventListener('click', function(){
 	chrome.storage.sync.set({
 		'src': src,
@@ -122,7 +185,11 @@ save_button.addEventListener('click', function(){
 		'translate_language_index': select_translate_language.value,
 		'dst_dialect': select_translate_dialect.value,
 		'show_original': checkbox_show_original.checked,
-		'show_translation': checkbox_show_translation.checked
+		'show_translation': checkbox_show_translation.checked,
+		'selectedFontIndex': selectedFontIndex,
+		'selectedFont': selectedFont,
+		'fontSize': fontSize,
+		'fontColor': fontColor,
 	}, function() {
 		console.log('save src = ', src);
 		console.log('save dst = ', dst);
@@ -132,6 +199,10 @@ save_button.addEventListener('click', function(){
 		console.log('save dst_dialect = ', select_translate_dialect.value);
 		console.log('save show_original = ', checkbox_show_original.checked);
 		console.log('save show_translation = ', checkbox_show_translation.checked);
+		console.log('selectedFontIndex = ', selectedFontIndex);
+		console.log('selectedFont = ', selectedFont);
+		console.log('fontSize = ', fontSize);
+		console.log('fontColor = ', fontColor);
 	});
 	CheckStoredValues();
 });
@@ -414,5 +485,65 @@ function update_tr_Country() {
     }
     select_translate_dialect.style.visibility = list[1].length == 1 ? 'hidden' : 'visible';
     dst=select_translate_dialect.value.split('-')[0];
+}
+
+
+function getAvailableFonts() {
+    var fontList = [];
+    var canvas = document.createElement("canvas");
+    var ctx = canvas.getContext("2d");
+
+    // Set some text to measure the width of
+    var text = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+    // Measure the width of the text for each font
+    var defaultWidth = ctx.measureText(text).width;
+
+    // List of commonly available fonts in most browsers
+    var fontFamilies = [
+      "Arial", "Arial Black", "Calibri", "Cambria", "Candara", "Comic Sans MS",
+      "Consolas", "Courier New", "Georgia", "Impact", "Lucida Console", "Lucida Sans Unicode",
+      "Microsoft Sans Serif", "Segoe UI", "Tahoma", "Times New Roman", "Trebuchet MS", "Verdana"
+    ];
+
+    // Check if each font is available
+    fontFamilies.forEach(function(font) {
+      ctx.font = "40px " + font + ", sans-serif";
+      var width = ctx.measureText(text).width;
+      if (width !== defaultWidth) {
+        fontList.push(font);
+      }
+    });
+
+    return fontList;
+}
+
+function updateSampleText() {
+    selectedFont = fontSelect.value;
+	console.log('selectedFont =', selectedFont);
+	chrome.storage.sync.set({'selectedFont' : selectedFont},(()=>{}));
+
+	selectedFontIndex = fontSelect.selectedIndex;
+	console.log('selectedFontIndex =', selectedFontIndex);
+	chrome.storage.sync.set({'selectedFontIndex' : selectedFontIndex},(()=>{}));
+
+    fontSize = fontSizeInput.value;
+	console.log('fontSize =', fontSize);
+	chrome.storage.sync.set({'fontSize' : fontSize},(()=>{}));
+
+	fontColor = fontColorInput.value;
+	console.log('fontColor =', fontColor);
+	chrome.storage.sync.set({'fontColor' : fontColor},(()=>{}));
+
+    sampleText.style.fontFamily = selectedFont + ", sans-serif";
+    sampleText.style.fontSize = fontSize + "px";
+	sampleText.style.color = fontColor;
+    sampleText.textContent = "Sample Text";
+	sampleText.style.backgroundColor = 'rgba(0,0,0,0.3)';
+	sampleText.style.width = (0.8*window.innerWidth) + "px";
+	console.log('width =', sampleText.style.width);
+	sampleText.style.height = (0.075*window.innerHeight) + "px";
+	console.log('height =', sampleText.style.height);
+	sampleText.style.offset({left:0.2*(window.innerWidth-0.5*window.innerWidth)})
 }
 
