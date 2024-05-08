@@ -19,8 +19,42 @@
 	<br>
 	<input type="checkbox" id="checkbox_show_translation" name="checkbox_show_translation"> <label style='font-size: 12px'> Show translation text</label>
 	<br><br>
-	<button id='save_button'>Save</button>
 
+	<!--
+	<label style='font-size: 12px'>Font Size&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+	<select id='select_fontsize' style='font-size:12px''></select>
+	<br><br>
+	-->
+
+	<label for="fontSelect">Subtitle Font:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+	<select id="fontSelect"></select>
+
+	<!--
+	<br>
+	<label for="fontSize">Font Size&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+	-->
+
+	<input type="number" id="fontSize" min="1" value="16">
+
+	<br>
+
+	<label for="fontColor">Subtitle Color&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+	<input type="color" id="fontColor" value="#000000">
+
+	<br><br>
+
+	<!--
+	<button onclick="updateSampleText()">Update Sample Text</button>
+	-->
+
+	<button id='updateSampleText_button'>Update Sample Text</button>
+
+	<div id="sampleText" style="margin-top: 20px;"></div>
+
+	<br><br>
+
+	<button id='save_button'>Save</button>
+	<br><br>
 
 </body>
 <script src='js/setting.js'></script>
