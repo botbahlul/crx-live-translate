@@ -20,19 +20,8 @@
 	<input type="checkbox" id="checkbox_show_translation" name="checkbox_show_translation"> <label style='font-size: 12px'> Show translation text</label>
 	<br><br>
 
-	<!--
-	<label style='font-size: 12px'>Font Size&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-	<select id='select_fontsize' style='font-size:12px''></select>
-	<br><br>
-	-->
-
 	<label for="fontSelect">Subtitle Font:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
 	<select id="fontSelect"></select>
-
-	<!--
-	<br>
-	<label for="fontSize">Font Size&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-	-->
 
 	<input type="number" id="fontSize" min="1" value="16">
 
@@ -41,15 +30,23 @@
 	<label for="fontColor">Subtitle Color&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
 	<input type="color" id="fontColor" value="#000000">
 
-	<br><br>
+	<br>
 
-	<!--
-	<button onclick="updateSampleText()">Update Sample Text</button>
-	-->
+	<label for="containerWidth">Container Width&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+	<input type="number" id="containerWidthFactor" min="0" max="1" step="0.001" value="0.8">
+	<label for="containerWidthContinuingText">&nbsp;x window.innerWidth (in pixels)</label>
+
+	<br>
+
+	<label for="containerHeight">Container Height&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+	<input type="number" id="containerHeightFactor" min="0" max="1" step="0.001" value="0.075">
+	<label for="containerHeightContinuingText">&nbsp;x window.innerHeight (in pixels)</label>
+
+	<br><br>
 
 	<button id='updateSampleText_button'>Update Sample Text</button>
 
-	<div id="sampleText" style="margin-top: 20px;"></div>
+	<div id="sampleText" style="margin-top: 20px; text-align: center;"></div>
 
 	<br><br>
 
