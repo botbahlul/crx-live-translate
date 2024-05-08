@@ -544,6 +544,5 @@ function updateSampleText() {
 	console.log('width =', sampleText.style.width);
 	sampleText.style.height = (0.075*window.innerHeight) + "px";
 	console.log('height =', sampleText.style.height);
-	sampleText.style.offset({left:0.2*(window.innerWidth-0.5*window.innerWidth)})
 }
 
