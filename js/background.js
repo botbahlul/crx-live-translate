@@ -1,4 +1,5 @@
 var recognizing = false;
+
 chrome.action.onClicked.addListener((tab) => {
 
 	recognizing=!recognizing;
@@ -10,7 +11,7 @@ chrome.action.onClicked.addListener((tab) => {
 				icon_text_listening = request.data.value;
 				chrome.action.setIcon({path: 'mic-listening.png'});
 				chrome.action.setBadgeText({text: icon_text_listening});
-			}
+			};
 		});
 
 		var icon_text_no_mic = '';
@@ -18,7 +19,7 @@ chrome.action.onClicked.addListener((tab) => {
 			if (request.cmd == 'icon_text_no_mic') {
 				icon_text_no_mic = request.data.value;
 				chrome.action.setIcon({path: 'mic-slashed.png'});
-			}
+			};
 		});
 
 		var icon_text_blocked = '';
@@ -26,7 +27,7 @@ chrome.action.onClicked.addListener((tab) => {
 			if (request.cmd == 'icon_text_blocked') {
 				icon_text_blocked = request.data.value;
 				chrome.action.setIcon({path: 'mic-slashed.png'});
-			}
+			};
 		});
 
 		var icon_text_denied = '';
@@ -34,7 +35,7 @@ chrome.action.onClicked.addListener((tab) => {
 			if (request.cmd == 'icon_text_denied') {
 				icon_text_denied = request.data.value;
 				chrome.action.setIcon({path: 'mic-slashed.png'});
-			}
+			};
 		});
 
 		console.log('Start button clicked to start: recognizing =', recognizing);
@@ -71,14 +72,14 @@ chrome.action.onClicked.addListener((tab) => {
 		chrome.action.setIcon({path: 'mic.png'});
 		console.log('Start button clicked to end: recognizing =', recognizing);
 		return;
-	}
+	};
 });
-
 
 
 function onLoad() {
 
-	var action, recognition, recognizing, src, dst, src_dialect, dst_dialect, selectedFont, fontSize, fontColor;
+	var action, recognition, recognizing, src, dst, src_dialect, dst_dialect;
+	var selectedFont, fontSize, fontColor, containerWidthFactor, containerHeightFactor, srcWidth, srcHeight, srcTop, srcLeft, dstWidth, dstHeight, dstTop, dstLeft;
 	var srt_id = 0, srt_time = 0, speech_start_time = 0, speech_end_time = 0, srt_transcript = '';
 	var srt_time_hh = 0, srt_time_mm = 0, srt_time_ss = 0;
 	var speech_start_time_hh = 0, speech_start_time_mm = 0, speech_start_time_ss = 0;
@@ -91,10 +92,7 @@ function onLoad() {
 		console.log('onload: response =', response);
 	});
 
-
-
-	chrome.storage.sync.get([ 'recognizing', 'src_dialect', 'dst_dialect', 'show_original', 'show_translation', 'selectedFont', 'fontSize', 'fontColor'], function(result) {
-
+	chrome.storage.sync.get([ 'recognizing', 'src_dialect', 'dst_dialect', 'show_original', 'show_translation', 'selectedFont', 'fontSize', 'fontColor', 'containerWidthFactor', 'containerHeightFactor'], function(result) {
 		recognizing = result.recognizing;
 		console.log('onLoad: recognizing =', recognizing);
 
@@ -104,17 +102,17 @@ function onLoad() {
 		src = src_dialect.split('-')[0];
 		if (src_dialect == "yue-Hant-HK") {
 			src = "zh-TW";
-		}
+		};
 		if (src_dialect == "cmn-Hans-CN") {
 			src = "zh-CN";
-		}
+		};
 		if (src_dialect == "cmn-Hans-HK") {
 			src = "zh-CN";
-		}
+		};
 		if (src_dialect == "cmn-Hant-TW") {
 			src = "zh-TW";
-		}
-		//console.log('src = ', src);
+		};
+		console.log('src = ', src);
 
 		dst_dialect = result.dst_dialect;
 		if (!dst_dialect) dst_dialect='en-US';
@@ -122,38 +120,71 @@ function onLoad() {
 		dst = dst_dialect.split('-')[0];
 		if (dst_dialect == "yue-Hant-HK") {
 			dst = "zh-TW";
-		}
+		};
 		if (dst_dialect == "cmn-Hans-CN") {
 			dst = "zh-CN";
-		}
+		};
 		if (dst_dialect == "cmn-Hans-HK") {
 			dst = "zh-CN";
-		}
+		};
 		if (dst_dialect == "cmn-Hant-TW") {
 			dst = "zh-TW";
-		}
-		//console.log('dst = ', dst);
+		};
+		console.log('dst = ', dst);
 
 		show_original = result.show_original;
 		//console.log('show_original =', result.show_original);
 		show_translation = result.show_translation;
 		//console.log('show_translation', result.show_translation);
 
-		selectedFont = result.selectedFont
-		console.log('selectedFont =', result.selectedFont);
+		selectedFont = result.selectedFont;
+		//console.log('selectedFont =', result.selectedFont);
 
-		fontSize = result.fontSize
-		console.log('fontSize =', result.fontSize);
+		fontSize = result.fontSize;
+		//console.log('fontSize =', result.fontSize);
 
-		fontColor = result.fontColor
-		console.log('fontColor =', result.fontColor);
+		fontColor = result.fontColor;
+		//console.log('fontColor =', result.fontColor);
+
+		containerWidthFactor = result.containerWidthFactor;
+		//console.log('result.containerWidthFactor =', result.containerWidthFactor);
+
+		containerHeightFactor = result.containerHeightFactor;
+		//console.log('result.containerHeightFactor =', result.containerHeightFactor);
+
+		srcWidth = containerWidthFactor*window.innerWidth;
+		//console.log('srcWidth =', srcWidth);
+
+		srcHeight = containerHeightFactor*window.innerHeight;
+		//console.log('srcHeight =', srcWidth);
+
+		srcTop = 0.2*window.innerHeight;
+		//console.log('srcTop =', srcTop);
+
+		//srcLeft = 0.2*(window.innerWidth-0.5*window.innerWidth);
+		srcLeft = 0.5*(window.innerWidth-srcWidth);
+		//console.log('srcLeft =', srcLeft);
+
+		dstWidth = containerWidthFactor*window.innerWidth;
+		//console.log('dstWidth =', dstWidth);
+		
+		dstHeight = containerHeightFactor*window.innerHeight;
+		//console.log('dstHeight =', dstHeight);
+
+		dstTop = 0.75*window.innerHeight;
+		//console.log('dstTop =', dstTop);
+
+		//dstLeft = 0.2*(window.innerWidth-0.5*window.innerWidth);
+		dstLeft = 0.5*(window.innerWidth-dstWidth);
+		//console.log('dstLeft =', dstLeft);
 
 		var icon_text_listening = src.toUpperCase()+':'+dst.toUpperCase();
-		chrome.runtime.sendMessage({ cmd: 'icon_text_listening', data: { value: icon_text_listening } })
+
+		chrome.runtime.sendMessage({ cmd: 'icon_text_listening', data: { value: icon_text_listening } });
 
 		var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
-			.width(0.8*window.innerWidth)
-			.height(0.075*window.innerHeight)
+			.width(srcWidth)
+			.height(srcHeight)
 			.resizable().draggable({
 				cancel: 'text',
 				start: function (){
@@ -174,14 +205,14 @@ function onLoad() {
 				'overflow': 'hidden',
 				'z-index': '2147483647'
 			})
-			.offset({top:0.1*window.innerHeight, left:0.2*(window.innerWidth-0.5*window.innerWidth)})
+			.offset({top:srcTop, left:srcLeft})
 
 		if (!document.querySelector("#src_textarea_container")) {
 			console.log('appending src_textarea_container to html body');
 			src_textarea_container$.appendTo('body');
 		} else {
 			console.log('src_textarea_container has already exist');
-		}
+		};
 
 		document.querySelector("#src_textarea").style.width = '100%';
 		document.querySelector("#src_textarea").style.height = '100%';
@@ -202,8 +233,8 @@ function onLoad() {
 		//});
 
 		var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
-			.width(0.8*window.innerWidth)
-			.height(0.075*window.innerHeight)
+			.width(dstWidth)
+			.height(dstHeight)
 			.resizable().draggable({
 				cancel: 'text',
 				start: function (){
@@ -224,14 +255,14 @@ function onLoad() {
 				'overflow': 'hidden',
 				'z-index': '2147483647'
 			})
-			.offset({top:0.65*window.innerHeight, left:0.2*(window.innerWidth-0.5*window.innerWidth)})
+			.offset({top:dstTop, left:dstLeft})
 
 		if (!document.querySelector("#dst_textarea_container")) {
 			console.log('appending dst_textarea_container to html body');
 			dst_textarea_container$.appendTo('body');
 		} else {
 			console.log('src_textarea_container has already exist');
-		}
+		};
 
 		document.querySelector("#dst_textarea").style.width = '100%';
 		document.querySelector("#dst_textarea").style.height = '100%';
@@ -252,14 +283,41 @@ function onLoad() {
 
 		window.addEventListener('resize', function(event){
 			if (document.querySelector("#src_textarea_container")) {
-				document.querySelector("#src_textarea_container").style.width = String(0.8*window.innerWidth)+'px';
-				document.querySelector("#src_textarea_container").style.height = String(0.075*window.innerHeight)+'px';
-				document.querySelector("#src_textarea_container").style.top = String(0.1*window.innerHeight)+'px';
-				document.querySelector("#src_textarea_container").style.left = String(0.2*(window.innerWidth-0.5*window.innerWidth))+'px';
+
+				srcWidth = containerWidthFactor*window.innerWidth;
+				//console.log('srcWidth =', srcWidth);
+
+				srcHeight = containerHeightFactor*window.innerHeight;
+				//console.log('srcHeight =', srcWidth);
+
+				srcTop = 0.2*window.innerHeight;
+				//console.log('srcTop =', srcTop);
+
+				//srcLeft = 0.2*(window.innerWidth-0.5*window.innerWidth);
+				srcLeft = 0.5*(window.innerWidth-srcWidth);
+				//console.log('srcLeft =', srcLeft);
+
+				dstWidth = containerWidthFactor*window.innerWidth;
+				//console.log('dstWidth =', dstWidth);
+		
+				dstHeight = containerHeightFactor*window.innerHeight;
+				//console.log('dstHeight =', dstHeight);
+
+				dstTop = 0.75*window.innerHeight;
+				//console.log('dstTop =', dstTop);
+
+				//dstLeft = 0.2*(window.innerWidth-0.5*window.innerWidth);
+				dstLeft = 0.5*(window.innerWidth-dstWidth);
+				//console.log('dstLeft =', dstLeft);
+
+				document.querySelector("#src_textarea_container").style.width = String(srcWidth)+'px';
+				document.querySelector("#src_textarea_container").style.height = String(srcHeight)+'px';
+				document.querySelector("#src_textarea_container").style.top = String(srcTop)+'px';
+				document.querySelector("#src_textarea_container").style.left = String(srcLeft)+'px';
 
 				var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
-					.width(0.8*window.innerWidth)
-					.height(0.075*window.innerHeight)
+					.width(srcWidth)
+					.height(srcHeight)
 					.resizable().draggable({
 						cancel: 'text',
 						start: function (){
@@ -280,10 +338,10 @@ function onLoad() {
 						'overflow': 'hidden',
 						'z-index': '2147483647'
 					})
-					.offset({top:0.1*window.innerHeight, left:0.2*(window.innerWidth-0.5*window.innerWidth)})
+					.offset({top:srcTop, left:srcLeft})
 
-				document.querySelector("#src_textarea").style.width = String(0.8*window.innerWidth)+'px';
-				document.querySelector("#src_textarea").style.height = String(0.075*window.innerHeight)+'px';
+				document.querySelector("#src_textarea").style.width = String(srcWidth)+'px';
+				document.querySelector("#src_textarea").style.height = String(srcHeight)+'px';
 				document.querySelector("#src_textarea").style.width = '100%';
 				document.querySelector("#src_textarea").style.height = '100%';
 				//document.querySelector("#src_textarea").style.color = 'yellow';
@@ -306,14 +364,14 @@ function onLoad() {
 			}
 
 			if (document.querySelector("#dst_textarea_container")) {
-				document.querySelector("#dst_textarea_container").style.width = String(0.8*window.innerWidth)+'px';
-				document.querySelector("#dst_textarea_container").style.height = String(0.075*window.innerHeight)+'px';
-				document.querySelector("#dst_textarea_container").style.top = String(0.65*window.innerHeight)+'px';
-				document.querySelector("#dst_textarea_container").style.left = String(0.2*(window.innerWidth-0.5*window.innerWidth))+'px';
+				document.querySelector("#dst_textarea_container").style.width = String(dstWidth)+'px';
+				document.querySelector("#dst_textarea_container").style.height = String(dstHeight)+'px';
+				document.querySelector("#dst_textarea_container").style.top = String(dstTop)+'px';
+				document.querySelector("#dst_textarea_container").style.left = String(dstLeft)+'px';
 
 				var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
-					.width(0.8*window.innerWidth)
-					.height(0.075*window.innerHeight)
+					.width(dstWidth)
+					.height(dstHeight)
 					.resizable().draggable({
 						cancel: 'text',
 						start: function (){
@@ -334,10 +392,10 @@ function onLoad() {
 						'overflow': 'hidden',
 						'z-index': '2147483647'
 					})
-					.offset({top:0.65*window.innerHeight, left:0.2*(window.innerWidth-0.5*window.innerWidth)})
+					.offset({top:dstTop, left:dstLeft})
 
-				document.querySelector("#dst_textarea").style.width = String(0.8*window.innerWidth)+'px';
-				document.querySelector("#dst_textarea").style.height = String(0.075*window.innerHeight)+'px';
+				document.querySelector("#dst_textarea").style.width = String(dstWidth)+'px';
+				document.querySelector("#dst_textarea").style.height = String(dstHeight)+'px';
 				document.querySelector("#dst_textarea").style.width = '100%';
 				document.querySelector("#dst_textarea").style.height = '100%';
 				//document.querySelector("#dst_textarea").style.color = 'yellow';
@@ -367,8 +425,7 @@ function onLoad() {
 			if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
 			console.log('onload: stopping because recognizing =', recognizing);
 			return;
-		}
-
+		};
 
 		console.log('initializing recognition: recognizing =', recognizing);
 
@@ -611,23 +668,23 @@ function onLoad() {
 					return;
 				}
 			});
-		}
+		};
 
 
 		var two_line = /\n\n/g;
 		var one_line = /\n/g;
 		function linebreak(s) {
 			return s.replace(two_line, '<p></p>').replace(one_line, '<br>');
-		}
+		};
 
 		function remove_linebreak(s) {
 			return s.replace(two_line, '').replace(one_line, '');
-		}
+		};
 
 		var first_char = /\S/;
 		function capitalize(s) {
 			return s.replace(first_char, function(m) { return m.toUpperCase(); });
-		}
+		};
 
 		var translate = async (t,src,dst) => {
 			var tt = new Promise(function(resolve) {
@@ -655,7 +712,7 @@ function onLoad() {
 				xmlHttp.onreadystatechange();
 			});
 			return await tt;
-		}
+		};
 
 
 	});

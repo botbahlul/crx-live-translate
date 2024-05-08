@@ -1,4 +1,4 @@
-var src, dst, language_index, translate_language_index, src_dialect, dst_dialect, dialect_index, translate_dialect_index, show_original, show_translation, selectedFontIndex, selectedFont, fontSize, fontColor, fontSelect, fontSizeInput, fontColorInput, sampleText, fonts;
+var src, dst, language_index, translate_language_index, src_dialect, dst_dialect, dialect_index, translate_dialect_index, show_original, show_translation, selectedFontIndex, selectedFont, fontSize, fontColor, fontSelect, fontSizeInput, fontColorInput, sampleText, fonts, containerWidthFactor, containerHeightFactor, containerWidthFactorInput, containerHeightFactorInput;
 
 fontSelect = document.getElementById("fontSelect");
 fontSizeInput = document.getElementById("fontSize");
@@ -10,6 +10,8 @@ fonts.forEach(function(font) {
     option.textContent = font;
     fontSelect.appendChild(option);
 });
+containerWidthFactorInput = document.getElementById("containerWidthFactor");
+containerHeightFactorInput = document.getElementById("containerHeightFactor");
 
 document.addEventListener('DOMContentLoaded', (event) => {
 	CheckStoredValues();
@@ -85,16 +87,15 @@ function CheckStoredValues() {
 
 	chrome.storage.sync.get(['selectedFontIndex'], function(result) {
 		selectedFontIndex = result.selectedFontIndex;
-		console.log('CheckStoredValues before if: selectedFontIndex =', selectedFontIndex);
+		console.log('CheckStoredValues before if: result.selectedFontIndex =', result.selectedFontIndex);
 		if (!selectedFontIndex) selectedFontIndex=8;
 		fontSelect.selectedIndex = selectedFontIndex;
 		console.log('CheckStoredValues after if: selectedFontIndex =', selectedFontIndex);
 	});
 
-
 	chrome.storage.sync.get(['selectedFont'], function(result) {
 		selectedFont = result.selectedFont;
-		console.log('CheckStoredValues before if: selectedFont =', selectedFont);
+		console.log('CheckStoredValues before if: result.selectedFont =', result.selectedFont);
 		if (result.selectedFont) {
 			fontSelect.value = selectedFont;
 		}
@@ -102,32 +103,51 @@ function CheckStoredValues() {
 		console.log('CheckStoredValues after if: selectedFont =', selectedFont);
 	});
 
-
 	chrome.storage.sync.get(['fontSize'], function(result) {
-		//if (!fontSize) fontSize=16;
 		fontSize = result.fontSize;
-		console.log('CheckStoredValues before if: fontSize =', fontSize);
+		console.log('CheckStoredValues before if: result.fontSize =', result.fontSize);
 		if (result.fontSize) {
 			fontSizeInput.value = fontSize;
 		}
 		console.log('CheckStoredValues after if: fontSize =', fontSize);
-		//getAvailableFonts()
 		updateSampleText()
 	});
 
 	chrome.storage.sync.get(['fontColor'], function(result) {
-		//if (!fontColor) fontColor="yellow";
 		fontColor = result.fontColor;
-		console.log('CheckStoredValues before if: fontColor =', fontColor);
+		console.log('CheckStoredValues before if: result.fontColor =', result.fontColor);
 		if (result.fontColor) {
 			fontColorInput.value = fontColor;
 		}
-		//getAvailableFonts()
 		updateSampleText()
 		console.log('CheckStoredValues after if: fontColor =', fontColor);
 	});
 
-}
+	chrome.storage.sync.get(['containerWidthFactor'], function(result) {
+		containerWidthFactor = result.containerWidthFactor;
+		console.log('CheckStoredValues before if: result.containerWidthFactor =', result.containerWidthFactor);
+		if (result.containerWidthFactor) {
+			containerWidthFactorInput.value = containerWidthFactor;
+		} else {
+			containerWidthFactorInput.value = 0.8;
+		}
+		updateSampleText()
+		console.log('CheckStoredValues after if: containerWidthFactor =', containerWidthFactor);
+	});
+
+	chrome.storage.sync.get(['containerHeightFactor'], function(result) {
+		containerHeightFactor = result.containerHeightFactor;
+		console.log('CheckStoredValues before if: result.containerHeightFactor =', result.containerHeightFactor);
+		if (result.containerHeightFactor) {
+			containerHeightFactorInput.value = containerHeightFactor;
+		} else {
+			containerHeightFactorInput.value = 0.075;
+		}
+		updateSampleText()
+		console.log('CheckStoredValues after if: containerHeightFactor =', containerHeightFactor);
+	});
+
+};
 
 select_language.addEventListener('change', function(){
 	update_Country()
@@ -172,7 +192,13 @@ checkbox_show_translation.addEventListener('change', function(){
 // Add event listeners for changes in font select and font size input
 fontSelect.addEventListener("change", updateSampleText);
 fontSizeInput.addEventListener("input", updateSampleText);
+fontSizeInput.addEventListener("change", updateSampleText);
 fontColorInput.addEventListener("input", updateSampleText);
+fontColorInput.addEventListener("change", updateSampleText);
+containerWidthFactorInput.addEventListener("input", updateSampleText);
+containerWidthFactorInput.addEventListener("change", updateSampleText);
+containerHeightFactorInput.addEventListener("input", updateSampleText);
+containerHeightFactorInput.addEventListener("change", updateSampleText);
 
 document.getElementById("updateSampleText_button").addEventListener("click", updateSampleText);
 
@@ -190,6 +216,8 @@ save_button.addEventListener('click', function(){
 		'selectedFont': selectedFont,
 		'fontSize': fontSize,
 		'fontColor': fontColor,
+		'containerWidthFactor': containerWidthFactor,
+		'containerHeightFactor': containerHeightFactor,
 	}, function() {
 		console.log('save src = ', src);
 		console.log('save dst = ', dst);
@@ -203,6 +231,8 @@ save_button.addEventListener('click', function(){
 		console.log('selectedFont = ', selectedFont);
 		console.log('fontSize = ', fontSize);
 		console.log('fontColor = ', fontColor);
+		console.log('containerWidthFactor = ', containerWidthFactor);
+		console.log('containerHeightFactor = ', containerHeightFactor);
 	});
 	CheckStoredValues();
 });
@@ -521,28 +551,32 @@ function getAvailableFonts() {
 function updateSampleText() {
     selectedFont = fontSelect.value;
 	console.log('selectedFont =', selectedFont);
-	chrome.storage.sync.set({'selectedFont' : selectedFont},(()=>{}));
 
 	selectedFontIndex = fontSelect.selectedIndex;
 	console.log('selectedFontIndex =', selectedFontIndex);
-	chrome.storage.sync.set({'selectedFontIndex' : selectedFontIndex},(()=>{}));
 
     fontSize = fontSizeInput.value;
 	console.log('fontSize =', fontSize);
-	chrome.storage.sync.set({'fontSize' : fontSize},(()=>{}));
 
 	fontColor = fontColorInput.value;
 	console.log('fontColor =', fontColor);
-	chrome.storage.sync.set({'fontColor' : fontColor},(()=>{}));
+
+	containerWidthFactor = containerWidthFactorInput.value;
+	console.log('containerWidthFactor =', containerWidthFactor);
+
+	containerHeightFactor = containerHeightFactorInput.value;
+	console.log('containerHeightFactor =', containerHeightFactor);
 
     sampleText.style.fontFamily = selectedFont + ", sans-serif";
-    sampleText.style.fontSize = fontSize + "px";
+    sampleText.style.fontSize = String(fontSize) + "px";
 	sampleText.style.color = fontColor;
-    sampleText.textContent = "Sample Text";
+	sampleText.innerHTML = "Sample Text Line 1<br>Sample Text Line 2";
 	sampleText.style.backgroundColor = 'rgba(0,0,0,0.3)';
-	sampleText.style.width = (0.8*window.innerWidth) + "px";
+	sampleText.style.width = String(containerWidthFactor*window.innerWidth) + "px";
 	console.log('width =', sampleText.style.width);
-	sampleText.style.height = (0.075*window.innerHeight) + "px";
+	sampleText.style.height = String(containerHeightFactor*window.innerHeight) + "px";
 	console.log('height =', sampleText.style.height);
+	sampleText.style.left = String(0.2*(window.innerWidth-0.5*window.innerWidth)) + "px";
+	console.log('left =', sampleText.style.left);
 }
 
