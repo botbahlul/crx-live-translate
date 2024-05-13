@@ -87,7 +87,7 @@ function onLoad() {
 	var srt_time = 0;
 	var a = '', b = '', c = '';
 	var transcript = [];
-	var timestamp, timestamped_final_transcript, timestamped_translated_transcript;
+	var startTimestamp, endTimestamp, timestamped_final_transcript, timestamped_translated_transcript;
 	var videoInfo;
 
 
@@ -167,11 +167,11 @@ function onLoad() {
 		if (videoInfo) {
 			console.log('Extension is starting');
 			console.log("Video player found!");
-			console.log("Id:", videoInfo.id);
-			console.log("Top:", videoInfo.top);
-			console.log("Left:", videoInfo.left);
-			console.log("Width:", videoInfo.width);
-			console.log("Height:", videoInfo.height);
+			console.log("videoInfo.id = ", videoInfo.id);
+			//console.log("Top:", videoInfo.top);
+			//console.log("Left:", videoInfo.left
+			//console.log("Width:", videoInfo.width);
+			//console.log("Height:", videoInfo.height);
 		} else {
 			console.log("No video player found on this page.");
 		}
@@ -217,11 +217,11 @@ function onLoad() {
 			if (videoInfo) {
 				console.log('Window is resized');
 				console.log("Video player found!");
-				console.log("Id:", videoInfo.id);
-				console.log("Top:", videoInfo.top);
-				console.log("Left:", videoInfo.left);
-				console.log("Width:", videoInfo.width);
-				console.log("Height:", videoInfo.height);
+				console.log("videoInfo.id = ", videoInfo.id);
+				//console.log("Top:", videoInfo.top);
+				//console.log("Left:", videoInfo.left
+				//console.log("Width:", videoInfo.width);
+				//console.log("Height:", videoInfo.height);
 			} else {
 				console.log("No video player found on this page.");
 			}
@@ -491,11 +491,11 @@ function onLoad() {
 			if (videoInfo) {
 				console.log('Window is resized');
 				console.log("Video player found!");
-				console.log("Id:", videoInfo.id);
-				console.log("Top:", videoInfo.top);
-				console.log("Left:", videoInfo.left);
-				console.log("Width:", videoInfo.width);
-				console.log("Height:", videoInfo.height);
+				console.log("videoInfo.id = ", videoInfo.id);
+				//console.log("Top:", videoInfo.top);
+				//console.log("Left:", videoInfo.left
+				//console.log("Width:", videoInfo.width);
+				//console.log("Height:", videoInfo.height);
 			} else {
 				console.log("No video player found on this page.");
 			}
@@ -661,11 +661,11 @@ function onLoad() {
 			if (videoInfo) {
 				console.log('fullscreenchange');
 				console.log("Video player found!");
-				console.log("Id:", videoInfo.id);
-				console.log("Top:", videoInfo.top);
-				console.log("Left:", videoInfo.left);
-				console.log("Width:", videoInfo.width);
-				console.log("Height:", videoInfo.height);
+				console.log("videoInfo.id = ", videoInfo.id);
+				//console.log("Top:", videoInfo.top);
+				//console.log("Left:", videoInfo.left
+				//console.log("Width:", videoInfo.width);
+				//console.log("Height:", videoInfo.height);
 			} else {
 				console.log("No video player found on this page.");
 			}
@@ -971,10 +971,14 @@ function onLoad() {
 							//final_transcript = capitalize(final_transcript);
 							//final_transcript = remove_linebreak(final_transcript);
 
-							timestamp = formatTimestamp(new Date());
-							final_transcript += `${timestamp} : ${capitalize(event.results[i][0].transcript)}`;
+							endTimestamp = formatTimestamp(new Date());
+							//final_transcript += `${startTimestamp} : ${capitalize(event.results[i][0].transcript)}`;
+							final_transcript += `${startTimestamp} - ${endTimestamp} : ${capitalize(event.results[i][0].transcript)}`;
 							final_transcript = final_transcript + '.\n'
 						} else {
+							if (interim_transcript.split(/\s+/).length === 1) {
+								startTimestamp = formatTimestamp(new Date());
+							}
 							interim_transcript += event.results[i][0].transcript;
 							//interim_transcript = remove_linebreak(interim_transcript);
 							interim_transcript = capitalize(interim_transcript);
@@ -982,13 +986,12 @@ function onLoad() {
 					}
 
 
-
 					timestamped_final_transcript = final_transcript + interim_transcript;
 					//timestamped_final_transcript = capitalize(timestamped_final_transcript);
 
 					if (containsColon(timestamped_final_transcript)) {
 						timestamped_final_transcript = capitalizeSentences(timestamped_final_transcript);
-						//console.log('capitalizeSentences(timestamped_final_transcript) = ', timestamped_final_transcript);
+						console.log('capitalizeSentences(timestamped_final_transcript) = ', timestamped_final_transcript);
 					}
 
 
@@ -1149,12 +1152,12 @@ function onLoad() {
     
 			// Iterate over each line
 			for (let i = 0; i < lines.length; i++) {
-				// Split each line by colon to separate timestamp and sentence
+				// Split each line by colon to separate startTimestamp and sentence
 				const parts = lines[i].split(' : ');
 				//console.log('parts[0] = ', parts[0]);
 				//console.log('parts[1] = ', parts[1]);
 
-				// If the line is in the correct format (timestamp : sentence)
+				// If the line is in the correct format (startTimestamp : sentence)
 				if (parts.length === 2) {
 					// Capitalize the first character of the sentence
 					const capitalizedSentence = (parts[1].trimLeft()).charAt(0).toUpperCase() + (parts[1].trimLeft()).slice(1);
@@ -1216,9 +1219,9 @@ function onLoad() {
 		}
 
 
-		function formatTimestamp(timestamp) {
-			// Convert timestamp to string
-			const timestampString = timestamp.toISOString();
+		function formatTimestamp(startTimestamp) {
+			// Convert startTimestamp to string
+			const timestampString = startTimestamp.toISOString();
 
 			// Extract date and time parts
 			const datePart = timestampString.slice(0, 10);
@@ -1291,7 +1294,7 @@ function onLoad() {
 		}
 
 
-
+		/*
 		function formatText(text) {
 			const timestamps = text.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3}/g);
 			//console.log('timestamps', timestamps);
@@ -1315,6 +1318,39 @@ function onLoad() {
 					}
 				}
 				console.log('formattedText', formattedText);
+				return formattedText;
+			} else {
+				return text;
+			}
+		}
+		*/
+
+
+		function formatText(text) {
+			text = text.replace('\%20/g', ' ');
+			const timestamps = text.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3} - \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3}/g);
+			//console.log('timestamps', timestamps);
+			let formattedText = "";
+			if (timestamps) {
+				const lines = text.split(/(?=\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3} - \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3})/);
+				//console.log('lines', lines);
+				for (let line of lines) {
+					const parts = line.split(/(?<=\d{3}:\d{2}): /);
+					//console.log('parts.length', parts.length);
+					//console.log('parts[0]', parts[0]);
+					//console.log('parts[1]', parts[1]);
+					if (parts[0].includes('.')) {
+						formattedText += parts[0].replace(/\./g, ".") + "\n";
+					}
+					else if (parts[0].includes('?')) {
+						formattedText += parts[0].replace(/\?/g, "?") + "\n";
+					}
+					else if (parts[0].includes('!')) {
+						formattedText += parts[0].replace(/\!/g, "!") + "\n";
+					}
+				}
+
+				//console.log('formattedText', formattedText);
 				return formattedText;
 			} else {
 				return text;
