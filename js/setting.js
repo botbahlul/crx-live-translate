@@ -1,4 +1,6 @@
-var src, dst, language_index, translate_language_index, src_dialect, dst_dialect, dialect_index, translate_dialect_index, show_original, show_translation, selectedFontIndex, selectedFont, fontSize, fontColor, fontSelect, fontSizeInput, fontColorInput, sampleText, fonts, containerWidthFactor, containerHeightFactor, containerWidthFactorInput, containerHeightFactorInput;
+var src, dst, language_index, translate_language_index, src_dialect, dst_dialect, dialect_index, translate_dialect_index, show_original, show_translation;
+var selectedFontIndex, selectedFont, fontSize, fontColor, fontSelect, fontSizeInput, fontColorInput, sampleText, fonts;
+var containerWidthFactor, containerHeightFactor, containerWidthFactorInput, containerHeightFactorInput;
 
 fontSelect = document.getElementById("fontSelect");
 fontSizeInput = document.getElementById("fontSize");
@@ -88,7 +90,7 @@ function CheckStoredValues() {
 	chrome.storage.sync.get(['selectedFontIndex'], function(result) {
 		selectedFontIndex = result.selectedFontIndex;
 		console.log('CheckStoredValues before if: result.selectedFontIndex =', result.selectedFontIndex);
-		if (!selectedFontIndex) selectedFontIndex=8;
+		if (!selectedFontIndex) selectedFontIndex=0;
 		fontSelect.selectedIndex = selectedFontIndex;
 		console.log('CheckStoredValues after if: selectedFontIndex =', selectedFontIndex);
 	});

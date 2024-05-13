@@ -87,6 +87,9 @@ function onLoad() {
 	var srt_time = 0;
 	var a = '', b = '', c = '';
 	var transcript = [];
+	var timestamp, timestamped_final_transcript, timestamped_translated_transcript;
+	var videoInfo;
+
 
 	chrome.runtime.onMessage.addListener(function (response, sendResponse) {
 		console.log('onload: response =', response);
@@ -152,31 +155,225 @@ function onLoad() {
 		containerHeightFactor = result.containerHeightFactor;
 		//console.log('result.containerHeightFactor =', result.containerHeightFactor);
 
-		srcWidth = containerWidthFactor*window.innerWidth;
+
+
+		document.documentElement.scrollTop = 0; // For modern browsers
+		document.body.scrollTop = 0; // For older browsers
+
+		videoID = getVideoPlayerId();
+		console.log("videoID:", videoID);
+
+		videoInfo = getVideoPlayerInfo();
+		if (videoInfo) {
+			console.log('Extension is starting');
+			console.log("Video player found!");
+			console.log("Id:", videoInfo.id);
+			console.log("Top:", videoInfo.top);
+			console.log("Left:", videoInfo.left);
+			console.log("Width:", videoInfo.width);
+			console.log("Height:", videoInfo.height);
+		} else {
+			console.log("No video player found on this page.");
+		}
+
+		//srcWidth = containerWidthFactor*window.innerWidth;
+		srcWidth = containerWidthFactor*videoInfo.width;
 		//console.log('srcWidth =', srcWidth);
 
-		srcHeight = containerHeightFactor*window.innerHeight;
+		//srcHeight = containerHeightFactor*window.innerHeight;
+		srcHeight = containerHeightFactor*videoInfo.height;
 		//console.log('srcHeight =', srcWidth);
 
-		srcTop = 0.2*window.innerHeight;
+		//srcTop = 0.25*window.innerHeight;
+		srcTop = videoInfo.top + 0.02*videoInfo.height;
 		//console.log('srcTop =', srcTop);
 
-		//srcLeft = 0.2*(window.innerWidth-0.5*window.innerWidth);
-		srcLeft = 0.5*(window.innerWidth-srcWidth);
+		//srcLeft = 0.5*(window.innerWidth-srcWidth);
+		srcLeft = videoInfo.left + 0.5*(videoInfo.width-srcWidth);
 		//console.log('srcLeft =', srcLeft);
 
-		dstWidth = containerWidthFactor*window.innerWidth;
+		//dstWidth = containerWidthFactor*window.innerWidth;
+		dstWidth = containerWidthFactor*videoInfo.width;
 		//console.log('dstWidth =', dstWidth);
 		
+		//dstHeight = containerHeightFactor*window.innerHeight;
 		dstHeight = containerHeightFactor*window.innerHeight;
 		//console.log('dstHeight =', dstHeight);
 
-		dstTop = 0.75*window.innerHeight;
+		//dstTop = 0.75*window.innerHeight;
+		dstTop = videoInfo.top + 0.6*videoInfo.height;
 		//console.log('dstTop =', dstTop);
 
-		//dstLeft = 0.2*(window.innerWidth-0.5*window.innerWidth);
-		dstLeft = 0.5*(window.innerWidth-dstWidth);
+		//dstLeft = 0.5*(window.innerWidth-dstWidth);
+		dstLeft = videoInfo.left + 0.5*(videoInfo.width-srcWidth);
 		//console.log('dstLeft =', dstLeft);
+
+
+		window.onresize = (function(){
+			document.documentElement.scrollTop = 0; // For modern browsers
+			document.body.scrollTop = 0; // For older browsers
+
+			videoInfo = getVideoPlayerInfo();
+			if (videoInfo) {
+				console.log('Window is resized');
+				console.log("Video player found!");
+				console.log("Id:", videoInfo.id);
+				console.log("Top:", videoInfo.top);
+				console.log("Left:", videoInfo.left);
+				console.log("Width:", videoInfo.width);
+				console.log("Height:", videoInfo.height);
+			} else {
+				console.log("No video player found on this page.");
+			}
+
+			//srcWidth = containerWidthFactor*window.innerWidth;
+			srcWidth = containerWidthFactor*videoInfo.width;
+			//console.log('srcWidth =', srcWidth);
+
+			//srcHeight = containerHeightFactor*window.innerHeight;
+			srcHeight = containerHeightFactor*videoInfo.height;
+			//console.log('srcHeight =', srcWidth);
+
+			//srcTop = 0.25*window.innerHeight;
+			srcTop = videoInfo.top + 0.02*videoInfo.height;
+			//console.log('srcTop =', srcTop);
+
+			//srcLeft = 0.5*(window.innerWidth-srcWidth);
+			srcLeft = videoInfo.left + 0.5*(videoInfo.width-srcWidth);
+			//console.log('srcLeft =', srcLeft);
+
+			//dstWidth = containerWidthFactor*window.innerWidth;
+			dstWidth = containerWidthFactor*videoInfo.width;
+			//console.log('dstWidth =', dstWidth);
+		
+			//dstHeight = containerHeightFactor*window.innerHeight;
+			dstHeight = containerHeightFactor*window.innerHeight;
+			//console.log('dstHeight =', dstHeight);
+
+			//dstTop = 0.75*window.innerHeight;
+			dstTop = videoInfo.top + 0.6*videoInfo.height;
+			//console.log('dstTop =', dstTop);
+
+			//dstLeft = 0.5*(window.innerWidth-dstWidth);
+			dstLeft = videoInfo.left + 0.5*(videoInfo.width-srcWidth);
+			//console.log('dstLeft =', dstLeft);
+
+
+			if (document.querySelector("#src_textarea_container")) {
+				document.querySelector("#src_textarea_container").style.width = String(srcWidth)+'px';
+				document.querySelector("#src_textarea_container").style.height = String(srcHeight)+'px';
+				document.querySelector("#src_textarea_container").style.top = String(srcTop)+'px';
+				document.querySelector("#src_textarea_container").style.left = String(srcLeft)+'px';
+
+				var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
+					.width(srcWidth)
+					.height(srcHeight)
+					.resizable().draggable({
+						cancel: 'text',
+						start: function (){
+							$('#src_textarea').focus();
+						},
+						stop: function (){
+							$('#src_textarea').focus();
+						}
+					})
+					.css({
+						'position': 'absolute',
+						'font': selectedFont,
+						'fontSize': fontSize,
+						'color': fontColor,
+						'background-color': 'rgba(0,0,0,0.3)',
+						'border': 'none',
+						'display': 'block',
+						'overflow': 'hidden',
+						'z-index': '2147483647'
+					})
+					.offset({top:srcTop, left:srcLeft})
+
+				document.querySelector("#src_textarea").style.width = String(srcWidth)+'px';
+				document.querySelector("#src_textarea").style.height = String(srcHeight)+'px';
+				document.querySelector("#src_textarea").style.width = '100%';
+				document.querySelector("#src_textarea").style.height = '100%';
+				//document.querySelector("#src_textarea").style.color = 'yellow';
+				document.querySelector("#src_textarea").style.color = fontColor;
+				document.querySelector("#src_textarea").style.backgroundColor = 'rgba(0,0,0,0.3)';
+				document.querySelector("#src_textarea").style.border = 'none';
+				document.querySelector("#src_textarea").style.display = 'inline-block';
+				document.querySelector("#src_textarea").style.overflow = 'hidden';
+
+				//src_h0 = $('#src_textarea').height();
+				//document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h0)+'px';
+				//if (document.querySelector("#src_textarea").offsetParent) {
+					//document.querySelector("#src_textarea").offsetParent.onresize = (function(){
+					//	src_h = $('#src_textarea').height();
+					//	document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h)+'px';
+					//	document.querySelector("#src_textarea").scrollTop=document.querySelector("#src_textarea").scrollHeight;
+					//});
+				//}
+
+				document.querySelector("#src_textarea").style.fontSize=String(fontSize)+'px';
+
+			}
+
+			if (document.querySelector("#dst_textarea_container")) {
+				document.querySelector("#dst_textarea_container").style.width = String(dstWidth)+'px';
+				document.querySelector("#dst_textarea_container").style.height = String(dstHeight)+'px';
+				document.querySelector("#dst_textarea_container").style.top = String(dstTop)+'px';
+				document.querySelector("#dst_textarea_container").style.left = String(dstLeft)+'px';
+
+				var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
+					.width(dstWidth)
+					.height(dstHeight)
+					.resizable().draggable({
+						cancel: 'text',
+						start: function (){
+							$('#dst_textarea').focus();
+						},
+						stop: function (){
+							$('#dst_textarea').focus();
+						}
+					})
+					.css({
+						'position': 'absolute',
+						'font': selectedFont,
+						'fontSize': fontSize,
+						'color': fontColor,
+						'background-color': 'rgba(0,0,0,0.3)',
+						'border': 'none',
+						'display': 'block',
+						'overflow': 'hidden',
+						'z-index': '2147483647'
+					})
+					.offset({top:dstTop, left:dstLeft})
+
+				document.querySelector("#dst_textarea").style.width = String(dstWidth)+'px';
+				document.querySelector("#dst_textarea").style.height = String(dstHeight)+'px';
+				document.querySelector("#dst_textarea").style.width = '100%';
+				document.querySelector("#dst_textarea").style.height = '100%';
+				//document.querySelector("#dst_textarea").style.color = 'yellow';
+				document.querySelector("#dst_textarea").style.color = fontColor;
+				document.querySelector("#dst_textarea").style.backgroundColor = 'rgba(0,0,0,0.3)';
+				document.querySelector("#dst_textarea").style.border = 'none';
+				document.querySelector("#dst_textarea").style.display = 'inline-block';
+				document.querySelector("#dst_textarea").style.overflow = 'hidden';
+
+				//dst_h0 = $('#dst_textarea').height();
+				//document.querySelector("#dst_textarea").style.fontSize=String(0.35*src_h0)+'px';
+				//if (document.querySelector("#dst_textarea").offsetParent) {
+					//document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
+					//	dst_h = $('#dst_textarea').height();
+					//	document.querySelector("#dst_textarea").style.fontSize=String(0.35*dst_h)+'px';
+					//	document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
+					//});
+				//}
+
+				document.querySelector("#dst_textarea").style.fontSize=String(fontSize)+'px';
+			}
+
+
+
+		});
+
 
 		var icon_text_listening = src.toUpperCase()+':'+dst.toUpperCase();
 
@@ -225,12 +422,13 @@ function onLoad() {
 
 		//src_h0 = $('#src_textarea').height();
 		//document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h0)+'px';
-		document.querySelector("#src_textarea").style.fontSize=String(fontSize)+'px';
-		
 		//document.querySelector("#src_textarea").offsetParent.onresize = (function(){
 		//	src_h = $('#src_textarea').height();
 		//	document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h)+'px';
 		//});
+
+		document.querySelector("#src_textarea").style.fontSize=String(fontSize)+'px';
+
 
 		var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
 			.width(dstWidth)
@@ -275,41 +473,69 @@ function onLoad() {
 
 		//dst_h0 = $('#dst_textarea').height();
 		//document.querySelector("#dst_textarea").style.fontSize=String(0.35*dst_h0)+'px';
-		document.querySelector("#dst_textarea").style.fontSize=String(fontSize)+'px';
 		//document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
 		//	dst_h = $('#dst_textarea').height();
 		//	document.querySelector("#dst_textarea").style.fontSize=String(0.35*dst_h)+'px';
 		//});
 
+		document.querySelector("#dst_textarea").style.fontSize=String(fontSize)+'px';
+
+
+
 		window.addEventListener('resize', function(event){
-			if (document.querySelector("#src_textarea_container")) {
 
-				srcWidth = containerWidthFactor*window.innerWidth;
-				//console.log('srcWidth =', srcWidth);
+			document.documentElement.scrollTop = 0; // For modern browsers
+			document.body.scrollTop = 0; // For older browsers
 
-				srcHeight = containerHeightFactor*window.innerHeight;
-				//console.log('srcHeight =', srcWidth);
+			videoInfo = getVideoPlayerInfo();
+			if (videoInfo) {
+				console.log('Window is resized');
+				console.log("Video player found!");
+				console.log("Id:", videoInfo.id);
+				console.log("Top:", videoInfo.top);
+				console.log("Left:", videoInfo.left);
+				console.log("Width:", videoInfo.width);
+				console.log("Height:", videoInfo.height);
+			} else {
+				console.log("No video player found on this page.");
+			}
 
-				srcTop = 0.2*window.innerHeight;
-				//console.log('srcTop =', srcTop);
+			//srcWidth = containerWidthFactor*window.innerWidth;
+			srcWidth = containerWidthFactor*videoInfo.width;
+			//console.log('srcWidth =', srcWidth);
 
-				//srcLeft = 0.2*(window.innerWidth-0.5*window.innerWidth);
-				srcLeft = 0.5*(window.innerWidth-srcWidth);
-				//console.log('srcLeft =', srcLeft);
+			//srcHeight = containerHeightFactor*window.innerHeight;
+			srcHeight = containerHeightFactor*videoInfo.height;
+			//console.log('srcHeight =', srcWidth);
 
-				dstWidth = containerWidthFactor*window.innerWidth;
-				//console.log('dstWidth =', dstWidth);
+			//srcTop = 0.25*window.innerHeight;
+			srcTop = videoInfo.top + 0.02*videoInfo.height;
+			//console.log('srcTop =', srcTop);
+
+			//srcLeft = 0.2*(window.innerWidth-0.5*window.innerWidth);
+			//srcLeft = 0.5*(window.innerWidth-srcWidth);
+			srcLeft = videoInfo.left + 0.5*(videoInfo.width-srcWidth);
+			//console.log('srcLeft =', srcLeft);
+
+			//dstWidth = containerWidthFactor*window.innerWidth;
+			dstWidth = containerWidthFactor*videoInfo.width;
+			//console.log('dstWidth =', dstWidth);
 		
-				dstHeight = containerHeightFactor*window.innerHeight;
-				//console.log('dstHeight =', dstHeight);
+			//dstHeight = containerHeightFactor*window.innerHeight;
+			dstHeight = containerHeightFactor*window.innerHeight;
+			//console.log('dstHeight =', dstHeight);
 
-				dstTop = 0.75*window.innerHeight;
-				//console.log('dstTop =', dstTop);
+			//dstTop = 0.75*window.innerHeight;
+			dstTop = videoInfo.top + 0.6*videoInfo.height;
+			//console.log('dstTop =', dstTop);
 
-				//dstLeft = 0.2*(window.innerWidth-0.5*window.innerWidth);
-				dstLeft = 0.5*(window.innerWidth-dstWidth);
-				//console.log('dstLeft =', dstLeft);
+			//dstLeft = 0.2*(window.innerWidth-0.5*window.innerWidth);
+			//dstLeft = 0.5*(window.innerWidth-dstWidth);
+			dstLeft = videoInfo.left + 0.5*(videoInfo.width-srcWidth);
+			//console.log('dstLeft =', dstLeft);
 
+
+			if (document.querySelector("#src_textarea_container")) {
 				document.querySelector("#src_textarea_container").style.width = String(srcWidth)+'px';
 				document.querySelector("#src_textarea_container").style.height = String(srcHeight)+'px';
 				document.querySelector("#src_textarea_container").style.top = String(srcTop)+'px';
@@ -353,7 +579,6 @@ function onLoad() {
 
 				//src_h0 = $('#src_textarea').height();
 				//document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h0)+'px';
-				document.querySelector("#src_textarea").style.fontSize=String(fontSize)+'px';
 				//if (document.querySelector("#src_textarea").offsetParent) {
 					//document.querySelector("#src_textarea").offsetParent.onresize = (function(){
 					//	src_h = $('#src_textarea').height();
@@ -361,6 +586,9 @@ function onLoad() {
 					//	document.querySelector("#src_textarea").scrollTop=document.querySelector("#src_textarea").scrollHeight;
 					//});
 				//}
+
+				document.querySelector("#src_textarea").style.fontSize=String(fontSize)+'px';
+
 			}
 
 			if (document.querySelector("#dst_textarea_container")) {
@@ -407,7 +635,6 @@ function onLoad() {
 
 				//dst_h0 = $('#dst_textarea').height();
 				//document.querySelector("#dst_textarea").style.fontSize=String(0.35*src_h0)+'px';
-				document.querySelector("#dst_textarea").style.fontSize=String(fontSize)+'px';
 				//if (document.querySelector("#dst_textarea").offsetParent) {
 					//document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
 					//	dst_h = $('#dst_textarea').height();
@@ -415,8 +642,188 @@ function onLoad() {
 					//	document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
 					//});
 				//}
+
+				document.querySelector("#dst_textarea").style.fontSize=String(fontSize)+'px';
 			}
+
+			document.documentElement.scrollTop = videoInfo.top; // For modern browsers
+			document.body.scrollTop = videoInfo.top; // For older browsers
+
 		});
+
+
+		document.addEventListener('fullscreenchange', function(event) {
+
+			document.documentElement.scrollTop = 0; // For modern browsers
+			document.body.scrollTop = 0; // For older browsers
+
+			videoInfo = getVideoPlayerInfo();
+			if (videoInfo) {
+				console.log('fullscreenchange');
+				console.log("Video player found!");
+				console.log("Id:", videoInfo.id);
+				console.log("Top:", videoInfo.top);
+				console.log("Left:", videoInfo.left);
+				console.log("Width:", videoInfo.width);
+				console.log("Height:", videoInfo.height);
+			} else {
+				console.log("No video player found on this page.");
+			}
+
+			//srcWidth = containerWidthFactor*window.innerWidth;
+			srcWidth = containerWidthFactor*videoInfo.width;
+			//console.log('srcWidth =', srcWidth);
+
+			//srcHeight = containerHeightFactor*window.innerHeight;
+			srcHeight = containerHeightFactor*videoInfo.height;
+			//console.log('srcHeight =', srcWidth);
+
+			//srcTop = 0.25*window.innerHeight;
+			srcTop = videoInfo.top + 0.02*videoInfo.height;
+			//console.log('srcTop =', srcTop);
+
+			//srcLeft = 0.2*(window.innerWidth-0.5*window.innerWidth);
+			//srcLeft = 0.5*(window.innerWidth-srcWidth);
+			srcLeft = videoInfo.left + 0.5*(videoInfo.width-srcWidth);
+			//console.log('srcLeft =', srcLeft);
+
+			//dstWidth = containerWidthFactor*window.innerWidth;
+			dstWidth = containerWidthFactor*videoInfo.width;
+			//console.log('dstWidth =', dstWidth);
+		
+			//dstHeight = containerHeightFactor*window.innerHeight;
+			dstHeight = containerHeightFactor*window.innerHeight;
+			//console.log('dstHeight =', dstHeight);
+
+			//dstTop = 0.75*window.innerHeight;
+			dstTop = videoInfo.top + 0.6*videoInfo.height;
+			//console.log('dstTop =', dstTop);
+
+			//dstLeft = 0.2*(window.innerWidth-0.5*window.innerWidth);
+			//dstLeft = 0.5*(window.innerWidth-dstWidth);
+			dstLeft = videoInfo.left + 0.5*(videoInfo.width-srcWidth);
+			//console.log('dstLeft =', dstLeft);
+
+
+			if (document.querySelector("#src_textarea_container")) {
+				document.querySelector("#src_textarea_container").style.width = String(srcWidth)+'px';
+				document.querySelector("#src_textarea_container").style.height = String(srcHeight)+'px';
+				document.querySelector("#src_textarea_container").style.top = String(srcTop)+'px';
+				document.querySelector("#src_textarea_container").style.left = String(srcLeft)+'px';
+
+				var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
+					.width(srcWidth)
+					.height(srcHeight)
+					.resizable().draggable({
+						cancel: 'text',
+						start: function (){
+							$('#src_textarea').focus();
+						},
+						stop: function (){
+							$('#src_textarea').focus();
+						}
+					})
+					.css({
+						'position': 'absolute',
+						'font': selectedFont,
+						'fontSize': fontSize,
+						'color': fontColor,
+						'background-color': 'rgba(0,0,0,0.3)',
+						'border': 'none',
+						'display': 'block',
+						'overflow': 'hidden',
+						'z-index': '2147483647'
+					})
+					.offset({top:srcTop, left:srcLeft})
+
+				document.querySelector("#src_textarea").style.width = String(srcWidth)+'px';
+				document.querySelector("#src_textarea").style.height = String(srcHeight)+'px';
+				document.querySelector("#src_textarea").style.width = '100%';
+				document.querySelector("#src_textarea").style.height = '100%';
+				//document.querySelector("#src_textarea").style.color = 'yellow';
+				document.querySelector("#src_textarea").style.color = fontColor;
+				document.querySelector("#src_textarea").style.backgroundColor = 'rgba(0,0,0,0.3)';
+				document.querySelector("#src_textarea").style.border = 'none';
+				document.querySelector("#src_textarea").style.display = 'inline-block';
+				document.querySelector("#src_textarea").style.overflow = 'hidden';
+
+				//src_h0 = $('#src_textarea').height();
+				//document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h0)+'px';
+				//if (document.querySelector("#src_textarea").offsetParent) {
+					//document.querySelector("#src_textarea").offsetParent.onresize = (function(){
+					//	src_h = $('#src_textarea').height();
+					//	document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h)+'px';
+					//	document.querySelector("#src_textarea").scrollTop=document.querySelector("#src_textarea").scrollHeight;
+					//});
+				//}
+
+				document.querySelector("#src_textarea").style.fontSize=String(fontSize)+'px';
+
+			}
+
+			if (document.querySelector("#dst_textarea_container")) {
+				document.querySelector("#dst_textarea_container").style.width = String(dstWidth)+'px';
+				document.querySelector("#dst_textarea_container").style.height = String(dstHeight)+'px';
+				document.querySelector("#dst_textarea_container").style.top = String(dstTop)+'px';
+				document.querySelector("#dst_textarea_container").style.left = String(dstLeft)+'px';
+
+				var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
+					.width(dstWidth)
+					.height(dstHeight)
+					.resizable().draggable({
+						cancel: 'text',
+						start: function (){
+							$('#dst_textarea').focus();
+						},
+						stop: function (){
+							$('#dst_textarea').focus();
+						}
+					})
+					.css({
+						'position': 'absolute',
+						'font': selectedFont,
+						'fontSize': fontSize,
+						'color': fontColor,
+						'background-color': 'rgba(0,0,0,0.3)',
+						'border': 'none',
+						'display': 'block',
+						'overflow': 'hidden',
+						'z-index': '2147483647'
+					})
+					.offset({top:dstTop, left:dstLeft})
+
+				document.querySelector("#dst_textarea").style.width = String(dstWidth)+'px';
+				document.querySelector("#dst_textarea").style.height = String(dstHeight)+'px';
+				document.querySelector("#dst_textarea").style.width = '100%';
+				document.querySelector("#dst_textarea").style.height = '100%';
+				//document.querySelector("#dst_textarea").style.color = 'yellow';
+				document.querySelector("#dst_textarea").style.color = fontColor;
+				document.querySelector("#dst_textarea").style.backgroundColor = 'rgba(0,0,0,0.3)';
+				document.querySelector("#dst_textarea").style.border = 'none';
+				document.querySelector("#dst_textarea").style.display = 'inline-block';
+				document.querySelector("#dst_textarea").style.overflow = 'hidden';
+
+				//dst_h0 = $('#dst_textarea').height();
+				//document.querySelector("#dst_textarea").style.fontSize=String(0.35*src_h0)+'px';
+				//if (document.querySelector("#dst_textarea").offsetParent) {
+					//document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
+					//	dst_h = $('#dst_textarea').height();
+					//	document.querySelector("#dst_textarea").style.fontSize=String(0.35*dst_h)+'px';
+					//	document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
+					//});
+				//}
+
+				document.querySelector("#dst_textarea").style.fontSize=String(fontSize)+'px';
+			}
+
+			document.documentElement.scrollTop = videoInfo.top; // For modern browsers
+			document.body.scrollTop = videoInfo.top; // For older browsers
+
+		});
+
+
+
+
 
 		if (!recognizing) {
 			final_transcript = '';
@@ -466,6 +873,9 @@ function onLoad() {
 				} else {
 					console.log('recognition.onstart: recognizing =', recognizing);
 					recognition.lang = src_dialect;
+
+					document.documentElement.scrollTop = videoInfo.top; // For modern browsers
+					document.body.scrollTop = videoInfo.top; // For older browsers
 				}
 			};
 
@@ -521,6 +931,13 @@ function onLoad() {
 				interim_transcript='';
 				if (!recognizing) {
 					console.log('recognition.onend: stopping because recognizing =', recognizing);
+					if (timestamped_final_transcript) {
+						saveTranscript(timestamped_final_transcript);
+						if (timestamped_final_transcript) var tt=gtranslate(timestamped_final_transcript,src,dst).then((result => {
+							timestamped_translated_transcript=formatText(result);
+							saveTranslatedTranscript(timestamped_translated_transcript);
+						}));
+					}
 					return;
 				} else {
 					console.log('recognition.onend: keep recognizing because recognizing =', recognizing);
@@ -549,20 +966,39 @@ function onLoad() {
 					var interim_transcript = '';
 					for (var i = event.resultIndex; i < event.results.length; ++i) {
 						if (event.results[i].isFinal) {
-							final_transcript += event.results[i][0].transcript;
-							final_transcript = final_transcript + '. '
-							final_transcript = capitalize(final_transcript);
-							final_transcript = remove_linebreak(final_transcript);
+							//final_transcript += event.results[i][0].transcript;
+							//final_transcript = final_transcript + '. '
+							//final_transcript = capitalize(final_transcript);
+							//final_transcript = remove_linebreak(final_transcript);
+
+							timestamp = formatTimestamp(new Date());
+							final_transcript += `${timestamp} : ${capitalize(event.results[i][0].transcript)}`;
+							final_transcript = final_transcript + '.\n'
 						} else {
 							interim_transcript += event.results[i][0].transcript;
-							interim_transcript = remove_linebreak(interim_transcript);
+							//interim_transcript = remove_linebreak(interim_transcript);
+							interim_transcript = capitalize(interim_transcript);
 						}
 					}
+
+
+
+					timestamped_final_transcript = final_transcript + interim_transcript;
+					//timestamped_final_transcript = capitalize(timestamped_final_transcript);
+
+					if (containsColon(timestamped_final_transcript)) {
+						timestamped_final_transcript = capitalizeSentences(timestamped_final_transcript);
+						//console.log('capitalizeSentences(timestamped_final_transcript) = ', timestamped_final_transcript);
+					}
+
 
 					//console.log('show_original =', result.show_original);
 					if (show_original) {
 						document.querySelector("#src_textarea_container").style.display = 'block';
-						document.querySelector("#src_textarea").innerHTML = final_transcript + interim_transcript;
+
+						//document.querySelector("#src_textarea").innerHTML = final_transcript + interim_transcript;
+						document.querySelector("#src_textarea").innerHTML = timestamped_final_transcript;
+						
 						document.querySelector("#src_textarea").scrollTop = document.querySelector("#src_textarea").scrollHeight;
 					}
 
@@ -622,19 +1058,27 @@ function onLoad() {
 					}
 
 
+					timestamped_final_transcript = document.querySelector("#src_textarea").innerHTML;
+
+
 					//console.log('show_translation =', show_translation);
 					if (show_translation) {
-						var  t = final_transcript + interim_transcript;
+						//var  t = final_transcript + interim_transcript;
+						var  t = timestamped_final_transcript;
 						if ((Date.now() - translate_time > 1000) && recognizing) {
-							if (t) var tt=translate(t,src,dst).then((result => {
+							if (t) var tt=gtranslate(t,src,dst).then((result => {
 								if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'block';
 								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").style.display = 'inline-block';
-								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value=result;
+								//if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value=result;
+								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").innerHTML=formatText(result);
 								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").scrollTop = document.querySelector("#dst_textarea").scrollHeight;
 							}));
 							translate_time = Date.now();
 						};
 					}
+
+					timestamped_translated_transcript = document.querySelector("#dst_textarea").innerHTML;
+
 				}
 			};
 
@@ -683,8 +1127,200 @@ function onLoad() {
 
 		var first_char = /\S/;
 		function capitalize(s) {
-			return s.replace(first_char, function(m) { return m.toUpperCase(); });
+			//return s.replace(first_char, function(m) { return m.toUpperCase(); });
+
+			// Check if the sentence is not empty
+			if (s && s.length > 0) {
+				// Capitalize the first character and concatenate it with the rest of the sentence
+				return (s.trimLeft()).charAt(0).toUpperCase() + (s.trimLeft()).slice(1);
+			} else {
+				// If the sentence is empty, return it as is
+				return s;
+			}
+
 		};
+
+
+		function capitalizeSentences(transcription) {
+			//console.log('transcription = ', transcription);
+
+			// Split the transcription into individual lines
+			const lines = transcription.split('\n');
+    
+			// Iterate over each line
+			for (let i = 0; i < lines.length; i++) {
+				// Split each line by colon to separate timestamp and sentence
+				const parts = lines[i].split(' : ');
+				//console.log('parts[0] = ', parts[0]);
+				//console.log('parts[1] = ', parts[1]);
+
+				// If the line is in the correct format (timestamp : sentence)
+				if (parts.length === 2) {
+					// Capitalize the first character of the sentence
+					const capitalizedSentence = (parts[1].trimLeft()).charAt(0).toUpperCase() + (parts[1].trimLeft()).slice(1);
+
+					// Replace the original sentence with the capitalized one
+					lines[i] = parts[0] + ' : ' + capitalizedSentence;
+					//console.log('i = ', i );
+					//console.log('lines[i] = ', lines[i] );
+				}
+			}
+    
+			// Join the lines back into a single string and return
+			//console.log('lines.join("\n") = ', lines.join('\n'));
+			return lines.join('\n');
+		}
+
+
+		function saveTranscript(timestamped_final_transcript) {
+			console.log('Saving all transcriptions');
+			
+			// Create a Blob with the transcript content
+			const blob = new Blob([timestamped_final_transcript], { type: 'text/plain' });
+
+			// Create a URL for the Blob
+			const url = URL.createObjectURL(blob);
+
+			// Create an anchor element
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = 'transcript.txt';
+
+			// Programmatically click the anchor element to trigger download
+			a.click();
+
+			// Cleanup
+			URL.revokeObjectURL(url);
+		}
+
+
+		function saveTranslatedTranscript(timestamped_translated_transcript) {
+			console.log('Saving translated transcriptions');
+			
+			// Create a Blob with the transcript content
+			const blob = new Blob([timestamped_translated_transcript], { type: 'text/plain' });
+
+			// Create a URL for the Blob
+			const url = URL.createObjectURL(blob);
+
+			// Create an anchor element
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = 'translated_transcript.txt';
+
+			// Programmatically click the anchor element to trigger download
+			a.click();
+
+			// Cleanup
+			URL.revokeObjectURL(url);
+		}
+
+
+		function formatTimestamp(timestamp) {
+			// Convert timestamp to string
+			const timestampString = timestamp.toISOString();
+
+			// Extract date and time parts
+			const datePart = timestampString.slice(0, 10);
+			const timePart = timestampString.slice(11, 23);
+
+			// Concatenate date and time parts with a space in between
+			return `${datePart} ${timePart}`;
+		}
+
+
+		function containsColon(sentence) {
+			// Check if the sentence includes the colon character
+			return sentence.includes(':');
+		}
+
+
+		function containsSpaceCharacter(sentence) {
+			// Check if the sentence includes the colon character
+			return sentence.includes('\%20');
+		}
+
+
+		function getVideoPlayerInfo() {
+			var elements = document.querySelectorAll('video, iframe');
+			console.log('elements = ',  elements);
+			for (var i = 0; i < elements.length; i++) {
+				var rect = elements[i].getBoundingClientRect();
+				console.log('rect', rect);
+				if (rect.width > 0) {
+					var videoPlayerID = elements[i].id;
+					console.log('videoPlayerID = ',  videoPlayerID);
+					return {
+						id: elements[i].id,
+						top: rect.top,
+						left: rect.left,
+						width: rect.width,
+						height: rect.height
+					};
+				}
+			}
+			console.log('No video player found');
+			return null;
+		}
+
+
+		function getVideoPlayerId() {
+			var elements = document.querySelectorAll('video, iframe');
+			for (var i = 0; i < elements.length; i++) {
+				if ((elements[i].getBoundingClientRect()).width > 0) {
+					return elements[i].id;
+				}
+			}
+			// If no video player found, return null
+			return null;
+		}
+
+
+		function detectFullscreenButtonClick(videoElement, callback) {
+			document.addEventListener("fullscreenchange", function () {
+				if (document.fullscreenElement === videoElement ||
+					document.mozFullScreenElement === videoElement ||
+					document.webkitFullscreenElement === videoElement) {
+					// Fullscreen mode is activated for the video element
+					callback(true);
+				} else {
+					// Fullscreen mode is exited for the video element
+					callback(false);
+				}
+			});
+		}
+
+
+
+		function formatText(text) {
+			const timestamps = text.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3}/g);
+			//console.log('timestamps', timestamps);
+			let formattedText = "";
+			if (timestamps) {
+				const lines = text.split(/(?=\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3})/);
+				//console.log('lines', lines);
+				for (let line of lines) {
+					const parts = line.split(/(?<=\d{3}:\d{2}): /);
+					//console.log('parts.length', parts.length);
+					//console.log('parts[0]', parts[0]);
+					//console.log('parts[1]', parts[1]);
+					if (parts[0].includes('.')) {
+						formattedText += parts[0].replace(/\./g, ".") + "\n";
+					}
+					else if (parts[0].includes('?')) {
+						formattedText += parts[0].replace(/\?/g, "?") + "\n";
+					}
+					else if (parts[0].includes('!')) {
+						formattedText += parts[0].replace(/\!/g, "!") + "\n";
+					}
+				}
+				console.log('formattedText', formattedText);
+				return formattedText;
+			} else {
+				return text;
+			}
+		}
+
 
 		var translate = async (t,src,dst) => {
 			var tt = new Promise(function(resolve) {
@@ -713,6 +1349,35 @@ function onLoad() {
 			});
 			return await tt;
 		};
+
+
+		var gtranslate = async (t,src,dst) => {
+			var tt = new Promise(function(resolve) {
+				var i=0, len=0, r='', tt='';
+				const url = 'https://translate.googleapis.com/translate_a/'
+				var params = 'single?client=gtx&sl='+src+'&tl='+dst+'&dt=t&q='+t;
+				var xmlHttp = new XMLHttpRequest();
+				var response;
+				xmlHttp.onreadystatechange = function(event) {
+					if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+						response = JSON.parse(xmlHttp.responseText)[0];
+						for (var i = 0, len = response.length; i < len; i++) {
+							var r=(((response[i][0]).replace('}/g','')).replace(')/g','')).replace('\%20/g', ' ');
+							r=((r.replace('}','')).replace(')','')).replace('\%20/g', ' ');
+							tt += r;
+						}
+						if (tt.includes('}'||')'||'%20')) {
+							tt=((tt.replace('}/g','')).replace(')/g','')).replace('\%20/g', ' ');
+						}
+						resolve(tt);
+					}
+				}
+				xmlHttp.open('GET', url+params, true);
+				xmlHttp.send(null);
+				xmlHttp.onreadystatechange();
+			});
+			return await tt;
+		}
 
 
 	});
