@@ -80,15 +80,11 @@ function onLoad() {
 
 	var action, recognition, recognizing, src, dst, src_dialect, dst_dialect;
 	var selectedFont, fontSize, fontColor, containerWidthFactor, containerHeightFactor, srcWidth, srcHeight, srcTop, srcLeft, dstWidth, dstHeight, dstTop, dstLeft;
-	//var srt_id = 0, srt_time = 0, speech_start_time = 0, speech_end_time = 0, srt_transcript = '';
-	//var srt_time_hh = 0, srt_time_mm = 0, srt_time_ss = 0;
-	//var speech_start_time_hh = 0, speech_start_time_mm = 0, speech_start_time_ss = 0;
-	//var speech_end_time_hh = 0, speech_end_time_mm = 0, speech_end_time_ss = 0;
-	//var srt_time = 0;
-	//var a = '', b = '', c = '';
-	var transcript = [];
-	var startTimestamp, endTimestamp, timestamped_final_transcript, timestamped_translated_transcript;
+	var startTimestamp, endTimestamp, timestamped_final_and_interim_transcript, timestamped_translated_final_and_interim_transcript;
+	var pauseTimeout, pauseThreshold = 1500; // 1.5 seconds artificial pause threshold;
+	var all_final_transcripts = [], formated_all_final_transcripts;
 	var videoInfo;
+	var timestamp_separator = "-->";
 
 
 	chrome.runtime.onMessage.addListener(function (response, sendResponse) {
@@ -153,7 +149,7 @@ function onLoad() {
 		//console.log('result.containerWidthFactor =', result.containerWidthFactor);
 
 		containerHeightFactor = result.containerHeightFactor;
-		//console.log('result.containerHeightFactor =', result.containerHeightFactor);
+		console.log('result.containerHeightFactor =', result.containerHeightFactor);
 
 
 
@@ -169,7 +165,7 @@ function onLoad() {
 			console.log("Video player found!");
 			console.log("videoInfo.id = ", videoInfo.id);
 			//console.log("Top:", videoInfo.top);
-			//console.log("Left:", videoInfo.left
+			//console.log("Left:", videoInfo.left);
 			//console.log("Width:", videoInfo.width);
 			//console.log("Height:", videoInfo.height);
 		} else {
@@ -182,7 +178,9 @@ function onLoad() {
 
 		//srcHeight = containerHeightFactor*window.innerHeight;
 		srcHeight = containerHeightFactor*videoInfo.height;
-		//console.log('srcHeight =', srcWidth);
+		//console.log('containerHeightFactor =', containerHeightFactor);
+		//console.log('videoInfo.height =', videoInfo.height);
+		//console.log('srcHeight =', srcHeight);
 
 		//srcTop = 0.25*window.innerHeight;
 		srcTop = videoInfo.top + 0.02*videoInfo.height;
@@ -195,9 +193,11 @@ function onLoad() {
 		//dstWidth = containerWidthFactor*window.innerWidth;
 		dstWidth = containerWidthFactor*videoInfo.width;
 		//console.log('dstWidth =', dstWidth);
-		
+
 		//dstHeight = containerHeightFactor*window.innerHeight;
-		dstHeight = containerHeightFactor*window.innerHeight;
+		dstHeight = containerHeightFactor*videoInfo.height;
+		//console.log('containerHeightFactor =', containerHeightFactor);
+		//console.log('videoInfo.height =', videoInfo.height);
 		//console.log('dstHeight =', dstHeight);
 
 		//dstTop = 0.75*window.innerHeight;
@@ -322,8 +322,8 @@ function onLoad() {
 
 		window.addEventListener('resize', function(event){
 
-			//document.documentElement.scrollTop = 0; // For modern browsers
-			//document.body.scrollTop = 0; // For older browsers
+			document.documentElement.scrollTop = 0; // For modern browsers
+			document.body.scrollTop = 0; // For older browsers
 
 			videoInfo = getVideoPlayerInfo();
 			if (videoInfo) {
@@ -344,7 +344,7 @@ function onLoad() {
 
 			//srcHeight = containerHeightFactor*window.innerHeight;
 			srcHeight = containerHeightFactor*videoInfo.height;
-			//console.log('srcHeight =', srcWidth);
+			//console.log('srcHeight =', srcHeight);
 
 			//srcTop = 0.25*window.innerHeight;
 			srcTop = videoInfo.top + 0.02*videoInfo.height;
@@ -360,7 +360,7 @@ function onLoad() {
 			//console.log('dstWidth =', dstWidth);
 		
 			//dstHeight = containerHeightFactor*window.innerHeight;
-			dstHeight = containerHeightFactor*window.innerHeight;
+			dstHeight = containerHeightFactor*videoInfo.height;
 			//console.log('dstHeight =', dstHeight);
 
 			//dstTop = 0.75*window.innerHeight;
@@ -417,18 +417,18 @@ function onLoad() {
 
 				//src_h0 = $('#src_textarea').height();
 				//document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h0)+'px';
+				document.querySelector("#src_textarea").style.fontSize=String(fontSize)+'px';
 				if (document.querySelector("#src_textarea").offsetParent) {
 					document.querySelector("#src_textarea").offsetParent.onresize = (function(){
 					//	src_h = $('#src_textarea').height();
 					//	document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h)+'px';
-					//	document.querySelector("#src_textarea").scrollTop=document.querySelector("#src_textarea").scrollHeight;
 						document.querySelector("#src_textarea").style.position='absolute';
 						document.querySelector("#src_textarea").style.width = '100%';
 						document.querySelector("#src_textarea").style.height = '100%';
+						document.querySelector("#src_textarea").scrollTop=document.querySelector("#src_textarea").scrollHeight;
 					});
 				}
 
-				document.querySelector("#src_textarea").style.fontSize=String(fontSize)+'px';
 
 			}
 
@@ -481,10 +481,10 @@ function onLoad() {
 					document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
 					//	dst_h = $('#dst_textarea').height();
 					//	document.querySelector("#dst_textarea").style.fontSize=String(0.35*dst_h)+'px';
-					//	document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
 						document.querySelector("#dst_textarea").style.position='absolute';
 						document.querySelector("#dst_textarea").style.width = '100%';
 						document.querySelector("#dst_textarea").style.height = '100%';
+						document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
 					});
 				}
 
@@ -520,7 +520,7 @@ function onLoad() {
 
 			//srcHeight = containerHeightFactor*window.innerHeight;
 			srcHeight = containerHeightFactor*videoInfo.height;
-			//console.log('srcHeight =', srcWidth);
+			//console.log('srcHeight =', srcHeight);
 
 			//srcTop = 0.25*window.innerHeight;
 			srcTop = videoInfo.top + 0.02*videoInfo.height;
@@ -536,7 +536,7 @@ function onLoad() {
 			//console.log('dstWidth =', dstWidth);
 		
 			//dstHeight = containerHeightFactor*window.innerHeight;
-			dstHeight = containerHeightFactor*window.innerHeight;
+			dstHeight = containerHeightFactor*videoInfo.height;
 			//console.log('dstHeight =', dstHeight);
 
 			//dstTop = 0.75*window.innerHeight;
@@ -598,10 +598,10 @@ function onLoad() {
 					document.querySelector("#src_textarea").offsetParent.onresize = (function(){
 					//	src_h = $('#src_textarea').height();
 					//	document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h)+'px';
-					//	document.querySelector("#src_textarea").scrollTop=document.querySelector("#src_textarea").scrollHeight;
 						document.querySelector("#src_textarea").style.position='absolute';
 						document.querySelector("#src_textarea").style.width = '100%';
 						document.querySelector("#src_textarea").style.height = '100%';
+						document.querySelector("#src_textarea").scrollTop=document.querySelector("#src_textarea").scrollHeight;
 					});
 				}
 			}
@@ -655,10 +655,10 @@ function onLoad() {
 					document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
 					//	dst_h = $('#dst_textarea').height();
 					//	document.querySelector("#dst_textarea").style.fontSize=String(0.35*dst_h)+'px';
-					//	document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
 						document.querySelector("#dst_textarea").style.position='absolute';
 						document.querySelector("#dst_textarea").style.width = '100%';
 						document.querySelector("#dst_textarea").style.height = '100%';
+						document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
 					});
 				}
 			}
@@ -669,6 +669,16 @@ function onLoad() {
 		});
 
 
+        document.addEventListener('DOMContentLoaded', (event) => {
+            document.querySelector("#dst_textarea").addEventListener('input', () => {
+                const value = document.querySelector("#dst_textarea").value;
+                if (value.includes('%20')) {
+                    console.log('dst_textarea contains %20');
+					value = value.replace('\%20/g', ' ');
+					document.querySelector("#dst_textarea").value = formattedText(value);
+                }
+            });
+        });
 
 
 
@@ -698,20 +708,16 @@ function onLoad() {
 			recognition.interimResults = true;
 			recognition.lang = src_dialect;
 
+
+//---------------------------------------------------------------ONSTART--------------------------------------------------------------//
+
+
 			recognition.onstart = function() {
 				final_transcript = '';
 				interim_transcript = '';
 
-//---------------------------------------------------------------ONSTART--------------------------------------------------------------//
-
-				/*
-				var now = Date.now();
-				var date = new Date(now);
-				srt_time = Date.now();
-				srt_time_hh = date.getHours();
-				srt_time_mm = date.getMinutes();
-				srt_time_ss = date.getSeconds();
-				*/
+				startTimestamp = formatTimestamp(new Date());
+				resetPauseTimeout();
 
 				if (!recognizing) {
 					//recognizing = false;
@@ -746,6 +752,7 @@ function onLoad() {
 			};
 
 			recognition.onerror = function(event) {
+				resetPauseTimeout(); // Reset timeout on error as well
 				if (event.error == 'no-speech') {
 					console.log('recognition.no-speech: recognizing =', recognizing);
 					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
@@ -780,11 +787,23 @@ function onLoad() {
 				interim_transcript='';
 				if (!recognizing) {
 					console.log('recognition.onend: stopping because recognizing =', recognizing);
-					if (timestamped_final_transcript) {
-						saveTranscript(timestamped_final_transcript);
-						if (timestamped_final_transcript) var tt=gtranslate(timestamped_final_transcript,src,dst).then((result => {
-							timestamped_translated_transcript=formatText(result);
-							saveTranslatedTranscript(timestamped_translated_transcript);
+					//console.log('786:timestamped_final_and_interim_transcript = ', timestamped_final_and_interim_transcript);
+					if (formated_all_final_transcripts) {
+						saveTranscript(formated_all_final_transcripts);
+						if (formated_all_final_transcripts) var tt=gtranslate(formated_all_final_transcripts,src,dst).then((result => {
+							//console.log('790:result = ', result);
+							result = result.replace(/(\d+),(\d+)/g, '$1.$2');
+							result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
+							result = result.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
+							result = result.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
+							result = result.replace(/(\d{4})\s*-\s*(\d{2})\s*-\s*(\d{2})/g, '$1-$2-$3');
+							result = result.replace(/(\d{2})\s*:\s*(\d{2})\s*:\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
+							result = capitalizeSentences(result);
+							result = formatText(result);
+							result = result.replace(/\n\s*$/, '');
+							timestamped_translated_final_and_interim_transcript = result + "\n";
+							//console.log('801:timestamped_translated_final_and_interim_transcript = ', timestamped_translated_final_and_interim_transcript);
+							saveTranslatedTranscript(timestamped_translated_final_and_interim_transcript);
 						}));
 					}
 					return;
@@ -802,6 +821,7 @@ function onLoad() {
 
 			recognition.onresult = function(event) {
 				console.log('recognition.onresult: recognizing =', recognizing);
+				resetPauseTimeout();
 
 				if (!recognizing) {
 					final_transcript='';
@@ -821,12 +841,18 @@ function onLoad() {
 							//final_transcript = remove_linebreak(final_transcript);
 
 							endTimestamp = formatTimestamp(new Date());
+							//console.log('endTimestamp =', endTimestamp);
 							//final_transcript += `${startTimestamp} : ${capitalize(event.results[i][0].transcript)}`;
-							final_transcript += `${startTimestamp} - ${endTimestamp} : ${capitalize(event.results[i][0].transcript)}`;
+							final_transcript += `${startTimestamp} ${timestamp_separator} ${endTimestamp} : ${capitalize(event.results[i][0].transcript)}`;
 							final_transcript = final_transcript + '.\n'
+							//console.log('final_transcript = ', final_transcript);
+							all_final_transcripts.push(`${final_transcript}`);
+							//console.log('841:all_final_transcripts = ', all_final_transcripts);
+
 						} else {
 							if (interim_transcript.split(/\s+/).length === 1) {
 								startTimestamp = formatTimestamp(new Date());
+								//console.log('startTimestamp =', startTimestamp);
 							}
 							interim_transcript += event.results[i][0].transcript;
 							//interim_transcript = remove_linebreak(interim_transcript);
@@ -835,40 +861,50 @@ function onLoad() {
 					}
 
 
-					timestamped_final_transcript = final_transcript + interim_transcript;
-					//timestamped_final_transcript = capitalize(timestamped_final_transcript);
+					timestamped_final_and_interim_transcript = final_transcript + interim_transcript;
 
-					if (containsColon(timestamped_final_transcript)) {
-						timestamped_final_transcript = capitalizeSentences(timestamped_final_transcript);
-						//console.log('capitalizeSentences(timestamped_final_transcript) = ', timestamped_final_transcript);
+
+					if (containsColon(timestamped_final_and_interim_transcript)) {
+						timestamped_final_and_interim_transcript = capitalizeSentences(timestamped_final_and_interim_transcript);
+						//console.log('capitalizeSentences(timestamped_final_and_interim_transcript) = ', timestamped_final_and_interim_transcript);
 					}
+
+					formated_all_final_transcripts = all_final_transcripts.join("");
+					//console.log('formated_all_final_transcripts = ', formated_all_final_transcripts);
 
 
 					//console.log('show_original =', result.show_original);
 					if (show_original) {
 						document.querySelector("#src_textarea_container").style.display = 'block';
-
 						//document.querySelector("#src_textarea").innerHTML = final_transcript + interim_transcript;
-						//document.querySelector("#src_textarea").innerHTML = timestamped_final_transcript;
-						document.querySelector("#src_textarea").value = timestamped_final_transcript;
-						
+						document.querySelector("#src_textarea").value = formated_all_final_transcripts + timestamped_final_and_interim_transcript;
 						document.querySelector("#src_textarea").scrollTop = document.querySelector("#src_textarea").scrollHeight;
 					}
 
 
-					timestamped_final_transcript = document.querySelector("#src_textarea").value;
+					timestamped_final_and_interim_transcript = document.querySelector("#src_textarea").value;
 
 
 					//console.log('show_translation =', show_translation);
 					if (show_translation) {
 						//var  t = final_transcript + interim_transcript;
-						var  t = timestamped_final_transcript;
+						var  t = timestamped_final_and_interim_transcript;
 						if ((Date.now() - translate_time > 1000) && recognizing) {
 							if (t) var tt=gtranslate(t,src,dst).then((result => {
 								if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'block';
 								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").style.display = 'inline-block';
 								//console.log('formatText(result) = ', formatText(result));
-								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value=formatText(result);
+								result = result.replace(/(\d+),(\d+)/g, '$1.$2');
+								result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
+								result = result.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
+								result = result.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
+								result = result.replace(/(\d{4})\s*-\s*(\d{2})\s*-\s*(\d{2})/g, '$1-$2-$3');
+								result = result.replace(/(\d{2})\s*:\s*(\d{2})\s*:\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
+								result = capitalizeSentences(result);
+								result = formatText(result);
+								result = result.replace(/\n\s*$/, '');
+								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value=result;
+								//console.log('#dst_textarea.value = ', document.querySelector("#dst_textarea").value);
 								//if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").innerHTML=formatText(result);
 								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").scrollTop = document.querySelector("#dst_textarea").scrollHeight;
 							}));
@@ -876,10 +912,11 @@ function onLoad() {
 						};
 					}
 
-					timestamped_translated_transcript = document.querySelector("#dst_textarea").value;
+					timestamped_translated_final_and_interim_transcript = document.querySelector("#dst_textarea").value;
 
 				}
 			};
+
 
 			if (recognizing) {
 				console.log('starting recognition: recognizing =', recognizing);
@@ -971,11 +1008,11 @@ function onLoad() {
 		}
 
 
-		function saveTranscript(timestamped_final_transcript) {
+		function saveTranscript(timestamped_final_and_interim_transcript) {
 			console.log('Saving all transcriptions');
 			
 			// Create a Blob with the transcript content
-			const blob = new Blob([timestamped_final_transcript], { type: 'text/plain' });
+			const blob = new Blob([timestamped_final_and_interim_transcript], { type: 'text/plain' });
 
 			// Create a URL for the Blob
 			const url = URL.createObjectURL(blob);
@@ -993,11 +1030,11 @@ function onLoad() {
 		}
 
 
-		function saveTranslatedTranscript(timestamped_translated_transcript) {
+		function saveTranslatedTranscript(timestamped_translated_final_and_interim_transcript) {
 			console.log('Saving translated transcriptions');
 			
 			// Create a Blob with the transcript content
-			const blob = new Blob([timestamped_translated_transcript], { type: 'text/plain' });
+			const blob = new Blob([timestamped_translated_final_and_interim_transcript], { type: 'text/plain' });
 
 			// Create a URL for the Blob
 			const url = URL.createObjectURL(blob);
@@ -1028,6 +1065,16 @@ function onLoad() {
 		}
 
 
+		function resetPauseTimeout() {
+			//all_final_transcripts += timestamped_final_and_interim_transcript;
+			clearTimeout(pauseTimeout);
+			pauseTimeout = setTimeout(function() {
+				console.log("No speech detected for " + pauseThreshold / 1000 + " seconds, stopping recognition");
+				recognition.stop();
+			}, pauseThreshold);
+		}
+
+
 		function containsColon(sentence) {
 			// Check if the sentence includes the colon character
 			return sentence.includes(':');
@@ -1043,10 +1090,18 @@ function onLoad() {
 		function getVideoPlayerInfo() {
 			var elements = document.querySelectorAll('video, iframe');
 			console.log('elements = ',  elements);
-			for (var i = 0; i < elements.length; i++) {
+			var largestVideoElement = null;
+			var largestSize = 0;
+
+			for (var i=0; i<elements.length; i++) {
 				var rect = elements[i].getBoundingClientRect();
 				console.log('rect', rect);
 				if (rect.width > 0) {
+					var size = rect.width * rect.height;
+					if (size > largestSize) {
+						largestSize = size;
+						largestVideoElement = elements[i];
+					}
 					var videoPlayerID = elements[i].id;
 					console.log('videoPlayerID = ',  videoPlayerID);
 					return {
@@ -1065,14 +1120,48 @@ function onLoad() {
 
 		function getVideoPlayerId() {
 			var elements = document.querySelectorAll('video, iframe');
-			for (var i = 0; i < elements.length; i++) {
+			var largestVideoElement = null;
+			var largestSize = 0;
+			for (var i=0; i<elements.length; i++) {
 				if ((elements[i].getBoundingClientRect()).width > 0) {
+					var size = elements[i].getBoundingClientRect().width * elements[i].getBoundingClientRect().height;
+					if (size > largestSize) {
+						largestSize = size;
+						largestVideoElement = elements[i].id;
+					}
 					return elements[i].id;
 				}
 			}
 			// If no video player found, return null
 			return null;
 		}
+
+
+		function findLargestVideoElement() {
+			var videoAndIframes = document.querySelectorAll('video, iframe');
+			var largestVideoElement = null;
+			var largestSize = 0;
+
+			// Iterate through selected elements
+			videoAndIframes.forEach(function(element) {
+				// Check if the element is a video element or an iframe containing a video
+				//if (element.tagName === 'VIDEO' || (element.tagName === 'IFRAME' && element.src && element.src.includes('youtube.com/embed'))) {
+				if ((element.getBoundingClientRect()).width > 0) {
+					// Calculate size of the video element (using area as size metric)
+					var size;
+					size = element.getBoundingClientRect().width * element.getBoundingClientRect().height;
+
+					// Check if this video element is larger than the current largest
+					if (size > largestSize) {
+						largestSize = size;
+						largestVideoElement = element;
+					}
+				}
+			});
+			// Return the largest video element found
+			return largestVideoElement;
+		}
+
 
 
 		function detectFullscreenButtonClick(videoElement, callback) {
@@ -1090,36 +1179,34 @@ function onLoad() {
 		}
 
 
-		function formatText(text) {
-			text = text.replace('\%20/g', ' ');
-			const timestamps = text.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3} - \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3}/g);
-			//console.log('timestamps', timestamps);
-			let formattedText = "";
-			if (timestamps) {
-				const lines = text.split(/(?=\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3} - \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3})/);
-				//console.log('lines', lines);
-				for (let line of lines) {
-					const parts = line.split(/(?<=\d{3}:\d{2}): /);
-					//console.log('parts.length', parts.length);
-					//console.log('parts[0]', parts[0]);
-					//console.log('parts[1]', parts[1]);
-					if (parts[0].includes('.')) {
-						formattedText += parts[0].replace(/\./g, ".") + "\n";
-					}
-					else if (parts[0].includes('?')) {
-						formattedText += parts[0].replace(/\?/g, "?") + "\n";
-					}
-					else if (parts[0].includes('!')) {
-						formattedText += parts[0].replace(/\!/g, "!") + "\n";
-					}
-				}
 
-				//console.log('formattedText', formattedText);
-				return formattedText;
+		function formatText(text) {
+			// Replace URL-encoded spaces with regular spaces
+			text = text.replace(/%20/g, ' ');
+
+			// Match timestamps in the text
+			const timestamps = text.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/g);
+
+			if (timestamps) {
+				// Split the text based on timestamps
+				const lines = text.split(/(?=\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/);
+
+				let formattedText = "";
+				for (let line of lines) {
+					// Replace the separator format in the timestamps
+					line = line.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) *--> *(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/, '$1 --> $2');
+            
+					// Add the formatted line to the result
+					formattedText += line.trim() + "\n";
+				}
+        
+				return formattedText.trim(); // Trim any leading/trailing whitespace from the final result
+
 			} else {
 				return text;
 			}
 		}
+
 
 
 		var translate = async (t,src,dst) => {
