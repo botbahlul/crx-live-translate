@@ -80,12 +80,28 @@ function onLoad() {
 
 	var action, recognition, recognizing, src, dst, src_dialect, dst_dialect;
 	var selectedFont, fontSize, fontColor, containerWidthFactor, containerHeightFactor, srcWidth, srcHeight, srcTop, srcLeft, dstWidth, dstHeight, dstTop, dstLeft;
-	var startTimestamp, endTimestamp, timestamped_final_and_interim_transcript, timestamped_translated_final_and_interim_transcript;
-	var pauseTimeout, pauseThreshold = 1500; // 1.5 seconds artificial pause threshold;
-	var all_final_transcripts = [], formated_all_final_transcripts;
+	var startTimestamp, endTimestamp, timestamped_final_and_interim_transcript, timestamped_translated_final_and_interim_transcript, interim_started = false;
+	var pauseTimeout, pauseThreshold = 2000; // 2 seconds artificial pause threshold;
+	var all_final_transcripts = [], all_final_transcripts_excluding_last = [], formatted_all_final_transcripts, formatted_all_final_transcripts_excluding_last;
 	var videoInfo;
 	var timestamp_separator = "-->";
+	var session_start_time, session_end_time;
 
+	function formatTimestamp(startTimestamp) {
+		// Convert startTimestamp to string
+		const timestampString = startTimestamp.toISOString();
+
+		// Extract date and time parts
+		const datePart = timestampString.slice(0, 10);
+		const timePart = timestampString.slice(11, 23);
+
+		// Concatenate date and time parts with a space in between
+		return `${datePart} ${timePart}`;
+	}
+
+
+	session_start_time = formatTimestamp(new Date());
+	console.log('session_start_time =', session_start_time);
 
 	chrome.runtime.onMessage.addListener(function (response, sendResponse) {
 		console.log('onload: response =', response);
@@ -428,9 +444,8 @@ function onLoad() {
 						document.querySelector("#src_textarea").scrollTop=document.querySelector("#src_textarea").scrollHeight;
 					});
 				}
-
-
 			}
+
 
 			if (document.querySelector("#dst_textarea_container")) {
 				document.querySelector("#dst_textarea_container").style.width = String(dstWidth)+'px';
@@ -669,16 +684,24 @@ function onLoad() {
 		});
 
 
-        document.addEventListener('DOMContentLoaded', (event) => {
-            document.querySelector("#dst_textarea").addEventListener('input', () => {
-                const value = document.querySelector("#dst_textarea").value;
-                if (value.includes('%20')) {
-                    console.log('dst_textarea contains %20');
-					value = value.replace('\%20/g', ' ');
-					document.querySelector("#dst_textarea").value = formattedText(value);
-                }
-            });
-        });
+		if (document.querySelector("#dst_textarea")) {
+			document.addEventListener('DOMContentLoaded', (event) => {
+				document.querySelector("#dst_textarea").addEventListener('input', () => {
+					const value = document.querySelector("#dst_textarea").value;
+					if (value.includes('%20')) {
+						console.log('dst_textarea contains %20');
+						value = value.replace('\\%20/g', ' ');
+						document.querySelector("#dst_textarea").value = formattedText(value);
+					}
+					if (value.includes('%3E')) {
+						console.log('dst_textarea contains %3E');
+						value = value.replace('\\%3E/g', '>');
+						document.querySelector("#dst_textarea").value = formattedText(value);
+					}
+					value = value.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
+				});
+			});
+		};
 
 
 
@@ -734,6 +757,7 @@ function onLoad() {
 				}
 			};
 
+
 			recognition.onspeechstart = function(event) {
 				console.log('recognition.onspeechstart: recognizing =', recognizing);
 				final_transcript = '';
@@ -750,6 +774,9 @@ function onLoad() {
 				start_timestamp = Date.now();
 				translate_time = Date.now();
 			};
+
+
+//---------------------------------------------------------------ONERROR--------------------------------------------------------------//
 
 			recognition.onerror = function(event) {
 				resetPauseTimeout(); // Reset timeout on error as well
@@ -782,30 +809,45 @@ function onLoad() {
 				}
 			};
 
+//---------------------------------------------------------------ONEND---------------------------------------------------------------//
+
 			recognition.onend = function() {
 				final_transcript='';
 				interim_transcript='';
 				if (!recognizing) {
 					console.log('recognition.onend: stopping because recognizing =', recognizing);
-					//console.log('786:timestamped_final_and_interim_transcript = ', timestamped_final_and_interim_transcript);
-					if (formated_all_final_transcripts) {
-						saveTranscript(formated_all_final_transcripts);
-						if (formated_all_final_transcripts) var tt=gtranslate(formated_all_final_transcripts,src,dst).then((result => {
-							//console.log('790:result = ', result);
+					//console.log('801:timestamped_final_and_interim_transcript = ', timestamped_final_and_interim_transcript);
+					var t = formatted_all_final_transcripts_excluding_last + timestamped_final_and_interim_transcript;
+					if (t) {
+						// Split text into an array of lines
+						let lines = t.trim().split('\n');
+						// Use a Set to filter out duplicate lines
+						let uniqueLines = [...new Set(lines)];
+						// Join the unique lines back into a single string
+						let uniqueText = uniqueLines.join('\n');
+						uniqueText = uniqueText + '\n';
+						saveTranscript(uniqueText);
+						var tt=gtranslate(uniqueText,src,dst).then((result => {
+							//console.log('806:result = ', result);
+							result = result.replace();
 							result = result.replace(/(\d+),(\d+)/g, '$1.$2');
 							result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
 							result = result.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
-							result = result.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
 							result = result.replace(/(\d{4})\s*-\s*(\d{2})\s*-\s*(\d{2})/g, '$1-$2-$3');
 							result = result.replace(/(\d{2})\s*:\s*(\d{2})\s*:\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
+							result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
 							result = capitalizeSentences(result);
 							result = formatText(result);
 							result = result.replace(/\n\s*$/, '');
 							timestamped_translated_final_and_interim_transcript = result + "\n";
-							//console.log('801:timestamped_translated_final_and_interim_transcript = ', timestamped_translated_final_and_interim_transcript);
+							//console.log('818:timestamped_translated_final_and_interim_transcript = ', timestamped_translated_final_and_interim_transcript);
 							saveTranslatedTranscript(timestamped_translated_final_and_interim_transcript);
 						}));
 					}
+
+					session_end_time = formatTimestamp(new Date());
+					console.log('session_end_time =', session_end_time);
+
 					return;
 				} else {
 					console.log('recognition.onend: keep recognizing because recognizing =', recognizing);
@@ -832,7 +874,8 @@ function onLoad() {
 					return;
 				} else {
 					recognition.lang=src_dialect;
-					var interim_transcript = '';
+					interim_transcript = '';
+
 					for (var i = event.resultIndex; i < event.results.length; ++i) {
 						if (event.results[i].isFinal) {
 							//final_transcript += event.results[i][0].transcript;
@@ -840,55 +883,68 @@ function onLoad() {
 							//final_transcript = capitalize(final_transcript);
 							//final_transcript = remove_linebreak(final_transcript);
 
+							interim_transcript = '';
+							interim_started = false;
 							endTimestamp = formatTimestamp(new Date());
 							//console.log('endTimestamp =', endTimestamp);
-							//final_transcript += `${startTimestamp} : ${capitalize(event.results[i][0].transcript)}`;
 							final_transcript += `${startTimestamp} ${timestamp_separator} ${endTimestamp} : ${capitalize(event.results[i][0].transcript)}`;
 							final_transcript = final_transcript + '.\n'
 							//console.log('final_transcript = ', final_transcript);
 							all_final_transcripts.push(`${final_transcript}`);
-							//console.log('841:all_final_transcripts = ', all_final_transcripts);
-
+							//console.log('864:all_final_transcripts = ', all_final_transcripts);
+							all_final_transcripts_excluding_last = all_final_transcripts.slice(0, -1);
+							//console.log('866:all_final_transcripts_excluding_last = ', all_final_transcripts_excluding_last);
 						} else {
-							if (interim_transcript.split(/\s+/).length === 1) {
+							if (!interim_started) {
+								// Capture the timestamp only when the interim result starts
 								startTimestamp = formatTimestamp(new Date());
-								//console.log('startTimestamp =', startTimestamp);
+								interim_started = true; // Set the flag to true
+								//console.log(`Interim transcript started at ${interim_start_timestamp}: ${interim_transcript}`);
 							}
 							interim_transcript += event.results[i][0].transcript;
 							//interim_transcript = remove_linebreak(interim_transcript);
 							interim_transcript = capitalize(interim_transcript);
+							//interim_transcript = capitalizeSentences(interim_transcript);
 						}
 					}
 
 
 					timestamped_final_and_interim_transcript = final_transcript + interim_transcript;
-
-
 					if (containsColon(timestamped_final_and_interim_transcript)) {
 						timestamped_final_and_interim_transcript = capitalizeSentences(timestamped_final_and_interim_transcript);
 						//console.log('capitalizeSentences(timestamped_final_and_interim_transcript) = ', timestamped_final_and_interim_transcript);
 					}
 
-					formated_all_final_transcripts = all_final_transcripts.join("");
-					//console.log('formated_all_final_transcripts = ', formated_all_final_transcripts);
-
+					formatted_all_final_transcripts = all_final_transcripts.join("");
+					//console.log('formatted_all_final_transcripts = ', formatted_all_final_transcripts);
+					formatted_all_final_transcripts_excluding_last = all_final_transcripts_excluding_last.join("");
+					//console.log('formatted_all_final_transcripts_excluding_last = ', formatted_all_final_transcripts_excluding_last);
 
 					//console.log('show_original =', result.show_original);
 					if (show_original) {
 						document.querySelector("#src_textarea_container").style.display = 'block';
 						//document.querySelector("#src_textarea").innerHTML = final_transcript + interim_transcript;
-						document.querySelector("#src_textarea").value = formated_all_final_transcripts + timestamped_final_and_interim_transcript;
+						//document.querySelector("#src_textarea").value = formatted_all_final_transcripts_excluding_last + timestamped_final_and_interim_transcript;
+						var t = formatted_all_final_transcripts_excluding_last + timestamped_final_and_interim_transcript;
+						if (t) {
+							// Split text into an array of lines
+							let lines = t.trim().split('\n');
+							// Use a Set to filter out duplicate lines
+							let uniqueLines = [...new Set(lines)];
+							// Join the unique lines back into a single string
+							let uniqueText = uniqueLines.join('\n');
+							document.querySelector("#src_textarea").value = uniqueText;
+						}
 						document.querySelector("#src_textarea").scrollTop = document.querySelector("#src_textarea").scrollHeight;
 					}
 
-
-					timestamped_final_and_interim_transcript = document.querySelector("#src_textarea").value;
 
 
 					//console.log('show_translation =', show_translation);
 					if (show_translation) {
 						//var  t = final_transcript + interim_transcript;
-						var  t = timestamped_final_and_interim_transcript;
+						//var  t = document.querySelector("#src_textarea").value;
+						var  t = formatted_all_final_transcripts_excluding_last + timestamped_final_and_interim_transcript;
 						if ((Date.now() - translate_time > 1000) && recognizing) {
 							if (t) var tt=gtranslate(t,src,dst).then((result => {
 								if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'block';
@@ -900,6 +956,7 @@ function onLoad() {
 								result = result.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
 								result = result.replace(/(\d{4})\s*-\s*(\d{2})\s*-\s*(\d{2})/g, '$1-$2-$3');
 								result = result.replace(/(\d{2})\s*:\s*(\d{2})\s*:\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
+								result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
 								result = capitalizeSentences(result);
 								result = formatText(result);
 								result = result.replace(/\n\s*$/, '');
@@ -1089,13 +1146,13 @@ function onLoad() {
 
 		function getVideoPlayerInfo() {
 			var elements = document.querySelectorAll('video, iframe');
-			console.log('elements = ',  elements);
+			//console.log('elements = ',  elements);
 			var largestVideoElement = null;
 			var largestSize = 0;
 
 			for (var i=0; i<elements.length; i++) {
 				var rect = elements[i].getBoundingClientRect();
-				console.log('rect', rect);
+				//console.log('rect', rect);
 				if (rect.width > 0) {
 					var size = rect.width * rect.height;
 					if (size > largestSize) {
@@ -1103,7 +1160,7 @@ function onLoad() {
 						largestVideoElement = elements[i];
 					}
 					var videoPlayerID = elements[i].id;
-					console.log('videoPlayerID = ',  videoPlayerID);
+					//console.log('videoPlayerID = ',  videoPlayerID);
 					return {
 						id: elements[i].id,
 						top: rect.top,
@@ -1113,7 +1170,7 @@ function onLoad() {
 					};
 				}
 			}
-			console.log('No video player found');
+			//console.log('No video player found');
 			return null;
 		}
 
@@ -1207,8 +1264,7 @@ function onLoad() {
 			}
 		}
 
-
-
+/*
 		var translate = async (t,src,dst) => {
 			var tt = new Promise(function(resolve) {
 				var i=0, len=0, r='', tt='';
@@ -1220,12 +1276,12 @@ function onLoad() {
 					if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
 						response = JSON.parse(xmlHttp.responseText);
 						for (var i = 0, len = response.sentences?.length; i < len; i++) {
-							var r=(((response.sentences[i].trans).replace('}/g','')).replace(')/g','')).replace('\%20/g', ' ');
-							r=((r.replace('}','')).replace(')','')).replace('\%20/g', ' ');
+							var r=((((response[i][0]).replace('}/g','')).replace(')/g','')).replace('\\%20/g', ' ')).replace('\\%3E/g', '>');
+							r=(((r.replace('}','')).replace(')','')).replace('\\%20/g', ' ')).replace('\\%3E/g', '>');
 							tt += r;
 						}
-						if (tt.includes('}'||')'||'%20')) {
-							tt=((tt.replace('}/g','')).replace(')/g','')).replace('\%20/g', ' ');
+						if (tt.includes('}'||')'||'%20'||'%3E')) {
+							tt=(((tt.replace('}/g','')).replace(')/g','')).replace('\\%20/g', ' ')).replace('\\%3E/g', '>');
 						}
 						resolve(tt);
 					}
@@ -1236,8 +1292,37 @@ function onLoad() {
 			});
 			return await tt;
 		};
+*/
+
+		var translate = async (t, src, dst) => {
+			return new Promise((resolve, reject) => {
+				const url = 'https://clients5.google.com/translate_a/single?dj=1&dt=t&dt=sp&dt=ld&dt=bd&client=dict-chrome-ex&sl=' 
+							+ src + '&tl=' + dst + '&q=' + encodeURIComponent(t);
+				var xmlHttp = new XMLHttpRequest();
+
+				xmlHttp.onreadystatechange = function() {
+					if (xmlHttp.readyState === 4) {
+						if (xmlHttp.status === 200) {
+							try {
+								let response = JSON.parse(xmlHttp.responseText);
+								let translatedText = response.sentences.map(sentence => sentence.trans).join('');
+								resolve(translatedText);
+							} catch (e) {
+								reject('Error parsing response: ' + e.message);
+							}
+						} else {
+							reject('Request failed with status: ' + xmlHttp.status);
+						}
+					}
+				};
+
+				xmlHttp.open('GET', url, true);
+				xmlHttp.send();
+			});
+		};
 
 
+/*
 		var gtranslate = async (t,src,dst) => {
 			var tt = new Promise(function(resolve) {
 				var i=0, len=0, r='', tt='';
@@ -1249,12 +1334,12 @@ function onLoad() {
 					if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
 						response = JSON.parse(xmlHttp.responseText)[0];
 						for (var i = 0, len = response.length; i < len; i++) {
-							var r=(((response[i][0]).replace('}/g','')).replace(')/g','')).replace('\%20/g', ' ');
-							r=((r.replace('}','')).replace(')','')).replace('\%20/g', ' ');
+							var r=((((response[i][0]).replace('}/g','')).replace(')/g','')).replace('\\%20/g', ' ')).replace('\\%3E/g', '>');
+							r=(((r.replace('}','')).replace(')','')).replace('\\%20/g', ' ')).replace('\\%3E/g', '>');
 							tt += r;
 						}
-						if (tt.includes('}'||')'||'%20')) {
-							tt=((tt.replace('}/g','')).replace(')/g','')).replace('\%20/g', ' ');
+						if (tt.includes('}'||')'||'%20'||'%3E')) {
+							tt=(((tt.replace('}/g','')).replace(')/g','')).replace('\\%20/g', ' ')).replace('\\%3E/g', '>');
 						}
 						resolve(tt);
 					}
@@ -1265,6 +1350,35 @@ function onLoad() {
 			});
 			return await tt;
 		}
+*/
+
+		var gtranslate = async (t, src, dst) => {
+			return new Promise((resolve, reject) => {
+				const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=' + src + '&tl=' + dst + '&dt=t&q=' + encodeURIComponent(t);
+				var xmlHttp = new XMLHttpRequest();
+
+				xmlHttp.onreadystatechange = function() {
+					if (xmlHttp.readyState === 4) {
+						if (xmlHttp.status === 200) {
+							try {
+								let response = JSON.parse(xmlHttp.responseText)[0];
+								let translatedText = response.map(segment => segment[0]).join('');
+								resolve(translatedText);
+							} catch (e) {
+								reject('Error parsing response: ' + e.message);
+							}
+						} else {
+							reject('Request failed with status: ' + xmlHttp.status);
+						}
+					}
+				};
+
+				xmlHttp.open('GET', url, true);
+				xmlHttp.send();
+			});
+		};
+
+
 
 
 	});
