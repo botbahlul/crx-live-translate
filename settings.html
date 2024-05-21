@@ -1,9 +1,142 @@
 <!DOCTYPE html>
 <style>
-  #fontColor {
-    width: 50px; /* Adjust width as needed */
-    height: 20px; /* Adjust height as needed */
-  }
+	* {
+		margin: 0;
+		padding: 0;
+		box-sizing: border-box;
+	}
+	body {
+		font-family: Arial, sans-serif;
+	}
+	.container {
+		width: 100%;
+		margin: 10px auto;
+	}
+	.two-column {
+		display: flex;
+		gap: 10px;
+	}
+	.column {
+		flex: 1;
+		padding: 10px;
+	}
+
+	#column1 {
+		text-align: left;
+		flex-direction: column;
+		align-items: left;
+		min-height: 500px;
+	}
+
+	#column2 {
+		text-align: center; /* Center the rectangle horizontally */
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		min-height: 500px;
+	}
+
+	#sample_video_frame {
+		width: 640px;
+		height: 360px;
+		background-color: blue;
+		margin: 10px auto;
+	}
+	#src_textarea_container {
+		display: block,
+		width: 720px,
+		height: 120px,
+		margin: 10px auto;
+	}
+	#src_textarea {
+		display: block,
+		width: 100%,
+		height: 100%,
+		margin: 10px auto;
+		text-align: left;
+		justify-content: center;
+	}
+	#dst_textarea_container {
+		display: block,
+		width: 720px,
+		height: 120px,
+		margin: 10px auto;
+	}
+	#dst_textarea {
+		display: block,
+		width: 100%,
+		height: 100%,
+		margin: 10px auto;
+		text-align: left;
+	}
+
+	#select_src_font {
+		width: 160px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
+	#input_src_font_size {
+		width: 40px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
+	#input_src_font_color {
+		width: 50px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
+	#input_src_container_width_factor {
+		width: 56px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
+	#input_src_container_height_factor {
+		width: 56px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
+	#input_src_container_color {
+		width: 56px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
+	#input_src_container_opacity {
+		width: 80px; /* Adjust width as needed */
+		height: 4px; /* Adjust height as needed */
+	}
+	#select_dst_language {
+		width: 160px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
+	#select_dst_dialect {
+		width: 240px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
+	#select_dst_font {
+		width: 160px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
+	#input_dst_font_size {
+		width: 40px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
+	#input_dst_font_color {
+		width: 50px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
+	#input_dst_container_width_factor {
+		width: 56px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
+	#input_dst_container_height_factor {
+		width: 56px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
+	#input_dst_container_color {
+		width: 56px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
+	#input_dst_container_opacity {
+		width: 80px; /* Adjust width as needed */
+		height: 4px; /* Adjust height as needed */
+	}
+
+
+
 </style>
 <html lang='en'>
 <head>
@@ -13,53 +146,103 @@
     <title>Language Setup</title>
 </head>
 <body>
-	<label style='font-size: 12px'>Audio Language&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-	<select id='select_language' style='font-size:12px''></select>
-	<select id='select_dialect' style='font-size:12px'></select>
+
+	<h1 style="font-size: 16px">Live Translate v0.2.0</h1> 
 	<br>
-	<input type="checkbox" id="checkbox_show_original" name="checkbox_show_original"> <label style='font-size: 12px'> Show recognized audio text </label>
-	<br><br>
-    <label style='font-size: 12px'>Translation Language</label>
-    <select id='select_translate_language' style='font-size:12px''></select>
-    <select id='select_translate_dialect' style='font-size:12px'></select>
-	<br>
-	<input type="checkbox" id="checkbox_show_translation" name="checkbox_show_translation"> <label style='font-size: 12px'> Show translation text</label>
-	<br><br>
+	<h2 style="font-size: 14px">Options</h2> 
 
-	<label for="fontSelect">Subtitle Font:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-	<select id="fontSelect"></select>
+    <div class="container">
+        <div class="two-column">
+            <div class="column left-column" id='column1'>
+				<label style='font-size: 12px'>Audio Language&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<select id='select_src_language' style='width: 160px' style='font-size: 12px'></select>
+				<select id='select_src_dialect' style='width: 240px' style='font-size: 12px'></select>
+				<br>
+				<input type="checkbox" id="checkbox_show_src" name="checkbox_show_src" style='font-size: 12px'>
+				<label style='font-size: 12px'> Show recognized audio text </label>
+				<br>
+				<label for="select_src_font" style="font-size: 12px">Subtitle Font&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<select id="select_src_font" style="font-size: 12px"></select>
+				<input type="number" id="input_src_font_size" min="1" value="18" style='font-size:12px'>
+				<input type="color" id="input_src_font_color" value="#ffff00" style='font-size:12px'>
+				<br>
+				<label for="input_src_container_width_factor" style="font-size: 12px" >Container Width&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<input type="number" id="input_src_container_width_factor" min="0" max="1" step="0.001" value="0.8" style='font-size:12px'>
+				<label for="src_container_width_continuing_text" style="font-size: 12px" >x Video Width</label>
+				<br>
+				<label for="input_src_container_height_factor" style="font-size: 12px">Container Height&nbsp;&nbsp;&nbsp;</label>
+				<input type="number" id="input_src_container_height_factor" min="0" max="1" step="0.001" value="0.15" style='font-size:12px'>
+				<label for="src_container_height_continuing_text" style="font-size: 12px">x Video Height&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<br>
+				<label for="input_src_container_color" style="font-size: 12px">Container Color&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<input type="color" id="input_src_container_color" value="#000000" style='font-size:12px'>
+				<br>
+				<label for="input_src_container_opacity" style="font-size: 12px">Container Opacity&nbsp;</label>
+				<input type="range" id="input_src_container_opacity" min="0" max="1" step="0.01" value="0.3" style='font-size:12px'>
+				<br>
+				<br>
+				<label style='font-size: 12px'>Translation&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<select id='select_dst_language' style='width:160px' style='font-size:12px'></select>
+				<select id='select_dst_dialect' style='width:240px' style='font-size:12px'></select>
+				<br>
+				<input type="checkbox" id="checkbox_show_dst" name="checkbox_show_dst" style='font-size:12px'>
+				<label style='font-size: 12px'> Show translation text</label>
+				<br>
+				<label for="select_dst_font" style="font-size: 12px">Subtitle Font&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<select id="select_dst_font" style="font-size: 12px"></select>
+				<input type="number" id="input_dst_font_size" min="1" value="18" style='font-size:12px'>
+				<input type="color" id="input_dst_font_color" value="#ffff00" style='font-size:12px'>
+				<br>
+				<label for="input_dst_container_width_factor" style="font-size: 12px">Container Width&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<input type="number" id="input_dst_container_width_factor" min="0" max="1" step="0.001" value="0.8" style='font-size:12px'>
+				<label for="dst_container_width_continuing_text" style="font-size: 12px">x Video Width</label>
+				<br>
+				<label for="input_dst_container_height_factor" style="font-size: 12px">Container Height&nbsp;&nbsp;&nbsp;</label>
+				<input type="number" id="input_dst_container_height_factor" min="0" max="1" step="0.001" value="0.15" style='font-size:12px'>
+				<label for="dst_container_height_continuing_text" style="font-size: 12px">x Video Height</label>
+				<br>
+				<label for="input_dst_container_color" style="font-size: 12px">Container Color&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<input type="color" id="input_dst_container_color" value="#000000" style='font-size:12px'>
+				<br>
+				<label for="input_dst_container_opacity" style="font-size: 12px">Container Opacity&nbsp;</label>
+				<input type="range" id="input_dst_container_opacity" min="0" max="1" step="0.01" value="0.3" style='font-size:12px'>
+				<br>
+				<br>
+				<label for="input_pause_threshold" style='font-size: 12px'>Pause Threshold&nbsp;&nbsp;&nbsp;</label>
+				<input style='width:60px' type="number" id="input_pause_threshold" min="0" step="1" value="5000" style='font-size:12px'>
+				<label for="pause_threshold_continuing_text" style='font-size: 12px'> (in miliseconds)</label>
 
-	<input type="number" id="fontSize" min="1" value="16">
+				<br><br>
+				<button id='save_button' style='position:relative'>Save</button>
+				<br><br>
 
-	<br>
+            </div>
 
-	<label for="fontColor">Subtitle Color&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-	<input type="color" id="fontColor" value="#000000">
+			<div class="column right-column" id='column2'>
 
-	<br>
+					<div id="sample_video_frame" style="background-color: blue">
 
-	<label for="containerWidth">Container Width&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-	<input type="number" id="containerWidthFactor" min="0" max="1" step="0.001" value="0.8">
-	<label for="containerWidthContinuingText">&nbsp;x window.innerWidth (in pixels)</label>
+						<div id="src_textarea_container">
+							<div id="src_textarea" style="background-color: rgba(0,0,0,0.3)" style="color: #ffff00">Recognized Audio Text</div>
+						</div>
 
-	<br>
+						<div id="dst_textarea_container">
+							<div id="dst_textarea" style="background-color: rgba(0,0,0,0.3)" style="color: #ffff00">Translation Text</div>
+						</div>
 
-	<label for="containerHeight">Container Height&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-	<input type="number" id="containerHeightFactor" min="0" max="1" step="0.001" value="0.075">
-	<label for="containerHeightContinuingText">&nbsp;x window.innerHeight (in pixels)</label>
+					</div>
+			</div>
 
-	<br><br>
+		</div>
 
-	<button id='updateSampleText_button'>Update Sample Text</button>
+	</div>
 
-	<div id="sampleText" style="margin-top: 20px;"></div>
 
-	<br><br>
-
-	<button id='save_button'>Save</button>
-	<br><br>
 
 </body>
+<script src="js/jquery.min.js"></script>
+<link rel="stylesheet" href="css/jquery-ui.css">
+<script src="js/jquery-ui.min.js"></script>
 <script src='js/setting.js'></script>
 </html>
 
