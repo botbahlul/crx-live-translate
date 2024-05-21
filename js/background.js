@@ -79,11 +79,24 @@ chrome.action.onClicked.addListener((tab) => {
 function onLoad() {
 
 	var action, recognition, recognizing, src, dst, src_dialect, dst_dialect;
-	var selectedFont, fontSize, fontColor, containerWidthFactor, containerHeightFactor, srcWidth, srcHeight, srcTop, srcLeft, dstWidth, dstHeight, dstTop, dstLeft;
-	var startTimestamp, endTimestamp, timestamped_final_and_interim_transcript, timestamped_translated_final_and_interim_transcript, interim_started = false;
-	var pauseTimeout, pauseThreshold = 2000; // 2 seconds artificial pause threshold;
-	var all_final_transcripts = [], all_final_transcripts_excluding_last = [], formatted_all_final_transcripts, formatted_all_final_transcripts_excluding_last;
-	var videoInfo;
+
+	var src_selected_font, src_font_size, src_font_color;
+	var src_container_width_factor, src_container_height_factor;
+	var src_width, src_height, src_top, src_left;
+	var dst_width, dst_height, dst_top, dst_left;
+	var src_container_color, src_container_opacity;
+
+	var dst_selected_font, dst_font_size, dst_font_color;
+	var dst_container_width_factor, dst_container_height_factor;
+	var dst_width, dst_height, dst_top, dst_left;
+	var dst_width, dst_height, dst_top, dst_left;
+	var dst_container_color, dst_container_opacity;
+
+	var startTimestamp, endTimestamp, timestamped_final_and_interim_transcript, timestamped_translated_final_and_interim_transcript;
+	var interim_started = false;
+	var pause_timeout, pause_threshold = 2000, input_pause_threshold; // 2 seconds artificial pause threshold;
+	var all_final_transcripts = [], formatted_all_final_transcripts;
+	var video_info;
 	var timestamp_separator = "-->";
 	var session_start_time, session_end_time;
 
@@ -107,7 +120,7 @@ function onLoad() {
 		console.log('onload: response =', response);
 	});
 
-	chrome.storage.sync.get([ 'recognizing', 'src_dialect', 'dst_dialect', 'show_original', 'show_translation', 'selectedFont', 'fontSize', 'fontColor', 'containerWidthFactor', 'containerHeightFactor'], function(result) {
+	chrome.storage.sync.get([ 'recognizing', 'src_dialect', 'dst_dialect', 'show_src', 'show_dst', 'pause_threshold', 'src_selected_font', 'src_font_size', 'src_font_color', 'src_container_width_factor', 'src_container_height_factor', 'src_container_color', 'src_container_opacity', 'dst_selected_font', 'dst_font_size', 'dst_font_color', 'dst_container_width_factor', 'dst_container_height_factor', 'dst_container_color', 'dst_container_opacity'], function(result) {
 		recognizing = result.recognizing;
 		console.log('onLoad: recognizing =', recognizing);
 
@@ -147,26 +160,57 @@ function onLoad() {
 		};
 		console.log('dst = ', dst);
 
-		show_original = result.show_original;
-		//console.log('show_original =', result.show_original);
-		show_translation = result.show_translation;
-		//console.log('show_translation', result.show_translation);
+		show_src = result.show_src;
+		//console.log('show_src =', result.show_src);
+		show_dst = result.show_dst;
+		//console.log('show_dst', result.show_dst);
 
-		selectedFont = result.selectedFont;
-		//console.log('selectedFont =', result.selectedFont);
+		pause_threshold = result.pause_threshold;
+		//console.log('pause_threshold =', result.pause_threshold);
 
-		fontSize = result.fontSize;
-		//console.log('fontSize =', result.fontSize);
 
-		fontColor = result.fontColor;
-		//console.log('fontColor =', result.fontColor);
+		src_selected_font = result.src_selected_font;
+		console.log('src_selected_font =', result.src_selected_font);
 
-		containerWidthFactor = result.containerWidthFactor;
-		//console.log('result.containerWidthFactor =', result.containerWidthFactor);
+		src_font_size = result.src_font_size;
+		console.log('src_font_size =', result.src_font_size);
 
-		containerHeightFactor = result.containerHeightFactor;
-		console.log('result.containerHeightFactor =', result.containerHeightFactor);
+		src_font_color = result.src_font_color;
+		console.log('src_font_color =', result.src_font_color);
 
+		src_container_width_factor = result.src_container_width_factor;
+		console.log('result.src_container_width_factor =', result.src_container_width_factor);
+
+		src_container_height_factor = result.src_container_height_factor;
+		console.log('result.src_container_height_factor =', result.src_container_height_factor);
+
+		src_container_color = result.src_container_color;
+		console.log('result.src_container_color =', result.src_container_color);
+
+		src_container_opacity = result.src_container_opacity;
+		console.log('result.src_container_opacity =', result.src_container_opacity);
+
+
+		dst_selected_font = result.dst_selected_font;
+		console.log('dst_selected_font =', result.dst_selected_font);
+
+		dst_font_size = result.dst_font_size;
+		console.log('dst_font_size =', result.dst_font_size);
+
+		dst_font_color = result.dst_font_color;
+		console.log('dst_font_color =', result.dst_font_color);
+
+		dst_container_width_factor = result.dst_container_width_factor;
+		console.log('result.dst_container_width_factor =', result.dst_container_width_factor);
+
+		dst_container_height_factor = result.dst_container_height_factor;
+		console.log('result.dst_container_height_factor =', result.dst_container_height_factor);
+
+		dst_container_color = result.dst_container_color;
+		console.log('result.dst_container_color =', result.dst_container_color);
+
+		dst_container_opacity = result.dst_container_opacity;
+		console.log('result.dst_container_opacity =', result.dst_container_opacity);
 
 
 		document.documentElement.scrollTop = 0; // For modern browsers
@@ -175,62 +219,76 @@ function onLoad() {
 		videoID = getVideoPlayerId();
 		console.log("videoID:", videoID);
 
-		videoInfo = getVideoPlayerInfo();
-		if (videoInfo) {
+		video_info = getVideoPlayerInfo();
+		if (video_info) {
 			console.log('Extension is starting');
 			console.log("Video player found!");
-			console.log("videoInfo.id = ", videoInfo.id);
-			//console.log("Top:", videoInfo.top);
-			//console.log("Left:", videoInfo.left);
-			//console.log("Width:", videoInfo.width);
-			//console.log("Height:", videoInfo.height);
+			console.log("video_info.id = ", video_info.id);
+			//console.log("Top:", video_info.top);
+			//console.log("Left:", video_info.left);
+			//console.log("Width:", video_info.width);
+			//console.log("Height:", video_info.height);
+
+			src_width = src_container_width_factor*video_info.width;
+			//console.log('src_width =', src_width);
+
+			src_height = src_container_height_factor*video_info.height;
+			//console.log('src_height =', src_height);
+
+			src_top = video_info.top + 0.02*video_info.height;
+			//console.log('src_top =', src_top);
+
+			src_left = video_info.left + 0.5*(video_info.width-src_width);
+			//console.log('src_left =', src_left);
+
+			dst_width = dst_container_width_factor*video_info.width;
+			//console.log('dst_width =', dst_width);
+
+			dst_height = dst_container_height_factor*video_info.height;
+			//console.log('dst_height =', dst_height);
+
+			dst_top = video_info.top + 0.6*video_info.height;
+			//console.log('dst_top =', dst_top);
+
+			dst_left = video_info.left + 0.5*(video_info.width-dst_width);
+			//console.log('dst_left =', dst_left);
+
 		} else {
 			console.log("No video player found on this page.");
+
+			src_width = src_container_width_factor*window.innerWidth;
+			//console.log('src_width =', src_width);
+
+			src_height = src_container_height_factor*window.innerHeight;
+			//console.log('src_height =', src_height);
+
+			src_top = 0.25*window.innerHeight;
+			//console.log('src_top =', src_top);
+
+			src_left = 0.5*(window.innerWidth-src_width);
+			//console.log('src_left =', src_left);
+
+			dst_width = dst_container_width_factor*window.innerWidth;
+			//console.log('dst_width =', dst_width);
+
+			dst_height = dst_container_height_factor*window.innerHeight;
+			//console.log('dst_height =', dst_height);
+
+			dst_top = 0.75*window.innerHeight;
+			//console.log('dst_top =', dst_top);
+
+			dst_left = 0.5*(window.innerWidth-dst_width);
+			//console.log('dst_left =', dst_left);
 		}
 
-		//srcWidth = containerWidthFactor*window.innerWidth;
-		srcWidth = containerWidthFactor*videoInfo.width;
-		//console.log('srcWidth =', srcWidth);
-
-		//srcHeight = containerHeightFactor*window.innerHeight;
-		srcHeight = containerHeightFactor*videoInfo.height;
-		//console.log('containerHeightFactor =', containerHeightFactor);
-		//console.log('videoInfo.height =', videoInfo.height);
-		//console.log('srcHeight =', srcHeight);
-
-		//srcTop = 0.25*window.innerHeight;
-		srcTop = videoInfo.top + 0.02*videoInfo.height;
-		//console.log('srcTop =', srcTop);
-
-		//srcLeft = 0.5*(window.innerWidth-srcWidth);
-		srcLeft = videoInfo.left + 0.5*(videoInfo.width-srcWidth);
-		//console.log('srcLeft =', srcLeft);
-
-		//dstWidth = containerWidthFactor*window.innerWidth;
-		dstWidth = containerWidthFactor*videoInfo.width;
-		//console.log('dstWidth =', dstWidth);
-
-		//dstHeight = containerHeightFactor*window.innerHeight;
-		dstHeight = containerHeightFactor*videoInfo.height;
-		//console.log('containerHeightFactor =', containerHeightFactor);
-		//console.log('videoInfo.height =', videoInfo.height);
-		//console.log('dstHeight =', dstHeight);
-
-		//dstTop = 0.75*window.innerHeight;
-		dstTop = videoInfo.top + 0.6*videoInfo.height;
-		//console.log('dstTop =', dstTop);
-
-		//dstLeft = 0.5*(window.innerWidth-dstWidth);
-		dstLeft = videoInfo.left + 0.5*(videoInfo.width-srcWidth);
-		//console.log('dstLeft =', dstLeft);
 
 		var icon_text_listening = src.toUpperCase()+':'+dst.toUpperCase();
 
 		chrome.runtime.sendMessage({ cmd: 'icon_text_listening', data: { value: icon_text_listening } });
 
 		var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
-			.width(srcWidth)
-			.height(srcHeight)
+			.width(src_width)
+			.height(src_height)
 			.resizable().draggable({
 				cancel: 'text',
 				start: function (){
@@ -242,16 +300,16 @@ function onLoad() {
 			})
 			.css({
 				'position': 'absolute',
-				'font': selectedFont,
-				'fontSize': fontSize,
-				'color': fontColor,
-				'background-color': 'rgba(0,0,0,0.3)',
+				'fontFamily': src_selected_font + ', sans-serif',
+				'fontSize': src_font_size,
+				'color': src_font_color,
+				'backgroundColor': hexToRgba(src_container_color, src_container_opacity),
 				'border': 'none',
 				'display': 'block',
 				'overflow': 'hidden',
 				'z-index': '2147483647'
 			})
-			.offset({top:srcTop, left:srcLeft})
+			.offset({top:src_top, left:src_left})
 
 		if (!document.querySelector("#src_textarea_container")) {
 			console.log('appending src_textarea_container to html body');
@@ -262,29 +320,43 @@ function onLoad() {
 
 		document.querySelector("#src_textarea").style.width = '100%';
 		document.querySelector("#src_textarea").style.height = '100%';
-		//document.querySelector("#src_textarea").style.color = 'yellow';
-		document.querySelector("#src_textarea").style.color = fontColor;
-		document.querySelector("#src_textarea").style.backgroundColor = 'rgba(0,0,0,0.3)';
 		document.querySelector("#src_textarea").style.border = 'none';
 		document.querySelector("#src_textarea").style.display = 'inline-block';
 		document.querySelector("#src_textarea").style.overflow = 'hidden';
 
-		//src_h0 = $('#src_textarea').height();
-		//document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h0)+'px';
-		document.querySelector("#src_textarea").style.fontSize=String(fontSize)+'px';
+		document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
+		document.querySelector("#src_textarea").style.color = src_font_color;
+		document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(src_container_color, src_container_opacity);
+		document.querySelector("#src_textarea").style.fontSize=String(src_font_size)+'px';
 		document.querySelector("#src_textarea").offsetParent.onresize = (function(){
-		//	src_h = $('#src_textarea').height();
-		//	document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h)+'px';
 			document.querySelector("#src_textarea").style.position='absolute';
 			document.querySelector("#src_textarea").style.width = '100%';
 			document.querySelector("#src_textarea").style.height = '100%';
+
+			console.log('src_width = ', document.querySelector("#src_textarea").getBoundingClientRect().width);
+			console.log('video_info.width = ', video_info.width);
+			src_container_width_factor = document.querySelector("#src_textarea").getBoundingClientRect().width/video_info.width;
+			if (src_container_width_factor <= 0) {
+				src_container_width_factor = 0.8;
+			}
+			console.log('src_container_width_factor = ', src_container_width_factor);
+			saveData('src_container_width_factor', src_container_width_factor);
+
+			console.log('src_height = ', document.querySelector("#src_textarea").getBoundingClientRect().height);
+			console.log('video_info.height = ', video_info.height);
+			src_container_height_factor = document.querySelector("#src_textarea").getBoundingClientRect().height/video_info.height;
+			if (src_container_height_factor <= 0) {
+				src_container_height_factor = 0.15;
+			}
+			console.log('src_container_height_factor = ', src_container_height_factor);
+			saveData('src_container_height_factor', src_container_height_factor);
+
 		});
 
 
-
 		var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
-			.width(dstWidth)
-			.height(dstHeight)
+			.width(dst_width)
+			.height(dst_height)
 			.resizable().draggable({
 				cancel: 'text',
 				start: function (){
@@ -296,16 +368,16 @@ function onLoad() {
 			})
 			.css({
 				'position': 'absolute',
-				'font': selectedFont,
-				'fontSize': fontSize,
-				'color': fontColor,
-				'background-color': 'rgba(0,0,0,0.3)',
+				'fontFamily': dst_selected_font + ', sans-serif',
+				'fontSize': dst_font_size,
+				'color': dst_font_color,
+				'backgroundColor': hexToRgba(dst_container_color, dst_container_opacity),
 				'border': 'none',
 				'display': 'block',
 				'overflow': 'hidden',
 				'z-index': '2147483647'
 			})
-			.offset({top:dstTop, left:dstLeft})
+			.offset({top:dst_top, left:dst_left})
 
 		if (!document.querySelector("#dst_textarea_container")) {
 			console.log('appending dst_textarea_container to html body');
@@ -316,24 +388,37 @@ function onLoad() {
 
 		document.querySelector("#dst_textarea").style.width = '100%';
 		document.querySelector("#dst_textarea").style.height = '100%';
-		//document.querySelector("#dst_textarea").style.color = 'yellow';
-		document.querySelector("#dst_textarea").style.color = fontColor;
-		document.querySelector("#dst_textarea").style.backgroundColor = 'rgba(0,0,0,0.3)';
 		document.querySelector("#dst_textarea").style.border = 'none';
 		document.querySelector("#dst_textarea").style.display = 'inline-block';
 		document.querySelector("#dst_textarea").style.overflow = 'hidden';
 
-		//dst_h0 = $('#dst_textarea').height();
-		//document.querySelector("#dst_textarea").style.fontSize=String(0.35*dst_h0)+'px';
-		document.querySelector("#dst_textarea").style.fontSize=String(fontSize)+'px';
+		document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif"
+		document.querySelector("#dst_textarea").style.color = dst_font_color;
+		document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(dst_container_color, dst_container_opacity);
+		document.querySelector("#dst_textarea").style.fontSize=String(dst_font_size)+'px';
 		document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
-		//	dst_h = $('#dst_textarea').height();
-		//	document.querySelector("#dst_textarea").style.fontSize=String(0.35*dst_h)+'px';
 			document.querySelector("#dst_textarea").style.position='absolute';
 			document.querySelector("#dst_textarea").style.width = '100%';
 			document.querySelector("#dst_textarea").style.height = '100%';
-		});
 
+			console.log('dst_width = ', document.querySelector("#dst_textarea").getBoundingClientRect().width);
+			console.log('video_info.width = ', video_info.width);
+			dst_container_width_factor = document.querySelector("#dst_textarea").getBoundingClientRect().width/video_info.width;
+			if (dst_container_width_factor <= 0) {
+				dst_container_width_factor = 0.8;
+			}
+			console.log('dst_container_width_factor = ', dst_container_width_factor);
+			saveData('dst_container_width_factor', dst_container_width_factor);
+
+			console.log('dst_height = ', document.querySelector("#dst_textarea").getBoundingClientRect().height);
+			console.log('video_info.height = ', video_info.height);
+			dst_container_height_factor = document.querySelector("#dst_textarea").getBoundingClientRect().height/video_info.height;
+			if (dst_container_height_factor <= 0) {
+				dst_container_height_factor = 0.15;
+			}
+			console.log('dst_container_height_factor = ', dst_container_height_factor);
+			saveData('dst_container_height_factor', dst_container_height_factor);
+		});
 
 
 		window.addEventListener('resize', function(event){
@@ -341,63 +426,78 @@ function onLoad() {
 			document.documentElement.scrollTop = 0; // For modern browsers
 			document.body.scrollTop = 0; // For older browsers
 
-			videoInfo = getVideoPlayerInfo();
-			if (videoInfo) {
+			video_info = getVideoPlayerInfo();
+			if (video_info) {
 				console.log('Window is resized');
 				console.log("Video player found!");
-				console.log("videoInfo.id = ", videoInfo.id);
-				//console.log("Top:", videoInfo.top);
-				//console.log("Left:", videoInfo.left
-				//console.log("Width:", videoInfo.width);
-				//console.log("Height:", videoInfo.height);
+				console.log("video_info.id = ", video_info.id);
+				//console.log("Top:", video_info.top);
+				//console.log("Left:", video_info.left
+				//console.log("Width:", video_info.width);
+				//console.log("Height:", video_info.height);
+
+				src_width = src_container_width_factor*video_info.width;
+				//console.log('src_width =', src_width);
+
+				src_height = src_container_height_factor*video_info.height;
+				//console.log('src_height =', src_height);
+
+				src_top = video_info.top + 0.02*video_info.height;
+				//console.log('src_top =', src_top);
+
+				src_left = video_info.left + 0.5*(video_info.width-src_width);
+				//console.log('src_left =', src_left);
+
+				dst_width = dst_container_width_factor*video_info.width;
+				//console.log('dst_width =', dst_width);
+
+				dst_height = dst_container_height_factor*video_info.height;
+				//console.log('dst_height =', dst_height);
+
+				dst_top = video_info.top + 0.6*video_info.height;
+				//console.log('dst_top =', dst_top);
+
+				dst_left = video_info.left + 0.5*(video_info.width-dst_width);
+				//console.log('dst_left =', dst_left);
+
 			} else {
 				console.log("No video player found on this page.");
+
+				src_width = src_container_width_factor*window.innerWidth;
+				//console.log('src_width =', src_width);
+
+				src_height = src_container_height_factor*window.innerHeight;
+				//console.log('src_height =', src_height);
+
+				src_top = 0.25*window.innerHeight;
+				//console.log('src_top =', src_top);
+
+				src_left = 0.5*(window.innerWidth-src_width);
+				//console.log('src_left =', src_left);
+
+				dst_width = dst_container_width_factor*window.innerWidth;
+				//console.log('dst_width =', dst_width);
+
+				dst_height = dst_container_height_factor*window.innerHeight;
+				//console.log('dst_height =', dst_height);
+
+				dst_top = 0.75*window.innerHeight;
+				//console.log('dst_top =', dst_top);
+
+				dst_left = 0.5*(window.innerWidth-dst_width);
+				//console.log('dst_left =', dst_left);
 			}
-
-			//srcWidth = containerWidthFactor*window.innerWidth;
-			srcWidth = containerWidthFactor*videoInfo.width;
-			//console.log('srcWidth =', srcWidth);
-
-			//srcHeight = containerHeightFactor*window.innerHeight;
-			srcHeight = containerHeightFactor*videoInfo.height;
-			//console.log('srcHeight =', srcHeight);
-
-			//srcTop = 0.25*window.innerHeight;
-			srcTop = videoInfo.top + 0.02*videoInfo.height;
-			//console.log('srcTop =', srcTop);
-
-			//srcLeft = 0.2*(window.innerWidth-0.5*window.innerWidth);
-			//srcLeft = 0.5*(window.innerWidth-srcWidth);
-			srcLeft = videoInfo.left + 0.5*(videoInfo.width-srcWidth);
-			//console.log('srcLeft =', srcLeft);
-
-			//dstWidth = containerWidthFactor*window.innerWidth;
-			dstWidth = containerWidthFactor*videoInfo.width;
-			//console.log('dstWidth =', dstWidth);
-		
-			//dstHeight = containerHeightFactor*window.innerHeight;
-			dstHeight = containerHeightFactor*videoInfo.height;
-			//console.log('dstHeight =', dstHeight);
-
-			//dstTop = 0.75*window.innerHeight;
-			dstTop = videoInfo.top + 0.6*videoInfo.height;
-			//console.log('dstTop =', dstTop);
-
-			//dstLeft = 0.2*(window.innerWidth-0.5*window.innerWidth);
-			//dstLeft = 0.5*(window.innerWidth-dstWidth);
-			dstLeft = videoInfo.left + 0.5*(videoInfo.width-srcWidth);
-			//console.log('dstLeft =', dstLeft);
 
 
 			if (document.querySelector("#src_textarea_container")) {
-				document.querySelector("#src_textarea_container").style.width = String(srcWidth)+'px';
-				document.querySelector("#src_textarea_container").style.height = String(srcHeight)+'px';
-				document.querySelector("#src_textarea_container").style.top = String(srcTop)+'px';
-				document.querySelector("#src_textarea_container").style.left = String(srcLeft)+'px';
+				document.querySelector("#src_textarea_container").style.width = String(src_width)+'px';
+				document.querySelector("#src_textarea_container").style.height = String(src_height)+'px';
+				document.querySelector("#src_textarea_container").style.top = String(src_top)+'px';
+				document.querySelector("#src_textarea_container").style.left = String(src_left)+'px';
 
 				var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
-					.width(srcWidth)
-					.height(srcHeight)
+					.width(src_width)
+					.height(src_height)
 					.resizable().draggable({
 						cancel: 'text',
 						start: function (){
@@ -409,53 +509,67 @@ function onLoad() {
 					})
 					.css({
 						'position': 'absolute',
-						'font': selectedFont,
-						'fontSize': fontSize,
-						'color': fontColor,
-						'background-color': 'rgba(0,0,0,0.3)',
+						'fontFamily': src_selected_font + ', sans-serif',
+						'fontSize': src_font_size,
+						'color': src_font_color,
+						'backgroundColor': hexToRgba(src_container_color, src_container_opacity),
 						'border': 'none',
 						'display': 'block',
 						'overflow': 'hidden',
 						'z-index': '2147483647'
 					})
-					.offset({top:srcTop, left:srcLeft})
+					.offset({top:src_top, left:src_left})
 
-				document.querySelector("#src_textarea").style.width = String(srcWidth)+'px';
-				document.querySelector("#src_textarea").style.height = String(srcHeight)+'px';
+				document.querySelector("#src_textarea").style.width = String(src_width)+'px';
+				document.querySelector("#src_textarea").style.height = String(src_height)+'px';
 				document.querySelector("#src_textarea").style.width = '100%';
 				document.querySelector("#src_textarea").style.height = '100%';
-				//document.querySelector("#src_textarea").style.color = 'yellow';
-				document.querySelector("#src_textarea").style.color = fontColor;
-				document.querySelector("#src_textarea").style.backgroundColor = 'rgba(0,0,0,0.3)';
+				document.querySelector("#src_textarea").style.color = src_font_color;
+				document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(src_container_color, src_container_opacity);
 				document.querySelector("#src_textarea").style.border = 'none';
 				document.querySelector("#src_textarea").style.display = 'inline-block';
 				document.querySelector("#src_textarea").style.overflow = 'hidden';
 
-				//src_h0 = $('#src_textarea').height();
-				//document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h0)+'px';
-				document.querySelector("#src_textarea").style.fontSize=String(fontSize)+'px';
+				document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
+				document.querySelector("#src_textarea").style.fontSize=String(src_font_size)+'px';
 				if (document.querySelector("#src_textarea").offsetParent) {
 					document.querySelector("#src_textarea").offsetParent.onresize = (function(){
-					//	src_h = $('#src_textarea').height();
-					//	document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h)+'px';
 						document.querySelector("#src_textarea").style.position='absolute';
 						document.querySelector("#src_textarea").style.width = '100%';
 						document.querySelector("#src_textarea").style.height = '100%';
 						document.querySelector("#src_textarea").scrollTop=document.querySelector("#src_textarea").scrollHeight;
+
+						console.log('src_width = ', document.querySelector("#src_textarea").getBoundingClientRect().width);
+						console.log('video_info.width = ', video_info.width);
+						src_container_width_factor = document.querySelector("#src_textarea").getBoundingClientRect().width/video_info.width;
+						if (src_container_width_factor <= 0) {
+							src_container_width_factor = 0.8;
+						}
+						console.log('src_container_width_factor = ', src_container_width_factor);
+						saveData('src_container_width_factor', src_container_width_factor);
+
+						console.log('src_height = ', document.querySelector("#src_textarea").getBoundingClientRect().height);
+						console.log('video_info.height = ', video_info.height);
+						src_container_height_factor = document.querySelector("#src_textarea").getBoundingClientRect().height/video_info.height;
+						if (src_container_height_factor <= 0) {
+							src_container_height_factor = 0.15;
+						}
+						console.log('src_container_height_factor = ', src_container_height_factor);
+						saveData('src_container_height_factor', src_container_height_factor);
 					});
 				}
 			}
 
 
 			if (document.querySelector("#dst_textarea_container")) {
-				document.querySelector("#dst_textarea_container").style.width = String(dstWidth)+'px';
-				document.querySelector("#dst_textarea_container").style.height = String(dstHeight)+'px';
-				document.querySelector("#dst_textarea_container").style.top = String(dstTop)+'px';
-				document.querySelector("#dst_textarea_container").style.left = String(dstLeft)+'px';
+				document.querySelector("#dst_textarea_container").style.width = String(dst_width)+'px';
+				document.querySelector("#dst_textarea_container").style.height = String(dst_height)+'px';
+				document.querySelector("#dst_textarea_container").style.top = String(dst_top)+'px';
+				document.querySelector("#dst_textarea_container").style.left = String(dst_left)+'px';
 
 				var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
-					.width(dstWidth)
-					.height(dstHeight)
+					.width(dst_width)
+					.height(dst_height)
 					.resizable().draggable({
 						cancel: 'text',
 						start: function (){
@@ -467,47 +581,56 @@ function onLoad() {
 					})
 					.css({
 						'position': 'absolute',
-						'font': selectedFont,
-						'fontSize': fontSize,
-						'color': fontColor,
-						'background-color': 'rgba(0,0,0,0.3)',
+						'fontFamily': dst_selected_font + ', sans-serif',
+						'fontSize': dst_font_size,
+						'color': dst_font_color,
+						'backgroundColor': hexToRgba(dst_container_color, dst_container_opacity),
 						'border': 'none',
 						'display': 'block',
 						'overflow': 'hidden',
 						'z-index': '2147483647'
 					})
-					.offset({top:dstTop, left:dstLeft})
+					.offset({top:dst_top, left:dst_left})
 
-				document.querySelector("#dst_textarea").style.width = String(dstWidth)+'px';
-				document.querySelector("#dst_textarea").style.height = String(dstHeight)+'px';
+				document.querySelector("#dst_textarea").style.width = String(dst_width)+'px';
+				document.querySelector("#dst_textarea").style.height = String(dst_height)+'px';
 				document.querySelector("#dst_textarea").style.width = '100%';
 				document.querySelector("#dst_textarea").style.height = '100%';
-				//document.querySelector("#dst_textarea").style.color = 'yellow';
-				document.querySelector("#dst_textarea").style.color = fontColor;
-				document.querySelector("#dst_textarea").style.backgroundColor = 'rgba(0,0,0,0.3)';
+				document.querySelector("#dst_textarea").style.color = dst_font_color;
+				document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(dst_container_color, dst_container_opacity);
 				document.querySelector("#dst_textarea").style.border = 'none';
 				document.querySelector("#dst_textarea").style.display = 'inline-block';
 				document.querySelector("#dst_textarea").style.overflow = 'hidden';
 
-				//dst_h0 = $('#dst_textarea').height();
-				//document.querySelector("#dst_textarea").style.fontSize=String(0.35*src_h0)+'px';
-				document.querySelector("#dst_textarea").style.fontSize=String(fontSize)+'px';
+				document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif";
+				document.querySelector("#dst_textarea").style.fontSize=String(dst_font_size)+'px';
 				if (document.querySelector("#dst_textarea").offsetParent) {
 					document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
-					//	dst_h = $('#dst_textarea').height();
-					//	document.querySelector("#dst_textarea").style.fontSize=String(0.35*dst_h)+'px';
 						document.querySelector("#dst_textarea").style.position='absolute';
 						document.querySelector("#dst_textarea").style.width = '100%';
 						document.querySelector("#dst_textarea").style.height = '100%';
 						document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
+
+						console.log('dst_width = ', document.querySelector("#dst_textarea").getBoundingClientRect().width);
+						console.log('video_info.width = ', video_info.width);
+						dst_container_width_factor = document.querySelector("#dst_textarea").getBoundingClientRect().width/video_info.width;
+						if (dst_container_width_factor <= 0) {
+							dst_container_width_factor = 0.8;
+						}
+						console.log('dst_container_width_factor = ', dst_container_width_factor);
+						saveData('dst_container_width_factor', dst_container_width_factor);
+
+						console.log('dst_height = ', document.querySelector("#dst_textarea").getBoundingClientRect().height);
+						console.log('video_info.height = ', video_info.height);
+						dst_container_height_factor = document.querySelector("#dst_textarea").getBoundingClientRect().height/video_info.height;
+						if (dst_container_height_factor <= 0) {
+							dst_container_height_factor = 0.15;
+						}
+						console.log('dst_container_height_factor = ', dst_container_height_factor);
+						saveData('dst_container_height_factor', dst_container_height_factor);
 					});
 				}
-
 			}
-
-			document.documentElement.scrollTop = videoInfo.top; // For modern browsers
-			document.body.scrollTop = videoInfo.top; // For older browsers
-
 		});
 
 
@@ -516,63 +639,78 @@ function onLoad() {
 			document.documentElement.scrollTop = 0; // For modern browsers
 			document.body.scrollTop = 0; // For older browsers
 
-			videoInfo = getVideoPlayerInfo();
-			if (videoInfo) {
+			video_info = getVideoPlayerInfo();
+			if (video_info) {
 				console.log('fullscreenchange');
 				console.log("Video player found!");
-				console.log("videoInfo.id = ", videoInfo.id);
-				//console.log("Top:", videoInfo.top);
-				//console.log("Left:", videoInfo.left
-				//console.log("Width:", videoInfo.width);
-				//console.log("Height:", videoInfo.height);
+				console.log("video_info.id = ", video_info.id);
+				//console.log("Top:", video_info.top);
+				//console.log("Left:", video_info.left
+				//console.log("Width:", video_info.width);
+				//console.log("Height:", video_info.height);
+
+				src_width = src_container_width_factor*video_info.width;
+				//console.log('src_width =', src_width);
+
+				src_height = src_container_height_factor*video_info.height;
+				//console.log('src_height =', src_height);
+
+				src_top = video_info.top + 0.02*video_info.height;
+				//console.log('src_top =', src_top);
+
+				src_left = video_info.left + 0.5*(video_info.width-src_width);
+				//console.log('src_left =', src_left);
+
+				dst_width = dst_container_width_factor*video_info.width;
+				//console.log('dst_width =', dst_width);
+
+				dst_height = dst_container_height_factor*video_info.height;
+				//console.log('dst_height =', dst_height);
+
+				dst_top = video_info.top + 0.6*video_info.height;
+				//console.log('dst_top =', dst_top);
+
+				dst_left = video_info.left + 0.5*(video_info.width-dst_width);
+				//console.log('dst_left =', dst_left);
+
 			} else {
 				console.log("No video player found on this page.");
+
+				src_width = src_container_width_factor*window.innerWidth;
+				//console.log('src_width =', src_width);
+
+				src_height = src_container_height_factor*window.innerHeight;
+				//console.log('src_height =', src_height);
+
+				src_top = 0.25*window.innerHeight;
+				//console.log('src_top =', src_top);
+
+				src_left = 0.5*(window.innerWidth-src_width);
+				//console.log('src_left =', src_left);
+
+				dst_width = dst_container_width_factor*window.innerWidth;
+				//console.log('dst_width =', dst_width);
+
+				dst_height = dst_container_height_factor*window.innerHeight;
+				//console.log('dst_height =', dst_height);
+
+				dst_top = 0.75*window.innerHeight;
+				//console.log('dst_top =', dst_top);
+
+				dst_left = 0.5*(window.innerWidth-dst_width);
+				//console.log('dst_left =', dst_left);
 			}
-
-			//srcWidth = containerWidthFactor*window.innerWidth;
-			srcWidth = containerWidthFactor*videoInfo.width;
-			//console.log('srcWidth =', srcWidth);
-
-			//srcHeight = containerHeightFactor*window.innerHeight;
-			srcHeight = containerHeightFactor*videoInfo.height;
-			//console.log('srcHeight =', srcHeight);
-
-			//srcTop = 0.25*window.innerHeight;
-			srcTop = videoInfo.top + 0.02*videoInfo.height;
-			//console.log('srcTop =', srcTop);
-
-			//srcLeft = 0.2*(window.innerWidth-0.5*window.innerWidth);
-			//srcLeft = 0.5*(window.innerWidth-srcWidth);
-			srcLeft = videoInfo.left + 0.5*(videoInfo.width-srcWidth);
-			//console.log('srcLeft =', srcLeft);
-
-			//dstWidth = containerWidthFactor*window.innerWidth;
-			dstWidth = containerWidthFactor*videoInfo.width;
-			//console.log('dstWidth =', dstWidth);
-		
-			//dstHeight = containerHeightFactor*window.innerHeight;
-			dstHeight = containerHeightFactor*videoInfo.height;
-			//console.log('dstHeight =', dstHeight);
-
-			//dstTop = 0.75*window.innerHeight;
-			dstTop = videoInfo.top + 0.6*videoInfo.height;
-			//console.log('dstTop =', dstTop);
-
-			//dstLeft = 0.2*(window.innerWidth-0.5*window.innerWidth);
-			//dstLeft = 0.5*(window.innerWidth-dstWidth);
-			dstLeft = videoInfo.left + 0.5*(videoInfo.width-srcWidth);
-			//console.log('dstLeft =', dstLeft);
 
 
 			if (document.querySelector("#src_textarea_container")) {
-				document.querySelector("#src_textarea_container").style.width = String(srcWidth)+'px';
-				document.querySelector("#src_textarea_container").style.height = String(srcHeight)+'px';
-				document.querySelector("#src_textarea_container").style.top = String(srcTop)+'px';
-				document.querySelector("#src_textarea_container").style.left = String(srcLeft)+'px';
+				document.querySelector("#src_textarea_container").style.width = String(src_width)+'px';
+				document.querySelector("#src_textarea_container").style.height = String(src_height)+'px';
+				document.querySelector("#src_textarea_container").style.top = String(src_top)+'px';
+				document.querySelector("#src_textarea_container").style.left = String(src_left)+'px';
 
 				var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
-					.width(srcWidth)
-					.height(srcHeight)
+					.width(src_width)
+					.height(src_height)
 					.resizable().draggable({
 						cancel: 'text',
 						start: function (){
@@ -584,35 +722,31 @@ function onLoad() {
 					})
 					.css({
 						'position': 'absolute',
-						'font': selectedFont,
-						'fontSize': fontSize,
-						'color': fontColor,
-						'background-color': 'rgba(0,0,0,0.3)',
+						'fontFamily': src_selected_font + ', sans-serif',
+						'fontSize': src_font_size,
+						'color': src_font_color,
+						'backgroundColor': hexToRgba(src_container_color, src_container_opacity),
 						'border': 'none',
 						'display': 'block',
 						'overflow': 'hidden',
 						'z-index': '2147483647'
 					})
-					.offset({top:srcTop, left:srcLeft})
+					.offset({top:src_top, left:src_left})
 
-				document.querySelector("#src_textarea").style.width = String(srcWidth)+'px';
-				document.querySelector("#src_textarea").style.height = String(srcHeight)+'px';
+				document.querySelector("#src_textarea").style.width = String(src_width)+'px';
+				document.querySelector("#src_textarea").style.height = String(src_height)+'px';
 				document.querySelector("#src_textarea").style.width = '100%';
 				document.querySelector("#src_textarea").style.height = '100%';
-				//document.querySelector("#src_textarea").style.color = 'yellow';
-				document.querySelector("#src_textarea").style.color = fontColor;
-				document.querySelector("#src_textarea").style.backgroundColor = 'rgba(0,0,0,0.3)';
+				document.querySelector("#src_textarea").style.color = src_font_color;
+				document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(src_container_color, src_container_opacity);
 				document.querySelector("#src_textarea").style.border = 'none';
 				document.querySelector("#src_textarea").style.display = 'inline-block';
 				document.querySelector("#src_textarea").style.overflow = 'hidden';
 
-				//src_h0 = $('#src_textarea').height();
-				//document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h0)+'px';
-				document.querySelector("#src_textarea").style.fontSize=String(fontSize)+'px';
+				document.querySelector("#src_textarea").style.font=src_selected_font;
+				document.querySelector("#src_textarea").style.fontSize=String(src_font_size)+'px';
 				if (document.querySelector("#src_textarea").offsetParent) {
 					document.querySelector("#src_textarea").offsetParent.onresize = (function(){
-					//	src_h = $('#src_textarea').height();
-					//	document.querySelector("#src_textarea").style.fontSize=String(0.35*src_h)+'px';
 						document.querySelector("#src_textarea").style.position='absolute';
 						document.querySelector("#src_textarea").style.width = '100%';
 						document.querySelector("#src_textarea").style.height = '100%';
@@ -622,14 +756,14 @@ function onLoad() {
 			}
 
 			if (document.querySelector("#dst_textarea_container")) {
-				document.querySelector("#dst_textarea_container").style.width = String(dstWidth)+'px';
-				document.querySelector("#dst_textarea_container").style.height = String(dstHeight)+'px';
-				document.querySelector("#dst_textarea_container").style.top = String(dstTop)+'px';
-				document.querySelector("#dst_textarea_container").style.left = String(dstLeft)+'px';
+				document.querySelector("#dst_textarea_container").style.width = String(dst_width)+'px';
+				document.querySelector("#dst_textarea_container").style.height = String(dst_height)+'px';
+				document.querySelector("#dst_textarea_container").style.top = String(dst_top)+'px';
+				document.querySelector("#dst_textarea_container").style.left = String(dst_left)+'px';
 
 				var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
-					.width(dstWidth)
-					.height(dstHeight)
+					.width(dst_width)
+					.height(dst_height)
 					.resizable().draggable({
 						cancel: 'text',
 						start: function (){
@@ -641,35 +775,30 @@ function onLoad() {
 					})
 					.css({
 						'position': 'absolute',
-						'font': selectedFont,
-						'fontSize': fontSize,
-						'color': fontColor,
-						'background-color': 'rgba(0,0,0,0.3)',
+						'fontFamily': dst_selected_font + ', sans-serif',
+						'fontSize': dst_font_size,
+						'color': dst_font_color,
+						'backgroundColor': hexToRgba(dst_container_color, dst_container_opacity),
 						'border': 'none',
 						'display': 'block',
 						'overflow': 'hidden',
 						'z-index': '2147483647'
 					})
-					.offset({top:dstTop, left:dstLeft})
+					.offset({top:dst_top, left:dst_left})
 
-				document.querySelector("#dst_textarea").style.width = String(dstWidth)+'px';
-				document.querySelector("#dst_textarea").style.height = String(dstHeight)+'px';
+				document.querySelector("#dst_textarea").style.width = String(dst_width)+'px';
+				document.querySelector("#dst_textarea").style.height = String(dst_height)+'px';
 				document.querySelector("#dst_textarea").style.width = '100%';
 				document.querySelector("#dst_textarea").style.height = '100%';
-				//document.querySelector("#dst_textarea").style.color = 'yellow';
-				document.querySelector("#dst_textarea").style.color = fontColor;
-				document.querySelector("#dst_textarea").style.backgroundColor = 'rgba(0,0,0,0.3)';
+				document.querySelector("#dst_textarea").style.color = dst_font_color;
+				document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(dst_container_color, dst_container_opacity);
 				document.querySelector("#dst_textarea").style.border = 'none';
 				document.querySelector("#dst_textarea").style.display = 'inline-block';
 				document.querySelector("#dst_textarea").style.overflow = 'hidden';
 
-				//dst_h0 = $('#dst_textarea').height();
-				//document.querySelector("#dst_textarea").style.fontSize=String(0.35*src_h0)+'px';
-				document.querySelector("#dst_textarea").style.fontSize=String(fontSize)+'px';
+				document.querySelector("#dst_textarea").style.fontSize=String(dst_font_size)+'px';
 				if (document.querySelector("#dst_textarea").offsetParent) {
 					document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
-					//	dst_h = $('#dst_textarea').height();
-					//	document.querySelector("#dst_textarea").style.fontSize=String(0.35*dst_h)+'px';
 						document.querySelector("#dst_textarea").style.position='absolute';
 						document.querySelector("#dst_textarea").style.width = '100%';
 						document.querySelector("#dst_textarea").style.height = '100%';
@@ -677,10 +806,6 @@ function onLoad() {
 					});
 				}
 			}
-
-			document.documentElement.scrollTop = videoInfo.top; // For modern browsers
-			document.body.scrollTop = videoInfo.top; // For older browsers
-
 		});
 
 
@@ -704,7 +829,6 @@ function onLoad() {
 		};
 
 
-
 		if (!recognizing) {
 			final_transcript = '';
 			interim_transcript = '';
@@ -715,6 +839,9 @@ function onLoad() {
 		};
 
 		console.log('initializing recognition: recognizing =', recognizing);
+
+		document.documentElement.scrollTop = video_info.top; // For modern browsers
+		document.body.scrollTop = video_info.top; // For older browsers
 
 		var final_transcript = '';
 		var interim_transcript = '';
@@ -740,7 +867,7 @@ function onLoad() {
 				interim_transcript = '';
 
 				startTimestamp = formatTimestamp(new Date());
-				resetPauseTimeout();
+				resetpause_timeout();
 
 				if (!recognizing) {
 					//recognizing = false;
@@ -751,9 +878,6 @@ function onLoad() {
 				} else {
 					console.log('recognition.onstart: recognizing =', recognizing);
 					recognition.lang = src_dialect;
-
-					document.documentElement.scrollTop = videoInfo.top; // For modern browsers
-					document.body.scrollTop = videoInfo.top; // For older browsers
 				}
 			};
 
@@ -779,7 +903,10 @@ function onLoad() {
 //---------------------------------------------------------------ONERROR--------------------------------------------------------------//
 
 			recognition.onerror = function(event) {
-				resetPauseTimeout(); // Reset timeout on error as well
+				resetpause_timeout(); // Reset timeout on error as well
+				if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
+				if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
+
 				if (event.error == 'no-speech') {
 					console.log('recognition.no-speech: recognizing =', recognizing);
 					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
@@ -816,19 +943,52 @@ function onLoad() {
 				interim_transcript='';
 				if (!recognizing) {
 					console.log('recognition.onend: stopping because recognizing =', recognizing);
-					//console.log('801:timestamped_final_and_interim_transcript = ', timestamped_final_and_interim_transcript);
-					var t = formatted_all_final_transcripts_excluding_last + timestamped_final_and_interim_transcript;
+
+					session_end_time = formatTimestamp(new Date());
+					console.log('session_end_time =', session_end_time);
+
+					var t = formatted_all_final_transcripts + timestamped_final_and_interim_transcript;
 					if (t) {
 						// Split text into an array of lines
-						let lines = t.trim().split('\n');
+						var lines = t.trim().split('\n');
 						// Use a Set to filter out duplicate lines
-						let uniqueLines = [...new Set(lines)];
+						var uniqueLines = [...new Set(lines)];
+						//console.log('uniqueLines = ', uniqueLines);
+
 						// Join the unique lines back into a single string
-						let uniqueText = uniqueLines.join('\n');
-						uniqueText = uniqueText + '\n';
-						saveTranscript(uniqueText);
+						var uniqueText;
+						var newUniqueLines = [];
+						var timestamps = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/;
+
+						if (uniqueLines.length===1 && uniqueLines[0] != '' && uniqueLines[0] != 'undefined') {
+							const timestamps = uniqueLines[0].match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/g);
+							if (!timestamps) {
+								var lastUniqueLines = `${session_start_time} ${timestamp_separator} ${session_end_time} : ${uniqueLines[0]}`;
+								console.log('lastUniqueLines = ', lastUniqueLines);
+								uniqueLines[0] = lastUniqueLines;
+								uniqueText = newUniqueLines.join('\n');
+								uniqueText = uniqueText + '\n';
+							}
+						}
+						else if (uniqueLines.length>1 && uniqueLines[uniqueLines.length-1] != '' && !timestamps.test(uniqueLines[uniqueLines.length-1])) {
+							var lastUniqueLines = `${startTimestamp} ${timestamp_separator} ${session_end_time} : ${uniqueLines[uniqueLines.length-1]}`;
+							console.log('lastUniqueLines = ', lastUniqueLines);
+							uniqueLines[uniqueLines.length-1] = lastUniqueLines;
+							for (var i=0; i<uniqueLines.length; i++) {
+								newUniqueLines.push(uniqueLines[i]);
+							}
+							console.log('newUniqueLines = ', newUniqueLines);
+							uniqueText = newUniqueLines.join('\n');
+							uniqueText = uniqueText + '\n';
+						}
+						else if (uniqueLines.length>1 && uniqueLines[uniqueLines.length-1] != '' && timestamps.test(uniqueLines[uniqueLines.length-1])) {
+							uniqueText = uniqueLines.join('\n');
+							uniqueText = uniqueText + '\n';
+						}
+
+						if (uniqueText) saveTranscript(uniqueText);
+
 						var tt=gtranslate(uniqueText,src,dst).then((result => {
-							//console.log('806:result = ', result);
 							result = result.replace();
 							result = result.replace(/(\d+),(\d+)/g, '$1.$2');
 							result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
@@ -840,15 +1000,12 @@ function onLoad() {
 							result = formatText(result);
 							result = result.replace(/\n\s*$/, '');
 							timestamped_translated_final_and_interim_transcript = result + "\n";
-							//console.log('818:timestamped_translated_final_and_interim_transcript = ', timestamped_translated_final_and_interim_transcript);
-							saveTranslatedTranscript(timestamped_translated_final_and_interim_transcript);
+							if (timestamped_translated_final_and_interim_transcript) saveTranslatedTranscript(timestamped_translated_final_and_interim_transcript);
 						}));
 					}
 
-					session_end_time = formatTimestamp(new Date());
-					console.log('session_end_time =', session_end_time);
-
 					return;
+
 				} else {
 					console.log('recognition.onend: keep recognizing because recognizing =', recognizing);
 					recognition.start();
@@ -863,7 +1020,7 @@ function onLoad() {
 
 			recognition.onresult = function(event) {
 				console.log('recognition.onresult: recognizing =', recognizing);
-				resetPauseTimeout();
+				resetpause_timeout();
 
 				if (!recognizing) {
 					final_transcript='';
@@ -878,36 +1035,24 @@ function onLoad() {
 
 					for (var i = event.resultIndex; i < event.results.length; ++i) {
 						if (event.results[i].isFinal) {
-							//final_transcript += event.results[i][0].transcript;
-							//final_transcript = final_transcript + '. '
-							//final_transcript = capitalize(final_transcript);
-							//final_transcript = remove_linebreak(final_transcript);
-
 							interim_transcript = '';
 							interim_started = false;
 							endTimestamp = formatTimestamp(new Date());
-							//console.log('endTimestamp =', endTimestamp);
 							final_transcript += `${startTimestamp} ${timestamp_separator} ${endTimestamp} : ${capitalize(event.results[i][0].transcript)}`;
 							final_transcript = final_transcript + '.\n'
-							//console.log('final_transcript = ', final_transcript);
 							all_final_transcripts.push(`${final_transcript}`);
-							//console.log('864:all_final_transcripts = ', all_final_transcripts);
-							all_final_transcripts_excluding_last = all_final_transcripts.slice(0, -1);
-							//console.log('866:all_final_transcripts_excluding_last = ', all_final_transcripts_excluding_last);
+							formatted_all_final_transcripts = all_final_transcripts.join("");
 						} else {
 							if (!interim_started) {
 								// Capture the timestamp only when the interim result starts
 								startTimestamp = formatTimestamp(new Date());
 								interim_started = true; // Set the flag to true
-								//console.log(`Interim transcript started at ${interim_start_timestamp}: ${interim_transcript}`);
 							}
 							interim_transcript += event.results[i][0].transcript;
-							//interim_transcript = remove_linebreak(interim_transcript);
+							interim_transcript = remove_linebreak(interim_transcript);
 							interim_transcript = capitalize(interim_transcript);
-							//interim_transcript = capitalizeSentences(interim_transcript);
 						}
 					}
-
 
 					timestamped_final_and_interim_transcript = final_transcript + interim_transcript;
 					if (containsColon(timestamped_final_and_interim_transcript)) {
@@ -917,39 +1062,35 @@ function onLoad() {
 
 					formatted_all_final_transcripts = all_final_transcripts.join("");
 					//console.log('formatted_all_final_transcripts = ', formatted_all_final_transcripts);
-					formatted_all_final_transcripts_excluding_last = all_final_transcripts_excluding_last.join("");
-					//console.log('formatted_all_final_transcripts_excluding_last = ', formatted_all_final_transcripts_excluding_last);
 
-					//console.log('show_original =', result.show_original);
-					if (show_original) {
+					if (show_src) {
 						document.querySelector("#src_textarea_container").style.display = 'block';
-						//document.querySelector("#src_textarea").innerHTML = final_transcript + interim_transcript;
-						//document.querySelector("#src_textarea").value = formatted_all_final_transcripts_excluding_last + timestamped_final_and_interim_transcript;
-						var t = formatted_all_final_transcripts_excluding_last + timestamped_final_and_interim_transcript;
+						var t = formatted_all_final_transcripts + timestamped_final_and_interim_transcript;
+						//console.log('t = ', t);
 						if (t) {
 							// Split text into an array of lines
-							let lines = t.trim().split('\n');
+							var lines = t.trim().split('\n');
 							// Use a Set to filter out duplicate lines
-							let uniqueLines = [...new Set(lines)];
+							var uniqueLines = [...new Set(lines)];
 							// Join the unique lines back into a single string
-							let uniqueText = uniqueLines.join('\n');
+							var uniqueText = uniqueLines.join('\n');
+							uniqueText = uniqueText.replace('undefined', '');
 							document.querySelector("#src_textarea").value = uniqueText;
 						}
-						document.querySelector("#src_textarea").scrollTop = document.querySelector("#src_textarea").scrollHeight;
+						if (uniqueText && document.querySelector("#src_textarea")) document.querySelector("#src_textarea").value = uniqueText;
+						if (document.querySelector("#src_textarea")) document.querySelector("#src_textarea").scrollTop = document.querySelector("#src_textarea").scrollHeight;
+
+					} else {
+						if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
 					}
 
 
-
-					//console.log('show_translation =', show_translation);
-					if (show_translation) {
-						//var  t = final_transcript + interim_transcript;
-						//var  t = document.querySelector("#src_textarea").value;
-						var  t = formatted_all_final_transcripts_excluding_last + timestamped_final_and_interim_transcript;
+					if (show_dst) {
+						var  t = uniqueText;
 						if ((Date.now() - translate_time > 1000) && recognizing) {
 							if (t) var tt=gtranslate(t,src,dst).then((result => {
 								if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'block';
 								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").style.display = 'inline-block';
-								//console.log('formatText(result) = ', formatText(result));
 								result = result.replace(/(\d+),(\d+)/g, '$1.$2');
 								result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
 								result = result.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
@@ -961,16 +1102,14 @@ function onLoad() {
 								result = formatText(result);
 								result = result.replace(/\n\s*$/, '');
 								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value=result;
-								//console.log('#dst_textarea.value = ', document.querySelector("#dst_textarea").value);
-								//if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").innerHTML=formatText(result);
 								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").scrollTop = document.querySelector("#dst_textarea").scrollHeight;
 							}));
 							translate_time = Date.now();
 						};
+					} else {
+						if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
 					}
-
 					timestamped_translated_final_and_interim_transcript = document.querySelector("#dst_textarea").value;
-
 				}
 			};
 
@@ -1035,8 +1174,6 @@ function onLoad() {
 
 
 		function capitalizeSentences(transcription) {
-			//console.log('transcription = ', transcription);
-
 			// Split the transcription into individual lines
 			const lines = transcription.split('\n');
     
@@ -1122,13 +1259,12 @@ function onLoad() {
 		}
 
 
-		function resetPauseTimeout() {
-			//all_final_transcripts += timestamped_final_and_interim_transcript;
-			clearTimeout(pauseTimeout);
-			pauseTimeout = setTimeout(function() {
-				console.log("No speech detected for " + pauseThreshold / 1000 + " seconds, stopping recognition");
+		function resetpause_timeout() {
+			clearTimeout(pause_timeout);
+			pause_timeout = setTimeout(function() {
+				console.log("No speech detected for " + pause_threshold / 1000 + " seconds, stopping recognition");
 				recognition.stop();
-			}, pauseThreshold);
+			}, pause_threshold);
 		}
 
 
@@ -1220,7 +1356,6 @@ function onLoad() {
 		}
 
 
-
 		function detectFullscreenButtonClick(videoElement, callback) {
 			document.addEventListener("fullscreenchange", function () {
 				if (document.fullscreenElement === videoElement ||
@@ -1234,7 +1369,6 @@ function onLoad() {
 				}
 			});
 		}
-
 
 
 		function formatText(text) {
@@ -1264,35 +1398,25 @@ function onLoad() {
 			}
 		}
 
-/*
-		var translate = async (t,src,dst) => {
-			var tt = new Promise(function(resolve) {
-				var i=0, len=0, r='', tt='';
-				const url = 'https://clients5.google.com/translate_a/';
-				var params = 'single?dj=1&dt=t&dt=sp&dt=ld&dt=bd&client=dict-chrome-ex&sl='+src+'&tl='+dst+'&q='+t;
-				var xmlHttp = new XMLHttpRequest();
-				var response;
-				xmlHttp.onreadystatechange = function(event) {
-					if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
-						response = JSON.parse(xmlHttp.responseText);
-						for (var i = 0, len = response.sentences?.length; i < len; i++) {
-							var r=((((response[i][0]).replace('}/g','')).replace(')/g','')).replace('\\%20/g', ' ')).replace('\\%3E/g', '>');
-							r=(((r.replace('}','')).replace(')','')).replace('\\%20/g', ' ')).replace('\\%3E/g', '>');
-							tt += r;
-						}
-						if (tt.includes('}'||')'||'%20'||'%3E')) {
-							tt=(((tt.replace('}/g','')).replace(')/g','')).replace('\\%20/g', ' ')).replace('\\%3E/g', '>');
-						}
-						resolve(tt);
-					}
-				}
-				xmlHttp.open('GET', url+params, true);
-				xmlHttp.send(null);
-				xmlHttp.onreadystatechange();
-			});
-			return await tt;
-		};
-*/
+
+		function hexToRgba(hex, opacity) {
+			let r = parseInt(hex.slice(1, 3), 16);
+			let g = parseInt(hex.slice(3, 5), 16);
+			let b = parseInt(hex.slice(5, 7), 16);
+			return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+		}
+
+
+		var debounceTimeout;
+		function saveData(key, data) {
+			clearTimeout(debounceTimeout);
+			debounceTimeout = setTimeout(() => {
+				chrome.storage.sync.set({ key: data }, () => {
+					console.log('Data saved.');
+				});
+			}, 1000); // Adjust the timeout as needed
+		}
+
 
 		var translate = async (t, src, dst) => {
 			return new Promise((resolve, reject) => {
@@ -1322,36 +1446,6 @@ function onLoad() {
 		};
 
 
-/*
-		var gtranslate = async (t,src,dst) => {
-			var tt = new Promise(function(resolve) {
-				var i=0, len=0, r='', tt='';
-				const url = 'https://translate.googleapis.com/translate_a/'
-				var params = 'single?client=gtx&sl='+src+'&tl='+dst+'&dt=t&q='+t;
-				var xmlHttp = new XMLHttpRequest();
-				var response;
-				xmlHttp.onreadystatechange = function(event) {
-					if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
-						response = JSON.parse(xmlHttp.responseText)[0];
-						for (var i = 0, len = response.length; i < len; i++) {
-							var r=((((response[i][0]).replace('}/g','')).replace(')/g','')).replace('\\%20/g', ' ')).replace('\\%3E/g', '>');
-							r=(((r.replace('}','')).replace(')','')).replace('\\%20/g', ' ')).replace('\\%3E/g', '>');
-							tt += r;
-						}
-						if (tt.includes('}'||')'||'%20'||'%3E')) {
-							tt=(((tt.replace('}/g','')).replace(')/g','')).replace('\\%20/g', ' ')).replace('\\%3E/g', '>');
-						}
-						resolve(tt);
-					}
-				}
-				xmlHttp.open('GET', url+params, true);
-				xmlHttp.send(null);
-				xmlHttp.onreadystatechange();
-			});
-			return await tt;
-		}
-*/
-
 		var gtranslate = async (t, src, dst) => {
 			return new Promise((resolve, reject) => {
 				const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=' + src + '&tl=' + dst + '&dt=t&q=' + encodeURIComponent(t);
@@ -1377,8 +1471,6 @@ function onLoad() {
 				xmlHttp.send();
 			});
 		};
-
-
 
 
 	});
