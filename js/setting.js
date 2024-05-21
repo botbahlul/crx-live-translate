@@ -995,7 +995,7 @@ function update_sample_text() {
 	document.querySelector("#dst_textarea").style.overflow = 'hidden';
 	document.querySelector("#dst_textarea").style.allow = "fullscreen";
 
-	document.querySelector("#src_textarea").style.fontFamily = dst_selected_font + ", sans-serif";
+	document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif";
 	document.querySelector("#dst_textarea").style.color = dst_font_color;
 	document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(input_dst_container_color.value, input_dst_container_opacity.value);
 	document.querySelector("#dst_textarea").style.fontSize=String(dst_font_size)+'px';
