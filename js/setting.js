@@ -8,18 +8,22 @@ var select_src_font, input_src_font_size, input_src_font_color;
 var src_selected_font_index, src_selected_font, src_font_size, src_font_color;
 var input_src_container_width_factor, input_src_container_height_factor;
 var src_container_width_factor, src_container_height_factor;
+var input_src_container_top_factor, input_src_container_left_factor, checkbox_centerize_src;
+var src_container_top_factor, src_container_left_factor, centerize_src;
 var src_container_color, src_container_opacity;
 
 var select_dst_font, input_dst_font_size, input_dst_font_color;
 var dst_selected_font_index, dst_selected_font, dst_font_size, dst_font_color;
 var input_dst_container_width_factor, input_dst_container_height_factor;
 var dst_container_width_factor, dst_container_height_factor;
+var input_dst_container_top_factor, input_dst_container_left_factor, checkbox_centerize_dst;
+var dst_container_top_factor, dst_container_left_factor, centerize_dst;
 var dst_container_color, dst_container_opacity;
 
 var src_textarea_container, src_textarea;
 var dst_text_container, dst_text;
 var sample_video_frame, column2_frame;
-var sample_video_frame_height_factor;
+var sample_video_frame_width_factor, sample_video_frame_height_factor, sample_video_frame_top_factor, sample_video_frame_left_factor;
 
 var input_pause_threshold;
 var pause_threshold;
@@ -41,6 +45,10 @@ src_fonts.forEach(function(font) {
 input_src_container_width_factor = document.querySelector("#input_src_container_width_factor");
 input_src_container_height_factor = document.querySelector("#input_src_container_height_factor");
 
+input_src_container_top_factor = document.querySelector("#input_src_container_top_factor");
+input_src_container_left_factor = document.querySelector("#input_src_container_left_factor");
+checkbox_centerize_src = document.querySelector("#checkbox_centerize_src");
+
 input_src_container_color = document.querySelector("#input_src_container_color");
 input_src_container_opacity = document.querySelector("#input_src_container_opacity");
 
@@ -61,6 +69,10 @@ dst_fonts.forEach(function(font) {
 input_dst_container_width_factor = document.querySelector("#input_dst_container_width_factor");
 input_dst_container_height_factor = document.querySelector("#input_dst_container_height_factor");
 
+input_dst_container_top_factor = document.querySelector("#input_dst_container_top_factor");
+input_dst_container_left_factor = document.querySelector("#input_dst_container_left_factor");
+checkbox_centerize_dst = document.querySelector("#checkbox_centerize_dst");
+
 input_dst_container_color = document.querySelector("#input_dst_container_color");
 input_dst_container_opacity = document.querySelector("#input_dst_container_opacity");
 
@@ -74,14 +86,21 @@ src_textarea = document.querySelector("#src_textarea");
 dst_textarea_container = document.querySelector("#dst_textarea_container");
 dst_textarea = document.querySelector("#dst_textarea");
 
-sample_video_frame_height_factor = sample_video_frame.getBoundingClientRect().height/window.innerHeight;
-console.log('sample_video_frame_height_factor = ', sample_video_frame_height_factor);
-console.log('sample_video_frame.getBoundingClientRect().height = ', sample_video_frame.getBoundingClientRect().height);
-
 sample_video_frame_width_factor = sample_video_frame.getBoundingClientRect().height/window.innerWidth;
 console.log('sample_video_frame_width_factor = ', sample_video_frame_width_factor);
 console.log('sample_video_frame.getBoundingClientRect().width = ', sample_video_frame.getBoundingClientRect().width);
 
+sample_video_frame_height_factor = sample_video_frame.getBoundingClientRect().height/window.innerHeight;
+console.log('sample_video_frame_height_factor = ', sample_video_frame_height_factor);
+console.log('sample_video_frame.getBoundingClientRect().height = ', sample_video_frame.getBoundingClientRect().height);
+
+sample_video_frame_top_factor = sample_video_frame.getBoundingClientRect().top/window.innerHeight;
+console.log('sample_video_frame_top_factor = ', sample_video_frame_top_factor);
+console.log('sample_video_frame.getBoundingClientRect().top = ', sample_video_frame.getBoundingClientRect().top);
+
+sample_video_frame_left_factor = sample_video_frame.getBoundingClientRect().left/window.innerWidth;
+console.log('sample_video_frame_left_factor = ', sample_video_frame_left_factor);
+console.log('sample_video_frame.getBoundingClientRect().left = ', sample_video_frame.getBoundingClientRect().left);
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -171,6 +190,7 @@ function CheckStoredValues() {
 		if (!src_selected_font_index) src_selected_font_index=0;
 		select_src_font.selectedIndex = src_selected_font_index;
 		console.log('CheckStoredValues after if: src_selected_font_index =', src_selected_font_index);
+		update_sample_text();
 	});
 
 	chrome.storage.sync.get(['src_selected_font'], function(result) {
@@ -179,8 +199,8 @@ function CheckStoredValues() {
 		if (result.src_selected_font) {
 			select_src_font.value = src_selected_font;
 		}
-		update_sample_text()
 		console.log('CheckStoredValues after if: src_selected_font =', src_selected_font);
+		update_sample_text();
 	});
 
 	chrome.storage.sync.get(['src_font_size'], function(result) {
@@ -190,7 +210,7 @@ function CheckStoredValues() {
 			input_src_font_size.value = src_font_size;
 		}
 		console.log('CheckStoredValues after if: src_font_size =', src_font_size);
-		update_sample_text()
+		update_sample_text();
 	});
 
 	chrome.storage.sync.get(['src_font_color'], function(result) {
@@ -199,8 +219,8 @@ function CheckStoredValues() {
 		if (result.src_font_color) {
 			input_src_font_color.value = src_font_color;
 		}
-		update_sample_text()
 		console.log('CheckStoredValues after if: src_font_color =', src_font_color);
+		update_sample_text();
 	});
 
 	chrome.storage.sync.get(['src_container_width_factor'], function(result) {
@@ -211,8 +231,8 @@ function CheckStoredValues() {
 		} else {
 			input_src_container_width_factor.value = 0.8;
 		}
-		update_sample_text()
 		console.log('CheckStoredValues after if: src_container_width_factor =', src_container_width_factor);
+		update_sample_text();
 	});
 
 	chrome.storage.sync.get(['src_container_height_factor'], function(result) {
@@ -223,8 +243,44 @@ function CheckStoredValues() {
 		} else {
 			input_src_container_height_factor.value = 0.15;
 		}
-		update_sample_text()
 		console.log('CheckStoredValues after if: src_container_height_factor =', src_container_height_factor);
+		update_sample_text();
+	});
+
+	chrome.storage.sync.get(['src_container_top_factor'], function(result) {
+		src_container_top_factor = result.src_container_top_factor;
+		console.log('CheckStoredValues before if: result.src_container_top_factor =', result.src_container_top_factor);
+		if (result.src_container_top_factor) {
+			input_src_container_top_factor.value = src_container_top_factor;
+		} else {
+			input_src_container_top_factor.value = 0.02;
+		}
+		console.log('CheckStoredValues after if: src_container_top_factor =', src_container_top_factor);
+		update_sample_text();
+	});
+
+	chrome.storage.sync.get(['centerize_src'], function(result) {
+		centerize_src = result.centerize_src;
+		console.log('CheckStoredValues before if: result.centerize_src =', result.centerize_src);
+		if (centerize_src) {
+			checkbox_centerize_src.checked = centerize_src;
+		} else {
+			checkbox_centerize_src.checked = true;
+		}
+		console.log('CheckStoredValues after if: centerize_src =', centerize_src);
+		update_sample_text();
+	});
+
+	chrome.storage.sync.get(['src_container_left_factor'], function(result) {
+		src_container_left_factor = result.src_container_left_factor;
+		console.log('CheckStoredValues before if: result.src_container_left_factor =', result.src_container_left_factor);
+		if (result.src_container_left_factor) {
+			input_src_container_left_factor.value = src_container_left_factor;
+		} else {
+			input_src_container_left_factor.value = 0.1;
+		}
+		console.log('CheckStoredValues after if: src_container_left_factor =', src_container_left_factor);
+		update_sample_text();
 	});
 
 	chrome.storage.sync.get(['src_container_color'], function(result) {
@@ -235,8 +291,8 @@ function CheckStoredValues() {
 		} else {
 			input_src_container_color.value = "#000000";
 		}
-		update_sample_text()
 		console.log('CheckStoredValues after if: src_container_color =', src_container_color);
+		update_sample_text();
 	});
 
 	chrome.storage.sync.get(['src_container_opacity'], function(result) {
@@ -247,8 +303,8 @@ function CheckStoredValues() {
 		} else {
 			input_src_container_opacity.value = 0.3;
 		}
-		update_sample_text()
 		console.log('CheckStoredValues after if: src_container_opacity =', src_container_opacity);
+		update_sample_text();
 	});
 
 
@@ -259,6 +315,7 @@ function CheckStoredValues() {
 		if (!dst_selected_font_index) dst_selected_font_index=0;
 		select_dst_font.selectedIndex = dst_selected_font_index;
 		console.log('CheckStoredValues after if: dst_selected_font_index =', dst_selected_font_index);
+		update_sample_text();
 	});
 
 	chrome.storage.sync.get(['dst_selected_font'], function(result) {
@@ -267,8 +324,8 @@ function CheckStoredValues() {
 		if (result.dst_selected_font) {
 			select_dst_font.value = dst_selected_font;
 		}
-		update_sample_text()
 		console.log('CheckStoredValues after if: dst_selected_font =', dst_selected_font);
+		update_sample_text();
 	});
 
 	chrome.storage.sync.get(['dst_font_size'], function(result) {
@@ -278,7 +335,7 @@ function CheckStoredValues() {
 			input_dst_font_size.value = dst_font_size;
 		}
 		console.log('CheckStoredValues after if: dst_font_size =', dst_font_size);
-		update_sample_text()
+		update_sample_text();
 	});
 
 	chrome.storage.sync.get(['dst_font_color'], function(result) {
@@ -287,8 +344,8 @@ function CheckStoredValues() {
 		if (result.dst_font_color) {
 			input_dst_font_color.value = dst_font_color;
 		}
-		update_sample_text()
 		console.log('CheckStoredValues after if: dst_font_color =', dst_font_color);
+		update_sample_text();
 	});
 
 	chrome.storage.sync.get(['dst_container_width_factor'], function(result) {
@@ -299,8 +356,8 @@ function CheckStoredValues() {
 		} else {
 			input_dst_container_width_factor.value = 0.8;
 		}
-		update_sample_text()
 		console.log('CheckStoredValues after if: dst_container_width_factor =', dst_container_width_factor);
+		update_sample_text();
 	});
 
 	chrome.storage.sync.get(['dst_container_height_factor'], function(result) {
@@ -311,8 +368,44 @@ function CheckStoredValues() {
 		} else {
 			input_dst_container_height_factor.value = 0.15;
 		}
-		update_sample_text()
 		console.log('CheckStoredValues after if: dst_container_height_factor =', dst_container_height_factor);
+		update_sample_text();
+	});
+
+	chrome.storage.sync.get(['dst_container_top_factor'], function(result) {
+		dst_container_top_factor = result.dst_container_top_factor;
+		console.log('CheckStoredValues before if: result.dst_container_top_factor =', result.dst_container_top_factor);
+		if (result.dst_container_top_factor) {
+			input_dst_container_top_factor.value = dst_container_top_factor;
+		} else {
+			input_dst_container_top_factor.value = 0.65;
+		}
+		console.log('CheckStoredValues after if: dst_container_top_factor =', dst_container_top_factor);
+		update_sample_text();
+	});
+
+	chrome.storage.sync.get(['centerize_dst'], function(result) {
+		centerize_dst = result.centerize_dst;
+		console.log('centerize_dst =', centerize_dst);
+		if (centerize_dst) {
+			checkbox_centerize_dst.checked = centerize_dst;
+		} else {
+			checkbox_centerize_dst.checked = true;
+		}
+		console.log('CheckStoredValues after if: centerize_dst =', centerize_dst);
+		update_sample_text();
+	});
+
+	chrome.storage.sync.get(['dst_container_left_factor'], function(result) {
+		dst_container_left_factor = result.dst_container_left_factor;
+		console.log('CheckStoredValues before if: result.dst_container_left_factor =', result.dst_container_left_factor);
+		if (result.dst_container_left_factor) {
+			input_dst_container_left_factor.value = dst_container_left_factor;
+		} else {
+			input_dst_container_left_factor.value = 0.1;
+		}
+		console.log('CheckStoredValues after if: dst_container_top_factor =', dst_container_top_factor);
+		update_sample_text();
 	});
 
 	chrome.storage.sync.get(['dst_container_color'], function(result) {
@@ -323,8 +416,8 @@ function CheckStoredValues() {
 		} else {
 			input_dst_container_color.value = "#000000";
 		}
-		update_sample_text()
 		console.log('CheckStoredValues after if: dst_container_color =', dst_container_color);
+		update_sample_text();
 	});
 
 	chrome.storage.sync.get(['dst_container_opacity'], function(result) {
@@ -335,11 +428,11 @@ function CheckStoredValues() {
 		} else {
 			input_dst_container_opacity.value = 0.3;
 		}
-		update_sample_text()
 		console.log('CheckStoredValues after if: dst_container_opacity =', dst_container_opacity);
+		update_sample_text();
 	});
-
 };
+
 
 select_src_language.addEventListener('change', function(){
 	update_src_country()
@@ -397,6 +490,17 @@ input_src_container_width_factor.addEventListener("input", update_sample_text);
 input_src_container_width_factor.addEventListener("change", update_sample_text);
 input_src_container_height_factor.addEventListener("input", update_sample_text);
 input_src_container_height_factor.addEventListener("change", update_sample_text);
+input_src_container_top_factor.addEventListener("input", update_sample_text);
+input_src_container_top_factor.addEventListener("change", update_sample_text);
+checkbox_centerize_src.addEventListener("change", update_sample_text);
+input_src_container_left_factor.addEventListener('input', function(){
+	checkbox_centerize_src.checked = false;
+	update_sample_text();
+});
+input_src_container_left_factor.addEventListener('change', function(){
+	checkbox_centerize_src.checked = false;
+	update_sample_text();
+});
 input_src_container_color.addEventListener("input", update_sample_text);
 input_src_container_color.addEventListener("change", update_sample_text);
 input_src_container_opacity.addEventListener("input", update_sample_text);
@@ -411,6 +515,17 @@ input_dst_container_width_factor.addEventListener("input", update_sample_text);
 input_dst_container_width_factor.addEventListener("change", update_sample_text);
 input_dst_container_height_factor.addEventListener("input", update_sample_text);
 input_dst_container_height_factor.addEventListener("change", update_sample_text);
+input_dst_container_top_factor.addEventListener("input", update_sample_text);
+input_dst_container_top_factor.addEventListener("change", update_sample_text);
+checkbox_centerize_dst.addEventListener("change", update_sample_text);
+input_dst_container_left_factor.addEventListener('input', function(){
+	checkbox_centerize_dst.checked = false;
+	update_sample_text();
+});
+input_dst_container_left_factor.addEventListener('change', function(){
+	checkbox_centerize_dst.checked = false;
+	update_sample_text();
+});
 input_dst_container_color.addEventListener("input", update_sample_text);
 input_dst_container_color.addEventListener("change", update_sample_text);
 input_dst_container_opacity.addEventListener("input", update_sample_text);
@@ -434,6 +549,9 @@ save_button.addEventListener('click', function(){
 		'src_font_color': input_src_font_color.value,
 		'src_container_width_factor': input_src_container_width_factor.value,
 		'src_container_height_factor': input_src_container_height_factor.value,
+		'src_container_top_factor': input_src_container_top_factor.value,
+		'src_container_left_factor': input_src_container_left_factor.value,
+		'centerize_src': checkbox_centerize_src.value,
 		'src_container_color': input_src_container_color.value,
 		'src_container_opacity': input_src_container_opacity.value,
 
@@ -443,6 +561,9 @@ save_button.addEventListener('click', function(){
 		'dst_font_color': input_dst_font_color.value,
 		'dst_container_width_factor': input_dst_container_width_factor.value,
 		'dst_container_height_factor': input_dst_container_height_factor.value,
+		'dst_container_top_factor': input_dst_container_top_factor.value,
+		'dst_container_left_factor': input_dst_container_left_factor.value,
+		'centerize_dst': checkbox_centerize_dst.value,
 		'dst_container_color': input_dst_container_color.value,
 		'dst_container_opacity': input_dst_container_opacity.value,
 
@@ -462,6 +583,9 @@ save_button.addEventListener('click', function(){
 		console.log('save src_font_color = ', input_src_font_color.value);
 		console.log('save src_container_width_factor = ', input_src_container_width_factor.value);
 		console.log('save src_container_height_factor = ', input_src_container_height_factor.value);
+		console.log('save src_container_top_factor = ', input_src_container_top_factor.value);
+		console.log('save src_container_left_factor = ', input_src_container_left_factor.value);
+		console.log('save centerize_src = ', checkbox_centerize_src.value);
 		console.log('save src_container_color = ', input_src_container_color.value);
 		console.log('save src_container_opacity = ', input_src_container_opacity.value);
 		console.log('save dst_selected_font_index = ', select_dst_font.selectedIndex);
@@ -470,6 +594,9 @@ save_button.addEventListener('click', function(){
 		console.log('save dst_font_color = ', input_dst_font_color.value);
 		console.log('save dst_container_width_factor = ', input_dst_container_width_factor.value);
 		console.log('save dst_container_height_factor = ', input_dst_container_height_factor.value);
+		console.log('save dst_container_top_factor = ', input_dst_container_top_factor.value);
+		console.log('save dst_container_left_factor = ', input_dst_container_left_factor.value);
+		console.log('save centerize_dst = ', checkbox_centerize_dst.value);
 		console.log('save dst_container_color = ', input_dst_container_color.value);
 		console.log('save dst_container_opacity = ', input_dst_container_opacity.value);
 	});
@@ -813,6 +940,27 @@ function update_sample_text() {
 	console.log('src_container_height_factor =', src_container_height_factor);
 	saveData('src_container_height_factor', src_container_height_factor);
 
+	src_container_top_factor = input_src_container_top_factor.value;
+	console.log('src_container_top_factor =', src_container_top_factor);
+	saveData('src_container_top_factor', src_container_top_factor);
+
+	centerize_src = checkbox_centerize_src.checked;
+	console.log('centerize_src =', centerize_src);
+	saveData('centerize_src', centerize_src);
+
+	if (centerize_src) {
+		src_left = sample_video_frame.getBoundingClientRect().left + 0.5*(sample_video_frame.getBoundingClientRect().width - src_container_width_factor*sample_video_frame.getBoundingClientRect().width);
+		console.log('src_left =', src_left);
+		src_container_left_factor = (src_left - sample_video_frame.getBoundingClientRect().left)/sample_video_frame.getBoundingClientRect().width;
+		console.log('src_container_left_factor =', src_container_left_factor);
+		document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
+		saveData('src_container_left_factor', src_container_left_factor);
+	} else {
+		src_container_left_factor = document.querySelector("#input_src_container_left_factor").value;
+		console.log('src_container_left_factor =', src_container_left_factor);
+		saveData('src_container_left_factor', src_container_left_factor);
+	}
+
 	src_container_color = input_src_container_color.value;
 	console.log('src_container_color =', src_container_color);
 	saveData('src_container_color', src_container_color);
@@ -846,6 +994,27 @@ function update_sample_text() {
 	console.log('dst_container_height_factor =', dst_container_height_factor);
 	saveData('dst_container_height_factor', dst_container_width_factor);
 
+	dst_container_top_factor = input_dst_container_top_factor.value;
+	console.log('dst_container_top_factor =', dst_container_top_factor);
+	saveData('dst_container_top_factor', dst_container_top_factor);
+
+	centerize_dst = checkbox_centerize_dst.checked;
+	console.log('centerize_dst =', centerize_dst);
+	saveData('centerize_dst', centerize_dst);
+
+	if (centerize_dst) {
+		dst_left = sample_video_frame.getBoundingClientRect().left + 0.5*(sample_video_frame.getBoundingClientRect().width - dst_container_width_factor*sample_video_frame.getBoundingClientRect().width);
+		console.log('dst_left =', dst_left);
+		dst_container_left_factor = (dst_left - sample_video_frame.getBoundingClientRect().left)/sample_video_frame.getBoundingClientRect().width;
+		console.log('dst_container_left_factor =', dst_container_left_factor);
+		document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
+		saveData('dst_container_left_factor', dst_container_left_factor);
+	} else {
+		dst_container_left_factor = document.querySelector("#input_dst_container_left_factor").value;
+		console.log('dst_container_left_factor =', dst_container_left_factor);
+		saveData('dst_container_left_factor', dst_container_left_factor);
+	}
+
 	dst_container_color = input_dst_container_color.value;
 	console.log('dst_container_color =', dst_container_color);
 	saveData('dst_container_color', dst_container_color);
@@ -854,25 +1023,126 @@ function update_sample_text() {
 	console.log('dst_container_opacity =', dst_container_opacity);
 	saveData('dst_container_opacity', dst_container_opacity);
 
+	regenerate_textarea();
+}
+
+
+document.addEventListener('fullscreenchange', function(event) {
+	regenerate_textarea();
+});
+
+
+window.addEventListener('resize', function(event){
+	regenerate_textarea();
+});
+
+window.addEventListener('fullscreenchange', function(event){
+	regenerate_textarea();
+});
+
+
+function hexToRgba(hex, opacity) {
+	let r = parseInt(hex.slice(1, 3), 16);
+    let g = parseInt(hex.slice(3, 5), 16);
+    let b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
+
+var debounceTimeout;
+function saveData(key, data) {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => {
+        chrome.storage.sync.set({ key: data }, () => {
+            console.log('Data saved.');
+        });
+    }, 1000); // Adjust the timeout as needed
+}
+
+
+function get_textarea_rect() {
+	document.documentElement.scrollTop = 0; // For modern browsers
+	document.body.scrollTop = 0; // For older browsers
+
+	var sample_video_frame_rect = document.querySelector("#sample_video_frame").getBoundingClientRect();
+
+	//console.log("top =", sample_video_frame_rect.top);
+	//console.log("left =", sample_video_frame_rect.left);
+	//console.log("width =", sample_video_frame_rect.width);
+	//console.log("height =", sample_video_frame_rect.height);
+
+	src_width = document.querySelector("#input_src_container_width_factor").value*sample_video_frame_rect.width;
+	//console.log('src_width =', src_width);
+
+	src_height = document.querySelector("#input_src_container_height_factor").value*sample_video_frame_rect.height;
+	//console.log('src_height =', src_width);
+
+	src_top = sample_video_frame_rect.top + document.querySelector("#input_src_container_top_factor").value*sample_video_frame_rect.height;
+	//console.log('src_top =', src_top);
+
+	if (document.querySelector("#checkbox_centerize_src").checked) {
+		src_left = sample_video_frame_rect.left + 0.5*(sample_video_frame_rect.width-src_width);
+		//console.log('src_left =', src_left);
+	} else {
+		src_left = sample_video_frame_rect.left + document.querySelector("#input_src_container_left_factor").value*sample_video_frame_rect.width;
+		//console.log('src_left =', src_left);
+	}
+
+	dst_width = document.querySelector("#input_dst_container_width_factor").value*sample_video_frame_rect.width;
+	//console.log('dst_width =', dst_width);
+		
+	dst_height = document.querySelector("#input_dst_container_height_factor").value*sample_video_frame_rect.height;
+	//console.log('dst_height =', dst_height);
+
+	dst_top = sample_video_frame_rect.top + document.querySelector("#input_dst_container_top_factor").value*sample_video_frame_rect.height;
+	//console.log('dst_top =', dst_top);
+
+	if (document.querySelector("#checkbox_centerize_dst").checked) {
+		dst_left = sample_video_frame_rect.left + 0.5*(sample_video_frame_rect.width-dst_width);
+		//console.log('dst_left =', dst_left);
+	} else {
+		dst_left = sample_video_frame_rect.left + document.querySelector("#input_dst_container_left_factor").value*sample_video_frame_rect.width;
+		//console.log('dst_left =', dst_left);
+	}
+
+	return {
+		src_width: src_width,
+		src_height: src_height,
+		src_top: src_top,
+		src_left: src_left,
+		dst_width: dst_width,
+		dst_height: dst_height,
+		dst_top: dst_top,
+		dst_left: dst_left
+	}
+}
+
+
+function regenerate_textarea() {
+
+	document.documentElement.scrollTop = 0; // For modern browsers
+	document.body.scrollTop = 0; // For older browsers
+
 	src_width = src_container_width_factor*sample_video_frame.getBoundingClientRect().width;
+	console.log('src_width = ', src_width);
 	src_height = src_container_height_factor*sample_video_frame.getBoundingClientRect().height;
-	src_left = sample_video_frame.getBoundingClientRect().left + 0.5*(sample_video_frame.getBoundingClientRect().width-src_container_width_factor*sample_video_frame.getBoundingClientRect().width);
-	src_top = sample_video_frame.getBoundingClientRect().top + 0.02*sample_video_frame.getBoundingClientRect().height;
-
-	dst_width = dst_container_width_factor*sample_video_frame.getBoundingClientRect().width;
-	dst_height = dst_container_height_factor*sample_video_frame.getBoundingClientRect().height;
-	dst_left = sample_video_frame.getBoundingClientRect().left + 0.5*(sample_video_frame.getBoundingClientRect().width-dst_container_width_factor*sample_video_frame.getBoundingClientRect().width);
-	dst_top = sample_video_frame.getBoundingClientRect().top + 0.65*sample_video_frame.getBoundingClientRect().height;
-
+	console.log('src_height = ', src_height);
+	src_top = sample_video_frame.getBoundingClientRect().top + src_container_top_factor*sample_video_frame.getBoundingClientRect().height;
+	console.log('src_top = ', src_top);
+	
+	if (centerize_src) {
+		src_left = sample_video_frame.getBoundingClientRect().left + 0.5*(sample_video_frame.getBoundingClientRect().width - src_container_width_factor*sample_video_frame.getBoundingClientRect().width);
+		console.log('centerize_src = true : src_left = ', src_left);
+	} else {
+		src_left = sample_video_frame.getBoundingClientRect().left + src_container_left_factor*sample_video_frame.getBoundingClientRect().width;
+		console.log('centerize_src = false : src_left = ', src_left);
+	}
 
 	src_textarea_container.style.position = 'absolute';
 	src_textarea_container.style.width = String(src_container_width_factor*sample_video_frame.getBoundingClientRect().width) + "px";
-	src_textarea_container.style.height = String(src_container_height_factor*sample_video_frame.getBoundingClientRect().height) + "px";
-	src_textarea_container.style.left = String(sample_video_frame.getBoundingClientRect().left + 0.5*(sample_video_frame.getBoundingClientRect().width-src_container_width_factor*sample_video_frame.getBoundingClientRect().width)) + "px";
-	console.log('sample_video_frame.getBoundingClientRect().left =', sample_video_frame.getBoundingClientRect().left);
-	console.log('src_left =', src_textarea_container.style.left);
-	src_textarea_container.style.top = String(sample_video_frame.getBoundingClientRect().top + 0.02*sample_video_frame.getBoundingClientRect().height) + "px";
-
+	src_textarea_container.style.height = String(src_height) + "px";
+	src_textarea_container.style.top = String(src_top) + "px";
+	src_textarea_container.style.left = String(src_left) + "px";
     src_textarea.style.fontFamily = src_selected_font + ", sans-serif";
     src_textarea.style.fontSize = String(src_font_size) + "px";
 	src_textarea.style.color = src_font_color;
@@ -880,31 +1150,7 @@ function update_sample_text() {
 	src_textarea.scrollTop = document.querySelector("#src_textarea").scrollHeight;
 	src_textarea.style.backgroundColor = hexToRgba(input_src_container_color.value, input_src_container_opacity.value);
 	src_textarea.style.width = "100%";
-	console.log('src_width =', src_textarea.style.width);
 	src_textarea.style.height = "100%";
-	console.log('src_height =', src_textarea.style.height);
-	//src_textarea.style.left = String(0.2*(window.innerWidth-0.5*window.innerWidth)) + "px";
-
-
-	dst_textarea_container.style.position = 'absolute';
-	dst_textarea_container.style.width = String(dst_container_width_factor*sample_video_frame.getBoundingClientRect().width) + "px";
-	dst_textarea_container.style.height = String(dst_container_height_factor*sample_video_frame.getBoundingClientRect().height) + "px";
-	dst_textarea_container.style.left = String(sample_video_frame.getBoundingClientRect().left + 0.5*(sample_video_frame.getBoundingClientRect().width-dst_container_width_factor*sample_video_frame.getBoundingClientRect().width)) + "px";
-	console.log('sample_video_frame.getBoundingClientRect().left =', sample_video_frame.getBoundingClientRect().left);
-	console.log('dst_left =', dst_textarea_container.style.left);
-	dst_textarea_container.style.top = String(sample_video_frame.getBoundingClientRect().top + 0.65*sample_video_frame.getBoundingClientRect().height) + "px";
-
-    dst_textarea.style.fontFamily = dst_selected_font + ", sans-serif";
-    dst_textarea.style.fontSize = String(dst_font_size) + "px";
-	dst_textarea.style.color = dst_font_color;
-	dst_textarea.innerHTML = "Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text";
-	dst_textarea.scrollTop = document.querySelector("#src_textarea").scrollHeight;
-	dst_textarea.style.backgroundColor = hexToRgba(input_dst_container_color.value, input_dst_container_opacity.value);
-	dst_textarea.style.width = "100%";
-	console.log('dst_width =', dst_textarea.style.width);
-	dst_textarea.style.height = "100%";
-	console.log('dst_height =', dst_textarea.style.height);
-
 
 	var src_textarea_container$=$('<div id="src_textarea_container"><div id="src_textarea"></div></div>')
 		.width(src_width)
@@ -962,6 +1208,34 @@ function update_sample_text() {
 	});
 
 
+	dst_width = dst_container_width_factor*sample_video_frame.getBoundingClientRect().width;
+	console.log('dst_width = ', dst_width);
+	dst_height = dst_container_height_factor*sample_video_frame.getBoundingClientRect().height;
+	console.log('dst_height = ', dst_height);
+	dst_top = sample_video_frame.getBoundingClientRect().top + dst_container_top_factor*sample_video_frame.getBoundingClientRect().height;
+	console.log('dst_top = ', dst_top);
+	
+	if (centerize_dst) {
+		dst_left = sample_video_frame.getBoundingClientRect().left + 0.5*(sample_video_frame.getBoundingClientRect().width - dst_container_width_factor*sample_video_frame.getBoundingClientRect().width);
+		console.log('centerize_dst = true : dst_left = ', dst_left);
+	} else {
+		dst_left = sample_video_frame.getBoundingClientRect().left + dst_container_left_factor*sample_video_frame.getBoundingClientRect().width;
+		console.log('centerize_dst = false : dst_left = ', dst_left);
+	}
+
+	dst_textarea_container.style.position = 'absolute';
+	dst_textarea_container.style.width = String(dst_width) + "px";
+	dst_textarea_container.style.height = String(dst_height) + "px";
+	dst_textarea_container.style.top = String(dst_top) + "px";
+	dst_textarea_container.style.left = String(dst_left) + "px";
+    dst_textarea.style.fontFamily = dst_selected_font + ", sans-serif";
+    dst_textarea.style.fontSize = String(dst_font_size) + "px";
+	dst_textarea.style.color = dst_font_color;
+	dst_textarea.innerHTML = "Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text";
+	dst_textarea.scrollTop = document.querySelector("#dst_textarea").scrollHeight;
+	dst_textarea.style.backgroundColor = hexToRgba(input_dst_container_color.value, input_dst_container_opacity.value);
+	dst_textarea.style.width = "100%";
+	dst_textarea.style.height = "100%";
 
 	var dst_textarea_container$=$('<div id="dst_textarea_container"><div id="dst_textarea"></div></div>')
 		.width(dst_width)
@@ -1016,144 +1290,4 @@ function update_sample_text() {
 		input_dst_container_height_factor.value = dst_container_height_factor;
 		chrome.storage.sync.set({'dst_container_height_factor' : dst_container_height_factor},(()=>{}));
 	});
-
-}
-
-function hexToRgba(hex, opacity) {
-	let r = parseInt(hex.slice(1, 3), 16);
-    let g = parseInt(hex.slice(3, 5), 16);
-    let b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-}
-
-
-window.addEventListener('resize', function(event){
-	input_src_container_width_factor = document.querySelector("#input_src_container_width_factor");
-	src_container_width_factor = input_src_container_width_factor.value;
-	input_src_container_height_factor = document.querySelector("#input_src_container_height_factor");
-	src_container_height_factor = input_src_container_height_factor.value;
-	console.log('src_container_width_factor = ', src_container_width_factor);
-
-	src_width = src_container_width_factor*sample_video_frame.getBoundingClientRect().width;
-	src_height = src_container_height_factor*sample_video_frame.getBoundingClientRect().height;
-	src_left = sample_video_frame.getBoundingClientRect().left + 0.5*(sample_video_frame.getBoundingClientRect().width-src_container_width_factor*sample_video_frame.getBoundingClientRect().width);
-	console.log('sample_video_frame.getBoundingClientRect().left = ', sample_video_frame.getBoundingClientRect().left);
-	console.log('src_left = ', src_left);
-	src_top = sample_video_frame.getBoundingClientRect().top + 0.02*sample_video_frame.getBoundingClientRect().height;
-
-	if (document.querySelector("#src_textarea_container")) {
-		document.querySelector("#src_textarea_container").style.fontFamily = src_selected_font + ", sans-serif";
-		document.querySelector("#src_textarea_container").style.width = String(src_width)+'px';
-		document.querySelector("#src_textarea_container").style.height = String(src_height)+'px';
-		document.querySelector("#src_textarea_container").style.top = String(src_top)+'px';
-		document.querySelector("#src_textarea_container").style.left = String(src_left)+'px';
-
-		var src_textarea_container$=$('<div id="src_textarea_container"><div id="src_textarea"></div></div>')
-			.width(src_width)
-			.height(src_height)
-			.resizable().draggable({
-				cancel: 'text',
-				start: function (){
-					$('#src_textarea').focus();
-				},
-				stop: function (){
-					$('#src_textarea').focus();
-				}
-			})
-			.css({
-				'position': 'absolute',
-				'fontFamily': src_selected_font + ', sans-serif',
-				'fontSize': src_font_size,
-				'color': src_font_color,
-				'backgroundColor': hexToRgba(input_src_container_color.value, input_src_container_opacity.value),
-				'border': 'none',
-				'display': 'block',
-				'overflow': 'hidden',
-				'z-index': '2147483647'
-			})
-			.offset({top:src_top, left:src_left})
-
-		document.querySelector("#src_textarea").style.width = String(src_width)+'px';
-		document.querySelector("#src_textarea").style.height = String(src_height)+'px';
-		document.querySelector("#src_textarea").style.width = '100%';
-		document.querySelector("#src_textarea").style.height = '100%';
-		document.querySelector("#src_textarea").style.border = 'none';
-		document.querySelector("#src_textarea").style.display = 'inline-block';
-		document.querySelector("#src_textarea").style.overflow = 'hidden';
-
-		document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
-		document.querySelector("#src_textarea").style.color = src_font_color;
-		document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(input_src_container_color.value, input_src_container_opacity.value);
-		document.querySelector("#src_textarea").style.fontSize=String(src_font_size)+'px';
-	}
-
-
-	input_dst_container_width_factor = document.querySelector("#input_dst_container_width_factor");
-	dst_container_width_factor = input_dst_container_width_factor.value;
-	input_dst_container_height_factor = document.querySelector("#input_dst_container_height_factor");
-	dst_container_height_factor = input_dst_container_height_factor.value;
-	console.log('dst_container_height_factor = ', dst_container_height_factor);
-
-	dst_width = dst_container_width_factor*sample_video_frame.getBoundingClientRect().width;
-	dst_height = dst_container_height_factor*sample_video_frame.getBoundingClientRect().height;
-	dst_left = sample_video_frame.getBoundingClientRect().left + 0.5*(sample_video_frame.getBoundingClientRect().width-dst_container_width_factor*sample_video_frame.getBoundingClientRect().width);
-	console.log('sample_video_frame.getBoundingClientRect().left = ', sample_video_frame.getBoundingClientRect().left);
-	console.log('dst_left = ', dst_left);
-	dst_top = sample_video_frame.getBoundingClientRect().top + 0.65*sample_video_frame.getBoundingClientRect().height;
-
-	if (document.querySelector("#dst_textarea_container")) {
-		document.querySelector("#dst_textarea_container").style.fontFamily = dst_selected_font + ", sans-serif";
-		document.querySelector("#dst_textarea_container").style.width = String(dst_width)+'px';
-		document.querySelector("#dst_textarea_container").style.height = String(dst_height)+'px';
-		document.querySelector("#dst_textarea_container").style.top = String(dst_top)+'px';
-		document.querySelector("#dst_textarea_container").style.left = String(dst_left)+'px';
-
-		var dst_textarea_container$=$('<div id="dst_textarea_container"><div id="dst_textarea"></div></div>')
-			.width(dst_width)
-			.height(dst_height)
-			.resizable().draggable({
-				cancel: 'text',
-				start: function (){
-					$('#dst_textarea').focus();
-				},
-				stop: function (){
-					$('#dst_textarea').focus();
-				}
-			})
-			.css({
-				'position': 'absolute',
-				'fontFamily': dst_selected_font + ', sans-serif',
-				'font-size': dst_font_size,
-				'color': dst_font_color,
-				'backgroundColor': hexToRgba(input_dst_container_color.value, input_dst_container_opacity.value),
-				'border': 'none',
-				'display': 'block',
-				'overflow': 'hidden',
-				'z-index': '2147483647'
-			})
-			.offset({top:dst_top, left:dst_left})
-
-		document.querySelector("#dst_textarea").style.width = String(dst_width)+'px';
-		document.querySelector("#dst_textarea").style.height = String(dst_height)+'px';
-		document.querySelector("#dst_textarea").style.width = '100%';
-		document.querySelector("#dst_textarea").style.height = '100%';
-		document.querySelector("#dst_textarea").style.border = 'none';
-		document.querySelector("#dst_textarea").style.display = 'inline-block';
-		document.querySelector("#dst_textarea").style.overflow = 'hidden';
-
-		document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif";
-		document.querySelector("#dst_textarea").style.color = dst_font_color;
-		document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(input_dst_container_color.value, input_dst_container_opacity.value);
-		document.querySelector("#dst_textarea").style.fontSize=String(dst_font_size)+'px';
-	}
-});
-
-var debounceTimeout;
-function saveData(key, data) {
-    clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(() => {
-        chrome.storage.sync.set({ key: data }, () => {
-            console.log('Data saved.');
-        });
-    }, 1000); // Adjust the timeout as needed
 }
