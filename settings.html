@@ -90,6 +90,14 @@
 		width: 56px; /* Adjust width as needed */
 		height: 16px; /* Adjust height as needed */
 	}
+	#input_src_container_top_factor {
+		width: 56px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
+	#input_src_container_left_factor {
+		width: 56px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
 	#input_src_container_color {
 		width: 56px; /* Adjust width as needed */
 		height: 16px; /* Adjust height as needed */
@@ -126,6 +134,14 @@
 		width: 56px; /* Adjust width as needed */
 		height: 16px; /* Adjust height as needed */
 	}
+	#input_dst_container_top_factor {
+		width: 56px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
+	#input_dst_container_left_factor {
+		width: 56px; /* Adjust width as needed */
+		height: 16px; /* Adjust height as needed */
+	}
 	#input_dst_container_color {
 		width: 56px; /* Adjust width as needed */
 		height: 16px; /* Adjust height as needed */
@@ -134,9 +150,6 @@
 		width: 80px; /* Adjust width as needed */
 		height: 4px; /* Adjust height as needed */
 	}
-
-
-
 </style>
 <html lang='en'>
 <head>
@@ -147,7 +160,7 @@
 </head>
 <body>
 
-	<h1 style="font-size: 16px">Live Translate v0.2.1</h1> 
+	<h1 style="font-size: 16px">Live Translate v0.2.2</h1> 
 	<br>
 	<h2 style="font-size: 14px">Options</h2> 
 
@@ -158,7 +171,7 @@
 				<select id='select_src_language' style='width: 160px' style='font-size: 12px'></select>
 				<select id='select_src_dialect' style='width: 240px' style='font-size: 12px'></select>
 				<br>
-				<input type="checkbox" id="checkbox_show_src" name="checkbox_show_src" style='font-size: 12px'>
+				<input type="checkbox" id="checkbox_show_src" name="checkbox_show_src" style='font-size: 12px' checked='true;'>
 				<label style='font-size: 12px'> Show recognized audio text </label>
 				<br>
 				<label for="select_src_font" style="font-size: 12px">Subtitle Font&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
@@ -174,7 +187,18 @@
 				<input type="number" id="input_src_container_height_factor" min="0" max="1" step="0.001" value="0.15" style='font-size:12px'>
 				<label for="src_container_height_continuing_text" style="font-size: 12px">x Video Height&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
 				<br>
-				<label for="input_src_container_color" style="font-size: 12px">Container Color&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<label for="input_src_container_top_factor" style="font-size: 12px">Container Top&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<input type="number" id="input_src_container_top_factor" min="0" max="1" step="0.01" value="0.01" style='font-size:12px'>
+				<label for="src_container_top_continuing_text" style="font-size: 12px">x Video Height</label>
+				<br>
+				<label for="input_src_container_left_factor" style="font-size: 12px">Container Left&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<input type="number" id="input_src_container_left_factor" min="0" max="1" step="0.01" value="0.1" style='font-size:12px'>
+				<label for="src_container_left_continuing_text" style="font-size: 12px">x Video Width</label>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				<input type="checkbox" id="checkbox_centerize_src" name="checkbox_centerize_src" style='font-size: 12px' checked='true;'>
+				<label style='font-size: 12px'> Centerize Horizontally </label>
+				<br>
+				<label for="input_src_container_color" style="font-size: 12px">Container Color&nbsp;&nbsp;&nbsp;&nbsp;</label>
 				<input type="color" id="input_src_container_color" value="#000000" style='font-size:12px'>
 				<br>
 				<label for="input_src_container_opacity" style="font-size: 12px">Container Opacity&nbsp;</label>
@@ -185,7 +209,7 @@
 				<select id='select_dst_language' style='width:160px' style='font-size:12px'></select>
 				<select id='select_dst_dialect' style='width:240px' style='font-size:12px'></select>
 				<br>
-				<input type="checkbox" id="checkbox_show_dst" name="checkbox_show_dst" style='font-size:12px'>
+				<input type="checkbox" id="checkbox_show_dst" name="checkbox_show_dst" style='font-size:12px' checked='true;'>
 				<label style='font-size: 12px'> Show translation text</label>
 				<br>
 				<label for="select_dst_font" style="font-size: 12px">Subtitle Font&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
@@ -201,7 +225,18 @@
 				<input type="number" id="input_dst_container_height_factor" min="0" max="1" step="0.001" value="0.15" style='font-size:12px'>
 				<label for="dst_container_height_continuing_text" style="font-size: 12px">x Video Height</label>
 				<br>
-				<label for="input_dst_container_color" style="font-size: 12px">Container Color&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<label for="input_dst_container_top_factor" style="font-size: 12px">Container Top&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<input type="number" id="input_dst_container_top_factor" min="0" max="1" step="0.01" value="0.65" style='font-size:12px'>
+				<label for="dst_container_top_continuing_text" style="font-size: 12px">x Video Height</label>
+				<br>
+				<label for="input_dst_container_left_factor" style="font-size: 12px">Container Left&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<input type="number" id="input_dst_container_left_factor" min="0" max="1" step="0.01" value="0.1" style='font-size:12px'>
+				<label for="dst_container_left_continuing_text" style="font-size: 12px">x Video Width</label>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				<input type="checkbox" id="checkbox_centerize_dst" name="checkbox_centerize_dst" style='font-size: 12px' checked='true;'>
+				<label style='font-size: 12px'> Centerize Horizontally </label>
+				<br>
+				<label for="input_dst_container_color" style="font-size: 12px">Container Color&nbsp;&nbsp;&nbsp;&nbsp;</label>
 				<input type="color" id="input_dst_container_color" value="#000000" style='font-size:12px'>
 				<br>
 				<label for="input_dst_container_opacity" style="font-size: 12px">Container Opacity&nbsp;</label>
@@ -210,7 +245,7 @@
 				<br>
 				<label for="input_pause_threshold" style='font-size: 12px'>Pause Threshold&nbsp;&nbsp;&nbsp;</label>
 				<input style='width:60px' type="number" id="input_pause_threshold" min="0" step="1" value="5000" style='font-size:12px'>
-				<label for="pause_threshold_continuing_text" style='font-size: 12px'> (in miliseconds)</label>
+				<label for="pause_threshold_continuing_text" style='font-size: 12px'> (in miliseconds, silent duration that will trigger speech engine to restart)</label>
 
 				<br><br>
 				<button id='save_button' style='position:relative'>Save</button>
