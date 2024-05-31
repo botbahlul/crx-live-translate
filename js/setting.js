@@ -86,21 +86,21 @@ src_textarea = document.querySelector("#src_textarea");
 dst_textarea_container = document.querySelector("#dst_textarea_container");
 dst_textarea = document.querySelector("#dst_textarea");
 
-sample_video_frame_width_factor = sample_video_frame.getBoundingClientRect().height/window.innerWidth;
+sample_video_frame_width_factor = getRect(sample_video_frame).height/window.innerWidth;
 console.log('sample_video_frame_width_factor = ', sample_video_frame_width_factor);
-console.log('sample_video_frame.getBoundingClientRect().width = ', sample_video_frame.getBoundingClientRect().width);
+console.log('getRect(sample_video_frame).width = ', getRect(sample_video_frame).width);
 
-sample_video_frame_height_factor = sample_video_frame.getBoundingClientRect().height/window.innerHeight;
+sample_video_frame_height_factor = getRect(sample_video_frame).height/window.innerHeight;
 console.log('sample_video_frame_height_factor = ', sample_video_frame_height_factor);
-console.log('sample_video_frame.getBoundingClientRect().height = ', sample_video_frame.getBoundingClientRect().height);
+console.log('getRect(sample_video_frame).height = ', getRect(sample_video_frame).height);
 
-sample_video_frame_top_factor = sample_video_frame.getBoundingClientRect().top/window.innerHeight;
+sample_video_frame_top_factor = getRect(sample_video_frame).top/window.innerHeight;
 console.log('sample_video_frame_top_factor = ', sample_video_frame_top_factor);
-console.log('sample_video_frame.getBoundingClientRect().top = ', sample_video_frame.getBoundingClientRect().top);
+console.log('getRect(sample_video_frame).top = ', getRect(sample_video_frame).top);
 
-sample_video_frame_left_factor = sample_video_frame.getBoundingClientRect().left/window.innerWidth;
+sample_video_frame_left_factor = getRect(sample_video_frame).left/window.innerWidth;
 console.log('sample_video_frame_left_factor = ', sample_video_frame_left_factor);
-console.log('sample_video_frame.getBoundingClientRect().left = ', sample_video_frame.getBoundingClientRect().left);
+console.log('getRect(sample_video_frame).left = ', getRect(sample_video_frame).left);
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -949,9 +949,9 @@ function update_sample_text() {
 	saveData('centerize_src', centerize_src);
 
 	if (centerize_src) {
-		src_left = sample_video_frame.getBoundingClientRect().left + 0.5*(sample_video_frame.getBoundingClientRect().width - src_container_width_factor*sample_video_frame.getBoundingClientRect().width);
+		src_left = getRect(sample_video_frame).left + 0.5*(getRect(sample_video_frame).width - src_container_width_factor*getRect(sample_video_frame).width);
 		console.log('src_left =', src_left);
-		src_container_left_factor = (src_left - sample_video_frame.getBoundingClientRect().left)/sample_video_frame.getBoundingClientRect().width;
+		src_container_left_factor = (src_left - getRect(sample_video_frame).left)/getRect(sample_video_frame).width;
 		console.log('src_container_left_factor =', src_container_left_factor);
 		document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
 		saveData('src_container_left_factor', src_container_left_factor);
@@ -1003,9 +1003,9 @@ function update_sample_text() {
 	saveData('centerize_dst', centerize_dst);
 
 	if (centerize_dst) {
-		dst_left = sample_video_frame.getBoundingClientRect().left + 0.5*(sample_video_frame.getBoundingClientRect().width - dst_container_width_factor*sample_video_frame.getBoundingClientRect().width);
+		dst_left = getRect(sample_video_frame).left + 0.5*(getRect(sample_video_frame).width - dst_container_width_factor*getRect(sample_video_frame).width);
 		console.log('dst_left =', dst_left);
-		dst_container_left_factor = (dst_left - sample_video_frame.getBoundingClientRect().left)/sample_video_frame.getBoundingClientRect().width;
+		dst_container_left_factor = (dst_left - getRect(sample_video_frame).left)/getRect(sample_video_frame).width;
 		console.log('dst_container_left_factor =', dst_container_left_factor);
 		document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
 		saveData('dst_container_left_factor', dst_container_left_factor);
@@ -1060,11 +1060,22 @@ function saveData(key, data) {
 }
 
 
-function get_textarea_rect() {
-	document.documentElement.scrollTop = 0; // For modern browsers
-	document.body.scrollTop = 0; // For older browsers
+function getRect(element) {
+	const rect = element.getBoundingClientRect();
+    const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
 
-	var sample_video_frame_rect = document.querySelector("#sample_video_frame").getBoundingClientRect();
+    return {
+		width: rect.width,
+		height: rect.height,
+		top: rect.top + scrollTop,
+		left: rect.left + scrollLeft
+	};
+}
+
+
+function get_textarea_rect() {
+	var sample_video_frame_rect = getRect(document.querySelector("#sample_video_frame"));
 
 	//console.log("top =", sample_video_frame_rect.top);
 	//console.log("left =", sample_video_frame_rect.left);
@@ -1123,23 +1134,23 @@ function regenerate_textarea() {
 	document.documentElement.scrollTop = 0; // For modern browsers
 	document.body.scrollTop = 0; // For older browsers
 
-	src_width = src_container_width_factor*sample_video_frame.getBoundingClientRect().width;
+	src_width = src_container_width_factor*getRect(sample_video_frame).width;
 	console.log('src_width = ', src_width);
-	src_height = src_container_height_factor*sample_video_frame.getBoundingClientRect().height;
+	src_height = src_container_height_factor*getRect(sample_video_frame).height;
 	console.log('src_height = ', src_height);
-	src_top = sample_video_frame.getBoundingClientRect().top + src_container_top_factor*sample_video_frame.getBoundingClientRect().height;
+	src_top = getRect(sample_video_frame).top + src_container_top_factor*getRect(sample_video_frame).height;
 	console.log('src_top = ', src_top);
 	
 	if (centerize_src) {
-		src_left = sample_video_frame.getBoundingClientRect().left + 0.5*(sample_video_frame.getBoundingClientRect().width - src_container_width_factor*sample_video_frame.getBoundingClientRect().width);
+		src_left = getRect(sample_video_frame).left + 0.5*(getRect(sample_video_frame).width - src_container_width_factor*getRect(sample_video_frame).width);
 		console.log('centerize_src = true : src_left = ', src_left);
 	} else {
-		src_left = sample_video_frame.getBoundingClientRect().left + src_container_left_factor*sample_video_frame.getBoundingClientRect().width;
+		src_left = getRect(sample_video_frame).left + src_container_left_factor*getRect(sample_video_frame).width;
 		console.log('centerize_src = false : src_left = ', src_left);
 	}
 
 	src_textarea_container.style.position = 'absolute';
-	src_textarea_container.style.width = String(src_container_width_factor*sample_video_frame.getBoundingClientRect().width) + "px";
+	src_textarea_container.style.width = String(src_container_width_factor*getRect(sample_video_frame).width) + "px";
 	src_textarea_container.style.height = String(src_height) + "px";
 	src_textarea_container.style.top = String(src_top) + "px";
 	src_textarea_container.style.left = String(src_left) + "px";
@@ -1193,14 +1204,14 @@ function regenerate_textarea() {
 		document.querySelector("#src_textarea").style.width = '100%';
 		document.querySelector("#src_textarea").style.height = '100%';
 
-		console.log('src_width = ', document.querySelector("#src_textarea").getBoundingClientRect().width);
-		src_container_width_factor = document.querySelector("#src_textarea").getBoundingClientRect().width/sample_video_frame.getBoundingClientRect().width;
+		console.log('src_width = ', getRect(document.querySelector("#src_textarea")).width);
+		src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/getRect(sample_video_frame).width;
 		console.log('src_container_width_factor = ', src_container_width_factor);
 		input_src_container_width_factor.value = src_container_width_factor;
 		chrome.storage.sync.set({'src_container_width_factor' : src_container_width_factor},(()=>{}));
 
-		console.log('src_height = ', document.querySelector("#src_textarea").getBoundingClientRect().height);
-		src_container_height_factor = document.querySelector("#src_textarea").getBoundingClientRect().height/sample_video_frame.getBoundingClientRect().height;
+		console.log('src_height = ', getRect(document.querySelector("#src_textarea")).height);
+		src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/getRect(sample_video_frame).height;
 		console.log('src_container_height_factor = ', src_container_height_factor);
 		input_src_container_height_factor.value = src_container_height_factor;
 		chrome.storage.sync.set({'src_container_height_factor' : src_container_height_factor},(()=>{}));
@@ -1208,18 +1219,18 @@ function regenerate_textarea() {
 	});
 
 
-	dst_width = dst_container_width_factor*sample_video_frame.getBoundingClientRect().width;
+	dst_width = dst_container_width_factor*getRect(sample_video_frame).width;
 	console.log('dst_width = ', dst_width);
-	dst_height = dst_container_height_factor*sample_video_frame.getBoundingClientRect().height;
+	dst_height = dst_container_height_factor*getRect(sample_video_frame).height;
 	console.log('dst_height = ', dst_height);
-	dst_top = sample_video_frame.getBoundingClientRect().top + dst_container_top_factor*sample_video_frame.getBoundingClientRect().height;
+	dst_top = getRect(sample_video_frame).top + dst_container_top_factor*getRect(sample_video_frame).height;
 	console.log('dst_top = ', dst_top);
 	
 	if (centerize_dst) {
-		dst_left = sample_video_frame.getBoundingClientRect().left + 0.5*(sample_video_frame.getBoundingClientRect().width - dst_container_width_factor*sample_video_frame.getBoundingClientRect().width);
+		dst_left = getRect(sample_video_frame).left + 0.5*(getRect(sample_video_frame).width - dst_container_width_factor*getRect(sample_video_frame).width);
 		console.log('centerize_dst = true : dst_left = ', dst_left);
 	} else {
-		dst_left = sample_video_frame.getBoundingClientRect().left + dst_container_left_factor*sample_video_frame.getBoundingClientRect().width;
+		dst_left = getRect(sample_video_frame).left + dst_container_left_factor*getRect(sample_video_frame).width;
 		console.log('centerize_dst = false : dst_left = ', dst_left);
 	}
 
@@ -1278,15 +1289,15 @@ function regenerate_textarea() {
 		document.querySelector("#dst_textarea").style.width = '100%';
 		document.querySelector("#dst_textarea").style.height = '100%';
 
-		console.log('dst_width = ', document.querySelector("#dst_textarea").getBoundingClientRect().width);
-		dst_container_width_factor = document.querySelector("#dst_textarea").getBoundingClientRect().width/sample_video_frame.getBoundingClientRect().width;
-		console.log('dst_container_width_factor = ', dst_container_width_factor);
+		//console.log('dst_width = ', getRect(document.querySelector("#dst_textarea")).width);
+		dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/getRect(sample_video_frame).width;
+		//console.log('dst_container_width_factor = ', dst_container_width_factor);
 		input_dst_container_width_factor.value = dst_container_width_factor;
 		chrome.storage.sync.set({'dst_container_width_factor' : dst_container_width_factor},(()=>{}));
 
-		console.log('dst_height = ', document.querySelector("#dst_textarea").getBoundingClientRect().height);
-		dst_container_height_factor = document.querySelector("#dst_textarea").getBoundingClientRect().height/sample_video_frame.getBoundingClientRect().height;
-		console.log('dst_container_height_factor = ', dst_container_height_factor);
+		//console.log('dst_height = ', getRect(document.querySelector("#dst_textarea")).height);
+		dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/getRect(sample_video_frame).height;
+		//console.log('dst_container_height_factor = ', dst_container_height_factor);
 		input_dst_container_height_factor.value = dst_container_height_factor;
 		chrome.storage.sync.set({'dst_container_height_factor' : dst_container_height_factor},(()=>{}));
 	});

@@ -94,8 +94,11 @@ function onLoad() {
 
 	var startTimestamp, endTimestamp, timestamped_final_and_interim_transcript, timestamped_translated_final_and_interim_transcript;
 	var interim_started = false;
-	var pause_timeout, pause_threshold = 2000, input_pause_threshold; // 2 seconds artificial pause threshold;
+	var pause_timeout, pause_threshold = 5000, input_pause_threshold; // 5 seconds artificial pause threshold;
 	var all_final_transcripts = [], formatted_all_final_transcripts;
+	var all_translated_transcripts = [], formatted_all_translated_transcripts;
+	var transcript_is_final = false;
+
 	var video_info;
 	var timestamp_separator = "-->";
 	var session_start_time, session_end_time;
@@ -240,7 +243,7 @@ function onLoad() {
 		document.documentElement.scrollTop = 0; // For modern browsers
 		document.body.scrollTop = 0; // For older browsers
 		video_info = getVideoPlayerInfo();
-		console.log("video_info = ", video_info);
+		//console.log("video_info = ", video_info);
 		if (video_info) {
 			console.log('Extension is starting');
 			console.log("Video player found!");
@@ -326,7 +329,7 @@ function onLoad() {
 		chrome.runtime.sendMessage({ cmd: 'icon_text_listening', data: { value: icon_text_listening } });
 
 		var vContainer = document.querySelector('#' + video_info.id).parentElement;
-		console.log('vContainer = ', vContainer);
+		//console.log('vContainer = ', vContainer);
 
 		var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
 			.width(src_width)
@@ -371,30 +374,48 @@ function onLoad() {
 		document.querySelector("#src_textarea").style.color = src_font_color;
 		document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(src_container_color, src_container_opacity);
 		document.querySelector("#src_textarea").style.fontSize=String(src_font_size)+'px';
+
 		document.querySelector("#src_textarea").offsetParent.onresize = (function(){
 			document.querySelector("#src_textarea").style.position='absolute';
 			document.querySelector("#src_textarea").style.width = '100%';
 			document.querySelector("#src_textarea").style.height = '100%';
 
-			console.log('src_width = ', document.querySelector("#src_textarea").getBoundingClientRect().width);
+			console.log('src_width = ', getRect(document.querySelector("#src_textarea")).width);
 			console.log('video_info.width = ', video_info.width);
-			src_container_width_factor = document.querySelector("#src_textarea").getBoundingClientRect().width/video_info.width;
-			if (src_container_width_factor <= 0) {
-				src_container_width_factor = 0.8;
+			src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/video_info.width;
+			if (src_container_width_factor < 0) {
+				src_container_width_factor = 0;
 			}
 			console.log('src_container_width_factor = ', src_container_width_factor);
 			saveData('src_container_width_factor', src_container_width_factor);
 
-			console.log('src_height = ', document.querySelector("#src_textarea").getBoundingClientRect().height);
+			console.log('src_height = ', getRect(document.querySelector("#src_textarea")).height);
 			console.log('video_info.height = ', video_info.height);
-			src_container_height_factor = document.querySelector("#src_textarea").getBoundingClientRect().height/video_info.height;
-			if (src_container_height_factor <= 0) {
-				src_container_height_factor = 0.15;
+			src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/video_info.height;
+			if (src_container_height_factor < 0) {
+				src_container_height_factor = 0;
 			}
 			console.log('src_container_height_factor = ', src_container_height_factor);
 			saveData('src_container_height_factor', src_container_height_factor);
 
 		});
+
+		document.querySelector("#src_textarea").offsetParent.ondrag = (function(){
+			src_container_top_factor = (getRect(document.querySelector("#src_textarea_container")).top - video_info.top)/video_info.height
+			if (src_container_top_factor < 0) {
+				src_container_top_factor = 0;
+			}
+			//console.log('src_container_top_factor = ', src_container_top_factor);
+			saveData("src_container_top_factor", src_container_top_factor);
+
+			src_container_left_factor = (getRect(document.querySelector("#src_textarea_container")).left - video_info.left)/video_info.width
+			if (src_container_left_factor < 0) {
+				src_container_left_factor = 0;
+			}
+			//console.log('src_container_left_factor = ', src_container_left_factor);
+			saveData("src_container_left_factor", src_container_left_factor);
+		});
+
 
 		var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
 			.width(dst_width)
@@ -439,40 +460,63 @@ function onLoad() {
 		document.querySelector("#dst_textarea").style.color = dst_font_color;
 		document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(dst_container_color, dst_container_opacity);
 		document.querySelector("#dst_textarea").style.fontSize=String(dst_font_size)+'px';
+
 		document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
 			document.querySelector("#dst_textarea").style.position='absolute';
 			document.querySelector("#dst_textarea").style.width = '100%';
 			document.querySelector("#dst_textarea").style.height = '100%';
 
-			console.log('dst_width = ', document.querySelector("#dst_textarea").getBoundingClientRect().width);
+			console.log('dst_width = ', getRect(document.querySelector("#dst_textarea")).width);
 			console.log('video_info.width = ', video_info.width);
-			dst_container_width_factor = document.querySelector("#dst_textarea").getBoundingClientRect().width/video_info.width;
-			if (dst_container_width_factor <= 0) {
-				dst_container_width_factor = 0.8;
+			dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/video_info.width;
+			if (dst_container_width_factor < 0) {
+				dst_container_width_factor = 0;
 			}
 			console.log('dst_container_width_factor = ', dst_container_width_factor);
 			saveData('dst_container_width_factor', dst_container_width_factor);
 
-			console.log('dst_height = ', document.querySelector("#dst_textarea").getBoundingClientRect().height);
+			console.log('dst_height = ', getRect(document.querySelector("#dst_textarea")).height);
 			console.log('video_info.height = ', video_info.height);
-			dst_container_height_factor = document.querySelector("#dst_textarea").getBoundingClientRect().height/video_info.height;
-			if (dst_container_height_factor <= 0) {
-				dst_container_height_factor = 0.15;
+			dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/video_info.height;
+			if (dst_container_height_factor < 0) {
+				dst_container_height_factor = 0;
 			}
 			console.log('dst_container_height_factor = ', dst_container_height_factor);
 			saveData('dst_container_height_factor', dst_container_height_factor);
+
+		});
+
+		document.querySelector("#dst_textarea").offsetParent.ondrag = (function(){
+			dst_container_top_factor = (getRect(document.querySelector("#dst_textarea_container")).top - video_info.top)/video_info.height
+			if (dst_container_top_factor < 0) {
+				dst_container_top_factor = 0;
+			}
+			//console.log('dst_container_top_factor = ', dst_container_top_factor);
+			saveData("dst_container_top_factor", dst_container_top_factor);
+
+			dst_container_left_factor = (getRect(document.querySelector("#dst_textarea_container")).left - video_info.left)/video_info.width
+			if (dst_container_left_factor < 0) {
+				dst_container_left_factor = 0;
+			}
+			//console.log('dst_container_left_factor = ', dst_container_left_factor);
+			saveData("dst_container_left_factor", dst_container_left_factor);
 		});
 
 
 		window.addEventListener('resize', function(event){
 			regenerate_textarea();
+			var video_info = getVideoPlayerInfo();
+			if (video_info) document.documentElement.scrollTop = video_info.top; // For modern browsers
+			if (video_info) document.body.scrollTop = video_info.top; // For older browsers
 		});
 
 
 		document.addEventListener('fullscreenchange', function(event) {
 			regenerate_textarea();
+			var video_info = getVideoPlayerInfo();
+			if (video_info) document.documentElement.scrollTop = video_info.top; // For modern browsers
+			if (video_info) document.body.scrollTop = video_info.top; // For older browsers
 		});
-
 
 		if (document.querySelector("#dst_textarea")) {
 			document.addEventListener('DOMContentLoaded', (event) => {
@@ -492,6 +536,7 @@ function onLoad() {
 				});
 			});
 		};
+
 
 
 		if (!recognizing) {
@@ -700,6 +745,7 @@ function onLoad() {
 
 					for (var i = event.resultIndex; i < event.results.length; ++i) {
 						if (event.results[i].isFinal) {
+							transcript_is_final = true;
 							interim_transcript = '';
 							interim_started = false;
 							endTimestamp = formatTimestamp(new Date());
@@ -708,6 +754,7 @@ function onLoad() {
 							all_final_transcripts.push(`${final_transcript}`);
 							formatted_all_final_transcripts = all_final_transcripts.join("");
 						} else {
+							transcript_is_final = false;
 							if (!interim_started) {
 								// Capture the timestamp only when the interim result starts
 								startTimestamp = formatTimestamp(new Date());
@@ -767,8 +814,37 @@ function onLoad() {
 								result = capitalizeSentences(result);
 								result = formatText(result);
 								result = result.replace(/\n\s*$/, '');
-								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value=result;
-								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").scrollTop = document.querySelector("#dst_textarea").scrollHeight;
+
+								const timestamps = result.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/g);
+								if (transcript_is_final) {
+									all_translated_transcripts.push(`${result}`);
+									//console.log('all_translated_transcripts = ', all_translated_transcripts);
+									formatted_all_translated_transcripts = all_translated_transcripts.join("");
+									//console.log('formatted_all_translated_transcripts = ', formatted_all_translated_transcripts);
+									var translated_lines = formatted_all_translated_transcripts.trim().split('\n');
+									var translated_uniqueLines = [...new Set(translated_lines)];
+									var translated_uniqueText = translated_uniqueLines.join('\n');
+								}
+								if (formatted_all_translated_transcripts) var tt = formatted_all_translated_transcripts;
+								//console.log('tt = ', tt);
+								if (tt) {
+									var translated_lines = tt.trim().split('\n');
+									var translated_uniqueLines = [...new Set(translated_lines)];
+									var translated_uniqueText = translated_uniqueLines.join('\n');
+									//console.log('translated_uniqueText = ', translated_uniqueText);
+								}
+								var displayed_translation = translated_uniqueText + result;
+								displayed_translation = formatText(displayed_translation);
+								if (getFirstWord(displayed_translation).includes('undefined')) displayed_translation = displayed_translation.replace('undefined', '');
+								if (all_translated_transcripts.length == 1) {
+									if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = result;
+								} else {
+									if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = displayed_translation;
+								}
+
+								//if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value=result;
+								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
+
 							}));
 							translate_time = Date.now();
 						};
@@ -997,6 +1073,7 @@ function onLoad() {
 				document.querySelector("#src_textarea").style.fontSize=String(src_font_size)+'px';
 				document.querySelector("#src_textarea").style.color = src_font_color;
 				document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(src_container_color, src_container_opacity);
+/*
 				if (document.querySelector("#src_textarea").offsetParent) {
 					document.querySelector("#src_textarea").offsetParent.onresize = (function(){
 						document.querySelector("#src_textarea").style.position='absolute';
@@ -1005,7 +1082,7 @@ function onLoad() {
 						document.querySelector("#src_textarea").scrollTop=document.querySelector("#src_textarea").scrollHeight;
 					});
 				}
-
+*/
 			} else {
 				console.log('src_textarea_container has already exist');
 			}
@@ -1055,6 +1132,7 @@ function onLoad() {
 				document.querySelector("#dst_textarea").style.fontSize=String(dst_font_size)+'px';
 				document.querySelector("#dst_textarea").style.color = dst_font_color.value;
 				document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(dst_container_color, dst_container_opacity);
+/*
 				if (document.querySelector("#dst_textarea").offsetParent) {
 					document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
 						document.querySelector("#dst_textarea").style.position='absolute';
@@ -1063,20 +1141,99 @@ function onLoad() {
 						document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
 					});
 				}
-
+*/
 			} else {
 				console.log('dst_textarea_container has already exist');
 			}
 
-			if (video_info) document.documentElement.scrollTop = video_info.top; // For modern browsers
-			if (video_info) document.body.scrollTop = video_info.top; // For older browsers
+			//if (video_info) document.documentElement.scrollTop = video_info.top; // For modern browsers
+			//if (video_info) document.body.scrollTop = video_info.top; // For older browsers
 
 		}
 
 
+		function getRect(element) {
+			const rect = element.getBoundingClientRect();
+			const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+			const scrollTop = window.scrollY || document.documentElement.scrollTop;
+
+			return {
+				width: rect.width,
+				height: rect.height,
+				top: rect.top + scrollTop,
+				left: rect.left + scrollLeft
+			};
+		}
+
+
+		function getVideoPlayerInfo() {
+			var elements = document.querySelectorAll('video, iframe');
+			//console.log('elements = ',  elements);
+			var largestVideoElement = null;
+			var largestSize = 0;
+
+			for (var i=0; i<elements.length; i++) {
+				var rect = getRect(elements[i]);
+				
+				//console.log('rect', rect);
+				if (rect.width > 0) {
+					var size = rect.width * rect.height;
+					if (size > largestSize) {
+						largestSize = size;
+						largestVideoElement = elements[i];
+					}
+					var videoPlayer = elements[i];
+					if (videoPlayer) {
+						// Check if the video player has a container
+						var videoPlayerContainer = videoPlayer.parentElement;
+						while (videoPlayerContainer && videoPlayerContainer !== document.body) {
+							var style = window.getComputedStyle(videoPlayerContainer);
+							//if (style.position !== 'static') {
+							//	break;
+							//}
+							videoPlayerContainer = videoPlayerContainer.parentElement;
+						}
+ 
+						// Default to the video player if no suitable container found
+						if (!videoPlayerContainer || videoPlayerContainer === document.body) {
+							videoPlayerContainer = videoPlayer;
+						}
+
+						// Get the position and size of the container
+						var container_rect = getRect(videoPlayerContainer);
+						// Get the computed style of the container
+						var container_style = window.getComputedStyle(videoPlayerContainer);
+						// Check if position and z-index are defined, else set default values
+						var container_position = container_style.position !== 'static' ? container_style.position : 'relative';
+						var container_zIndex = container_style.zIndex !== 'auto' && container_style.zIndex !== '0' ? parseInt(container_style.zIndex) : 1;
+					}
+
+					return {
+						element: elements[i],
+						id: elements[i].id,
+						top: rect.top,
+						left: rect.left,
+						width: rect.width,
+						height: rect.height,
+						position: elements[i].style.position,
+						zIndex: elements[i].style.zIndex,
+						container: videoPlayerContainer,
+						container_id: videoPlayerContainer.id,
+						container_top: container_rect.top,
+						container_left: container_rect.left,
+						container_width: container_rect.width,
+						container_height: container_rect.height,
+						container_position: container_position,
+						container_zIndex: container_zIndex,
+					};
+				}
+			}
+			//console.log('No video player found');
+			return null;
+		}
+
+
 		function get_textarea_rect() {
-			document.documentElement.scrollTop = 0; // For modern browsers
-			document.body.scrollTop = 0; // For older browsers
 			video_info = getVideoPlayerInfo();
 			if (video_info) {
 				console.log("Video player found");
@@ -1172,79 +1329,13 @@ function onLoad() {
 		}
 
 
-		function getVideoPlayerInfo() {
-			var elements = document.querySelectorAll('video, iframe');
-			//console.log('elements = ',  elements);
-			var largestVideoElement = null;
-			var largestSize = 0;
-
-			for (var i=0; i<elements.length; i++) {
-				var rect = elements[i].getBoundingClientRect();
-				//console.log('rect', rect);
-				if (rect.width > 0) {
-					var size = rect.width * rect.height;
-					if (size > largestSize) {
-						largestSize = size;
-						largestVideoElement = elements[i];
-					}
-					var videoPlayer = elements[i];
-					if (videoPlayer) {
-						// Check if the video player has a container
-						var videoPlayerContainer = videoPlayer.parentElement;
-						while (videoPlayerContainer && videoPlayerContainer !== document.body) {
-							var style = window.getComputedStyle(videoPlayerContainer);
-							//if (style.position !== 'static') {
-							//	break;
-							//}
-							videoPlayerContainer = videoPlayerContainer.parentElement;
-						}
- 
-						// Default to the video player if no suitable container found
-						if (!videoPlayerContainer || videoPlayerContainer === document.body) {
-							videoPlayerContainer = videoPlayer;
-						}
-
-						// Get the position and size of the container
-						var container_rect = videoPlayerContainer.getBoundingClientRect();
-						// Get the computed style of the container
-						var container_style = window.getComputedStyle(videoPlayerContainer);
-						// Check if position and z-index are defined, else set default values
-						var container_position = container_style.position !== 'static' ? container_style.position : 'relative';
-						var container_zIndex = container_style.zIndex !== 'auto' && container_style.zIndex !== '0' ? parseInt(container_style.zIndex) : 1;
-					}
-
-					return {
-						element: elements[i],
-						id: elements[i].id,
-						top: rect.top,
-						left: rect.left,
-						width: rect.width,
-						height: rect.height,
-						position: elements[i].style.position,
-						zIndex: elements[i].style.zIndex,
-						container: videoPlayerContainer,
-						container_id: videoPlayerContainer.id,
-						container_top: container_rect.top,
-						container_left: container_rect.left,
-						container_width: container_rect.width,
-						container_height: container_rect.height,
-						container_position: container_position,
-						container_zIndex: container_zIndex,
-					};
-				}
-			}
-			//console.log('No video player found');
-			return null;
-		}
-
-
 		function getVideoPlayerId() {
 			var elements = document.querySelectorAll('video, iframe');
 			var largestVideoElement = null;
 			var largestSize = 0;
 			for (var i=0; i<elements.length; i++) {
-				if ((elements[i].getBoundingClientRect()).width > 0) {
-					var size = elements[i].getBoundingClientRect().width * elements[i].getBoundingClientRect().height;
+				if (getRect(elements[i]).width > 0) {
+					var size = getRect(elements[i]).width * getRect(elements[i]).height;
 					if (size > largestSize) {
 						largestSize = size;
 						largestVideoElement = elements[i].id;
@@ -1266,10 +1357,10 @@ function onLoad() {
 			videoAndIframes.forEach(function(element) {
 				// Check if the element is a video element or an iframe containing a video
 				//if (element.tagName === 'VIDEO' || (element.tagName === 'IFRAME' && element.src && element.src.includes('youtube.com/embed'))) {
-				if ((element.getBoundingClientRect()).width > 0) {
+				if (getRect(element).width > 0) {
 					// Calculate size of the video element (using area as size metric)
 					var size;
-					size = element.getBoundingClientRect().width * element.getBoundingClientRect().height;
+					size = getRect(element).width * getRect(element).height;
 
 					// Check if this video element is larger than the current largest
 					if (size > largestSize) {
@@ -1315,7 +1406,7 @@ function onLoad() {
 				}
 
 				// Get the position and size of the container
-				var rect = container.getBoundingClientRect();
+				var rect = getRect(container);
 				// Get the computed style of the container
 				var style = window.getComputedStyle(container);
 
@@ -1489,6 +1580,18 @@ function onLoad() {
 				textarea.style.height = '100px'; // Adjust height as needed
 				textarea.style.zIndex = containerInfo.zIndex + 1; // Ensure it is above the container
 			}
+		}
+
+
+		function getFirstWord(sentence) {
+			// Trim the sentence to remove any leading or trailing whitespace
+			let trimmedSentence = sentence.trim();
+
+			// Split the sentence into an array of words
+			let words = trimmedSentence.split(/\s+/);
+
+			// Return the first word
+			return words[0];
 		}
 
 
