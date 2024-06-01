@@ -21,9 +21,7 @@ var dst_container_top_factor, dst_container_left_factor, centerize_dst;
 var dst_container_color, dst_container_opacity;
 
 var src_textarea_container, src_textarea;
-var dst_text_container, dst_text;
-var sample_video_frame, column2_frame;
-var sample_video_frame_width_factor, sample_video_frame_height_factor, sample_video_frame_top_factor, sample_video_frame_left_factor;
+var dst_textarea_container, dst_textarea;
 
 var input_pause_threshold;
 var pause_threshold;
@@ -79,33 +77,17 @@ input_dst_container_opacity = document.querySelector("#input_dst_container_opaci
 input_pause_threshold = document.querySelector("#input_pause_threshold");
 
 
-column2_frame = document.querySelector("#column2");
-sample_video_frame = document.querySelector("#sample_video_frame");
 src_textarea_container = document.querySelector("#src_textarea_container");
 src_textarea = document.querySelector("#src_textarea");
 dst_textarea_container = document.querySelector("#dst_textarea_container");
 dst_textarea = document.querySelector("#dst_textarea");
 
-sample_video_frame_width_factor = getRect(sample_video_frame).height/window.innerWidth;
-console.log('sample_video_frame_width_factor = ', sample_video_frame_width_factor);
-console.log('getRect(sample_video_frame).width = ', getRect(sample_video_frame).width);
-
-sample_video_frame_height_factor = getRect(sample_video_frame).height/window.innerHeight;
-console.log('sample_video_frame_height_factor = ', sample_video_frame_height_factor);
-console.log('getRect(sample_video_frame).height = ', getRect(sample_video_frame).height);
-
-sample_video_frame_top_factor = getRect(sample_video_frame).top/window.innerHeight;
-console.log('sample_video_frame_top_factor = ', sample_video_frame_top_factor);
-console.log('getRect(sample_video_frame).top = ', getRect(sample_video_frame).top);
-
-sample_video_frame_left_factor = getRect(sample_video_frame).left/window.innerWidth;
-console.log('sample_video_frame_left_factor = ', sample_video_frame_left_factor);
-console.log('getRect(sample_video_frame).left = ', getRect(sample_video_frame).left);
-
 
 document.addEventListener('DOMContentLoaded', (event) => {
 	CheckStoredValues();
+	create_modal_text_area();
 });
+
 
 function CheckStoredValues() {
 
@@ -599,6 +581,12 @@ save_button.addEventListener('click', function(){
 		console.log('save centerize_dst = ', checkbox_centerize_dst.value);
 		console.log('save dst_container_color = ', input_dst_container_color.value);
 		console.log('save dst_container_opacity = ', input_dst_container_opacity.value);
+
+        if (chrome.runtime.lastError) {
+            console.error("Error setting data: ", chrome.runtime.lastError);
+        } else {
+            console.log("Data saved successfully.");
+        }
 	});
 	CheckStoredValues();
 });
@@ -948,17 +936,16 @@ function update_sample_text() {
 	console.log('centerize_src =', centerize_src);
 	saveData('centerize_src', centerize_src);
 
-	if (centerize_src) {
-		src_left = getRect(sample_video_frame).left + 0.5*(getRect(sample_video_frame).width - src_container_width_factor*getRect(sample_video_frame).width);
-		console.log('src_left =', src_left);
-		src_container_left_factor = (src_left - getRect(sample_video_frame).left)/getRect(sample_video_frame).width;
+	var textarea_rect = get_textarea_rect();
+	if (document.querySelector("#checkbox_centerize_src").checked) {
+		src_left = textarea_rect.src_left;
+		console.log('textarea_rect.src_left =', textarea_rect.src_left);
+		src_container_left_factor = (src_left - getRect(document.querySelector("#my_yt_iframe")).left)/getRect(document.querySelector("#my_yt_iframe")).width;
 		console.log('src_container_left_factor =', src_container_left_factor);
 		document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
-		saveData('src_container_left_factor', src_container_left_factor);
 	} else {
 		src_container_left_factor = document.querySelector("#input_src_container_left_factor").value;
 		console.log('src_container_left_factor =', src_container_left_factor);
-		saveData('src_container_left_factor', src_container_left_factor);
 	}
 
 	src_container_color = input_src_container_color.value;
@@ -968,6 +955,7 @@ function update_sample_text() {
 	src_container_opacity = input_src_container_opacity.value;
 	console.log('src_container_opacity =', src_container_opacity);
 	saveData('src_container_opacity', src_container_opacity);
+
 
 
     dst_selected_font = select_dst_font.value;
@@ -1002,17 +990,15 @@ function update_sample_text() {
 	console.log('centerize_dst =', centerize_dst);
 	saveData('centerize_dst', centerize_dst);
 
-	if (centerize_dst) {
-		dst_left = getRect(sample_video_frame).left + 0.5*(getRect(sample_video_frame).width - dst_container_width_factor*getRect(sample_video_frame).width);
-		console.log('dst_left =', dst_left);
-		dst_container_left_factor = (dst_left - getRect(sample_video_frame).left)/getRect(sample_video_frame).width;
+	if (document.querySelector("#checkbox_centerize_dst").checked) {
+		dst_left = textarea_rect.dst_left;
+		console.log('textarea_rect.dst_left =', textarea_rect.dst_left);
+		dst_container_left_factor = (dst_left - getRect(document.querySelector("#my_yt_iframe")).left)/getRect(document.querySelector("#my_yt_iframe")).width;
 		console.log('dst_container_left_factor =', dst_container_left_factor);
 		document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
-		saveData('dst_container_left_factor', dst_container_left_factor);
 	} else {
 		dst_container_left_factor = document.querySelector("#input_dst_container_left_factor").value;
 		console.log('dst_container_left_factor =', dst_container_left_factor);
-		saveData('dst_container_left_factor', dst_container_left_factor);
 	}
 
 	dst_container_color = input_dst_container_color.value;
@@ -1033,10 +1019,6 @@ document.addEventListener('fullscreenchange', function(event) {
 
 
 window.addEventListener('resize', function(event){
-	regenerate_textarea();
-});
-
-window.addEventListener('fullscreenchange', function(event){
 	regenerate_textarea();
 });
 
@@ -1075,44 +1057,38 @@ function getRect(element) {
 
 
 function get_textarea_rect() {
-	var sample_video_frame_rect = getRect(document.querySelector("#sample_video_frame"));
 
-	//console.log("top =", sample_video_frame_rect.top);
-	//console.log("left =", sample_video_frame_rect.left);
-	//console.log("width =", sample_video_frame_rect.width);
-	//console.log("height =", sample_video_frame_rect.height);
-
-	src_width = document.querySelector("#input_src_container_width_factor").value*sample_video_frame_rect.width;
+	src_width = document.querySelector("#input_src_container_width_factor").value*getRect(document.querySelector("#my_yt_iframe")).width;
 	//console.log('src_width =', src_width);
 
-	src_height = document.querySelector("#input_src_container_height_factor").value*sample_video_frame_rect.height;
+	src_height = document.querySelector("#input_src_container_height_factor").value*getRect(document.querySelector("#my_yt_iframe")).height;
 	//console.log('src_height =', src_width);
 
-	src_top = sample_video_frame_rect.top + document.querySelector("#input_src_container_top_factor").value*sample_video_frame_rect.height;
+	src_top = getRect(document.querySelector("#my_yt_iframe")).top + document.querySelector("#input_src_container_top_factor").value*getRect(document.querySelector("#my_yt_iframe")).height;
 	//console.log('src_top =', src_top);
 
 	if (document.querySelector("#checkbox_centerize_src").checked) {
-		src_left = sample_video_frame_rect.left + 0.5*(sample_video_frame_rect.width-src_width);
+		src_left = getRect(document.querySelector("#my_yt_iframe")).left + 0.5*(getRect(document.querySelector("#my_yt_iframe")).width - document.querySelector("#input_src_container_width_factor").value*getRect(document.querySelector("#my_yt_iframe")).width);
 		//console.log('src_left =', src_left);
 	} else {
-		src_left = sample_video_frame_rect.left + document.querySelector("#input_src_container_left_factor").value*sample_video_frame_rect.width;
+		src_left = getRect(document.querySelector("#my_yt_iframe")).left + document.querySelector("#input_src_container_left_factor").value*getRect(document.querySelector("#my_yt_iframe")).width;
 		//console.log('src_left =', src_left);
 	}
 
-	dst_width = document.querySelector("#input_dst_container_width_factor").value*sample_video_frame_rect.width;
+	dst_width = document.querySelector("#input_dst_container_width_factor").value*getRect(document.querySelector("#my_yt_iframe")).width;
 	//console.log('dst_width =', dst_width);
 		
-	dst_height = document.querySelector("#input_dst_container_height_factor").value*sample_video_frame_rect.height;
+	dst_height = document.querySelector("#input_dst_container_height_factor").value*getRect(document.querySelector("#my_yt_iframe")).height;
 	//console.log('dst_height =', dst_height);
 
-	dst_top = sample_video_frame_rect.top + document.querySelector("#input_dst_container_top_factor").value*sample_video_frame_rect.height;
+	dst_top = getRect(document.querySelector("#my_yt_iframe")).top + document.querySelector("#input_dst_container_top_factor").value*getRect(document.querySelector("#my_yt_iframe")).height;
 	//console.log('dst_top =', dst_top);
 
 	if (document.querySelector("#checkbox_centerize_dst").checked) {
-		dst_left = sample_video_frame_rect.left + 0.5*(sample_video_frame_rect.width-dst_width);
+		dst_left = getRect(document.querySelector("#my_yt_iframe")).left + 0.5*(getRect(document.querySelector("#my_yt_iframe")).width - document.querySelector("#input_dst_container_width_factor").value*getRect(document.querySelector("#my_yt_iframe")).width);
 		//console.log('dst_left =', dst_left);
 	} else {
-		dst_left = sample_video_frame_rect.left + document.querySelector("#input_dst_container_left_factor").value*sample_video_frame_rect.width;
+		dst_left = getRect(document.querySelector("#my_yt_iframe")).left + document.querySelector("#input_dst_container_left_factor").value*getRect(document.querySelector("#my_yt_iframe")).width;
 		//console.log('dst_left =', dst_left);
 	}
 
@@ -1130,42 +1106,129 @@ function get_textarea_rect() {
 
 
 function regenerate_textarea() {
+	var textarea_rect = get_textarea_rect();
 
-	document.documentElement.scrollTop = 0; // For modern browsers
-	document.body.scrollTop = 0; // For older browsers
+	if (document.querySelector("#src_textarea_container")) {
+		document.querySelector("#src_textarea_container").style.fontFamily = document.querySelector("#select_src_font").value + ", sans-serif";
+		document.querySelector("#src_textarea_container").style.width = String(textarea_rect.src_width)+'px';
+		document.querySelector("#src_textarea_container").style.height = String(textarea_rect.src_height)+'px';
+		document.querySelector("#src_textarea_container").style.top = String(textarea_rect.src_top)+'px';
+		document.querySelector("#src_textarea_container").style.left = String(textarea_rect.src_left)+'px';
 
-	src_width = src_container_width_factor*getRect(sample_video_frame).width;
-	console.log('src_width = ', src_width);
-	src_height = src_container_height_factor*getRect(sample_video_frame).height;
-	console.log('src_height = ', src_height);
-	src_top = getRect(sample_video_frame).top + src_container_top_factor*getRect(sample_video_frame).height;
-	console.log('src_top = ', src_top);
-	
-	if (centerize_src) {
-		src_left = getRect(sample_video_frame).left + 0.5*(getRect(sample_video_frame).width - src_container_width_factor*getRect(sample_video_frame).width);
-		console.log('centerize_src = true : src_left = ', src_left);
+		var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
+			.width(textarea_rect.src_width)
+			.height(textarea_rect.src_height)
+			.resizable().draggable({
+				cancel: 'text',
+				start: function (){
+					$('#src_textarea').focus();
+				},
+				stop: function (){
+					$('#src_textarea').focus();
+				}
+			})
+			.css({
+				'position': 'absolute',
+				'fontFamily': document.querySelector("#select_src_font").value + ', sans-serif',
+				'fontSize': document.querySelector("#input_src_font_size").value,
+				'color': document.querySelector("#input_src_font_color").value,
+				'backgroundColor': hexToRgba(document.querySelector("#input_src_container_color").value, document.querySelector("#input_src_container_opacity").value),
+				'border': 'none',
+				'display': 'block',
+				'overflow': 'hidden',
+				'z-index': '2147483647'
+			})
+			.offset({top:textarea_rect.src_top, left:textarea_rect.src_left})
+
+		document.querySelector("#src_textarea").value = "This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height.";
+
+		document.querySelector("#src_textarea").style.width = String(textarea_rect.src_width)+'px';
+		document.querySelector("#src_textarea").style.height = String(textarea_rect.src_height)+'px';
+		document.querySelector("#src_textarea").style.width = '100%';
+		document.querySelector("#src_textarea").style.height = '100%';
+		document.querySelector("#src_textarea").style.border = 'none';
+		document.querySelector("#src_textarea").style.display = 'inline-block';
+		document.querySelector("#src_textarea").style.overflow = 'hidden';
+
+		document.querySelector("#src_textarea").style.fontFamily = document.querySelector("#select_src_font").value + ", sans-serif";
+		document.querySelector("#src_textarea").style.fontSize=String(document.querySelector("#input_src_font_size").value)+'px';
+		document.querySelector("#src_textarea").style.color = document.querySelector("#input_src_font_color").value;
+		document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_src_container_color").value, document.querySelector("#input_src_container_opacity").value);
+		
+
 	} else {
-		src_left = getRect(sample_video_frame).left + src_container_left_factor*getRect(sample_video_frame).width;
-		console.log('centerize_src = false : src_left = ', src_left);
+		console.log('src_textarea_container has already exist');
 	}
 
-	src_textarea_container.style.position = 'absolute';
-	src_textarea_container.style.width = String(src_container_width_factor*getRect(sample_video_frame).width) + "px";
-	src_textarea_container.style.height = String(src_height) + "px";
-	src_textarea_container.style.top = String(src_top) + "px";
-	src_textarea_container.style.left = String(src_left) + "px";
-    src_textarea.style.fontFamily = src_selected_font + ", sans-serif";
-    src_textarea.style.fontSize = String(src_font_size) + "px";
-	src_textarea.style.color = src_font_color;
-	src_textarea.innerHTML = "Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text";
-	src_textarea.scrollTop = document.querySelector("#src_textarea").scrollHeight;
-	src_textarea.style.backgroundColor = hexToRgba(input_src_container_color.value, input_src_container_opacity.value);
-	src_textarea.style.width = "100%";
-	src_textarea.style.height = "100%";
 
-	var src_textarea_container$=$('<div id="src_textarea_container"><div id="src_textarea"></div></div>')
-		.width(src_width)
-		.height(src_height)
+	if (document.querySelector("#dst_textarea_container")) {
+		document.querySelector("#dst_textarea_container").style.fontFamily = document.querySelector("#select_dst_font").value + ", sans-serif";
+		document.querySelector("#dst_textarea_container").style.width = String(textarea_rect.dst_width)+'px';
+		document.querySelector("#dst_textarea_container").style.height = String(textarea_rect.dst_height)+'px';
+		document.querySelector("#dst_textarea_container").style.top = String(textarea_rect.dst_top)+'px';
+		document.querySelector("#dst_textarea_container").style.left = String(textarea_rect.dst_left)+'px';
+
+		var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
+			.width(textarea_rect.dst_width)
+			.height(textarea_rect.dst_height)
+			.resizable().draggable({
+				cancel: 'text',
+				start: function (){
+					$('#dst_textarea').focus();
+				},
+				stop: function (){
+					$('#dst_textarea').focus();
+				}
+			})
+			.css({
+				'position': 'absolute',
+				'fontFamily': document.querySelector("#select_dst_font").value + ', sans-serif',
+				'fontSize': document.querySelector("#input_dst_font_size").value,
+				'color': document.querySelector("#input_dst_font_color").value,
+				'backgroundColor': hexToRgba(document.querySelector("#input_dst_container_color").value, document.querySelector("#input_dst_container_opacity").value),
+				'border': 'none',
+				'display': 'block',
+				'overflow': 'hidden',
+				'z-index': '2147483647'
+			})
+			.offset({top:textarea_rect.dst_top, left:textarea_rect.dst_left})
+
+		document.querySelector("#dst_textarea").value = "This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height.";
+
+		document.querySelector("#dst_textarea").style.width = String(textarea_rect.dst_width)+'px';
+		document.querySelector("#dst_textarea").style.height = String(textarea_rect.dst_height)+'px';
+		document.querySelector("#dst_textarea").style.width = '100%';
+		document.querySelector("#dst_textarea").style.height = '100%';
+		document.querySelector("#dst_textarea").style.border = 'none';
+		document.querySelector("#dst_textarea").style.display = 'inline-block';
+		document.querySelector("#dst_textarea").style.overflow = 'hidden';
+
+		document.querySelector("#dst_textarea").style.fontFamily = document.querySelector("#select_dst_font").value + ", sans-serif";
+		document.querySelector("#dst_textarea").style.fontSize=String(document.querySelector("#input_dst_font_size").value)+'px';
+		document.querySelector("#dst_textarea").style.color = document.querySelector("#input_dst_font_color").value;
+		document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_dst_container_color").value, document.querySelector("#input_dst_container_opacity").value);
+
+	} else {
+		console.log('dst_textarea_container has already exist');
+	}
+}
+
+
+function create_modal_text_area() {
+	console.log("Create modal text area");
+
+	src_container_width_factor = document.querySelector("#input_src_container_width_factor").value;
+	src_container_height_factor = document.querySelector("#input_src_container_height_factor").value;
+
+	dst_container_width_factor = document.querySelector("#input_dst_container_width_factor").value;
+	dst_container_height_factor = document.querySelector("#input_dst_container_height_factor").value;
+
+	var textarea_rect = get_textarea_rect();
+	video_info = getVideoPlayerInfo();
+
+	var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
+		.width(textarea_rect.src_width)
+		.height(textarea_rect.src_height)
 		.resizable().draggable({
 			cancel: 'text',
 			start: function (){
@@ -1177,80 +1240,117 @@ function regenerate_textarea() {
 		})
 		.css({
 			'position': 'absolute',
-			'fontFamily': src_selected_font + ', sans-serif',
-			'fontSize': src_font_size,
-			'color': src_font_color,
-			'backgroundColor': hexToRgba(input_src_container_color.value, input_src_container_opacity.value),
+			'fontFamily': document.querySelector("#select_src_font").value + ', sans-serif',
+			'fontSize': document.querySelector("#input_src_font_size").value,
+			'color': document.querySelector("#input_src_font_color").value,
+			'backgroundColor': hexToRgba(document.querySelector("#input_src_container_color").value, document.querySelector("#input_src_container_opacity").value),
 			'border': 'none',
 			'display': 'block',
 			'overflow': 'hidden',
 			'z-index': '2147483647'
 		})
-		.offset({top:src_top, left:src_left})
+		.offset({top:textarea_rect.src_top, left:textarea_rect.src_left})
+
+	if (!document.querySelector("#src_textarea_container")) {
+		console.log('appending src_textarea_container to html body');
+		src_textarea_container$.appendTo('body');
+	} else {
+		console.log('src_textarea_container has already exist');
+	}
+
+	document.querySelector("#src_textarea").value = "This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height.";
 
 	document.querySelector("#src_textarea").style.width = '100%';
 	document.querySelector("#src_textarea").style.height = '100%';
 	document.querySelector("#src_textarea").style.border = 'none';
 	document.querySelector("#src_textarea").style.display = 'inline-block';
 	document.querySelector("#src_textarea").style.overflow = 'hidden';
-	document.querySelector("#src_textarea").style.allow = "fullscreen";
+	document.querySelector("#src_textarea").style.allow="fullscreen";
 
 	document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
 	document.querySelector("#src_textarea").style.color = src_font_color;
-	document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(input_src_container_color.value, input_src_container_opacity.value);
+	document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_src_container_color").value, document.querySelector("#input_src_container_opacity").value);
 	document.querySelector("#src_textarea").style.fontSize=String(src_font_size)+'px';
+
 	document.querySelector("#src_textarea").offsetParent.onresize = (function(){
+		if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
+			document.querySelector("#checkbox_centerize_src").checked = false;
+		}
+
 		document.querySelector("#src_textarea").style.position='absolute';
 		document.querySelector("#src_textarea").style.width = '100%';
 		document.querySelector("#src_textarea").style.height = '100%';
 
-		console.log('src_width = ', getRect(document.querySelector("#src_textarea")).width);
-		src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/getRect(sample_video_frame).width;
-		console.log('src_container_width_factor = ', src_container_width_factor);
-		input_src_container_width_factor.value = src_container_width_factor;
-		chrome.storage.sync.set({'src_container_width_factor' : src_container_width_factor},(()=>{}));
+		video_info = getVideoPlayerInfo();
+		if (video_info) {
+			src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/video_info.width;
+			//console.log('src_container_width_factor = ', src_container_width_factor);
+			document.querySelector("#input_src_container_width_factor").value = src_container_width_factor;
+			saveData("src_container_width_factor", src_container_width_factor);
 
-		console.log('src_height = ', getRect(document.querySelector("#src_textarea")).height);
-		src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/getRect(sample_video_frame).height;
-		console.log('src_container_height_factor = ', src_container_height_factor);
-		input_src_container_height_factor.value = src_container_height_factor;
-		chrome.storage.sync.set({'src_container_height_factor' : src_container_height_factor},(()=>{}));
+			src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/video_info.height;
+			//console.log('src_container_height_factor = ', src_container_height_factor);
+			document.querySelector("#input_src_container_height_factor").value = src_container_height_factor;
+			saveData("src_container_height_factor", src_container_height_factor);
+		} else {
+			src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/window.innerWidth;
+			//console.log('src_container_width_factor = ', src_container_width_factor);
+			document.querySelector("#input_src_container_width_factor").value = src_container_width_factor;
+			saveData("src_container_width_factor", src_container_width_factor);
 
+			src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/window.innerHeight;
+			//console.log('src_container_height_factor = ', src_container_height_factor);
+			document.querySelector("#input_src_container_height_factor").value = src_container_height_factor;
+			saveData("src_container_height_factor", src_container_height_factor);
+		}
 	});
 
+	document.querySelector("#src_textarea").offsetParent.ondrag = (function(){
+		if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
+			document.querySelector("#checkbox_centerize_src").checked = false;
+		}
 
-	dst_width = dst_container_width_factor*getRect(sample_video_frame).width;
-	console.log('dst_width = ', dst_width);
-	dst_height = dst_container_height_factor*getRect(sample_video_frame).height;
-	console.log('dst_height = ', dst_height);
-	dst_top = getRect(sample_video_frame).top + dst_container_top_factor*getRect(sample_video_frame).height;
-	console.log('dst_top = ', dst_top);
-	
-	if (centerize_dst) {
-		dst_left = getRect(sample_video_frame).left + 0.5*(getRect(sample_video_frame).width - dst_container_width_factor*getRect(sample_video_frame).width);
-		console.log('centerize_dst = true : dst_left = ', dst_left);
-	} else {
-		dst_left = getRect(sample_video_frame).left + dst_container_left_factor*getRect(sample_video_frame).width;
-		console.log('centerize_dst = false : dst_left = ', dst_left);
-	}
+		document.querySelector("#src_textarea").style.position='absolute';
 
-	dst_textarea_container.style.position = 'absolute';
-	dst_textarea_container.style.width = String(dst_width) + "px";
-	dst_textarea_container.style.height = String(dst_height) + "px";
-	dst_textarea_container.style.top = String(dst_top) + "px";
-	dst_textarea_container.style.left = String(dst_left) + "px";
-    dst_textarea.style.fontFamily = dst_selected_font + ", sans-serif";
-    dst_textarea.style.fontSize = String(dst_font_size) + "px";
-	dst_textarea.style.color = dst_font_color;
-	dst_textarea.innerHTML = "Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text Sample Text";
-	dst_textarea.scrollTop = document.querySelector("#dst_textarea").scrollHeight;
-	dst_textarea.style.backgroundColor = hexToRgba(input_dst_container_color.value, input_dst_container_opacity.value);
-	dst_textarea.style.width = "100%";
-	dst_textarea.style.height = "100%";
+		video_info = getVideoPlayerInfo();
+		if (video_info) {
+			src_container_top_factor = (getRect(document.querySelector("#src_textarea_container")).top - video_info.top)/video_info.height;
+			if (src_container_top_factor <= 0) {
+				src_container_top_factor = 0;
+			}
+			document.querySelector("#input_src_container_top_factor").value = src_container_top_factor;
+			//console.log('src_container_top_factor = ', src_container_top_factor);
+			saveData("src_container_top_factor", src_container_top_factor);
 
-	var dst_textarea_container$=$('<div id="dst_textarea_container"><div id="dst_textarea"></div></div>')
-		.width(dst_width)
-		.height(dst_height)
+			src_container_left_factor = (getRect(document.querySelector("#src_textarea_container")).left - video_info.left)/video_info.width;
+			if (src_container_left_factor <= 0) {
+				src_container_left_factor = 0;
+			}
+			document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
+			//console.log('src_container_left_factor = ', src_container_left_factor);
+			saveData("src_container_left_factor", src_container_left_factor);
+		} else {
+			src_container_top_factor = getRect(document.querySelector("#src_textarea_container")).top/window.innerHeight;
+			if (src_container_top_factor <= 0) {
+				src_container_top_factor = 0;
+			}
+			document.querySelector("#input_src_container_top_factor").value = src_container_top_factor;
+			//console.log('src_container_top_factor = ', src_container_top_factor);
+			saveData("src_container_top_factor", src_container_top_factor);
+
+			src_container_left_factor = getRect(document.querySelector("#src_textarea_container")).left/window.innerWidth;
+			if (src_container_left_factor <= 0) {
+				src_container_left_factor = 0;
+			}
+			document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
+			//console.log('src_container_left_factor = ', src_container_left_factor);
+			saveData("src_container_left_factor", src_container_left_factor);
+		}
+	});
+
+	var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
+		.width(textarea_rect.dst_width)
+		.height(textarea_rect.dst_height)
 		.resizable().draggable({
 			cancel: 'text',
 			start: function (){
@@ -1262,43 +1362,152 @@ function regenerate_textarea() {
 		})
 		.css({
 			'position': 'absolute',
-			'fontFamily': dst_selected_font + ', sans-serif',
-			'fontSize': dst_font_size,
-			'color': dst_font_color,
-			'backgroundColor': hexToRgba(input_dst_container_color.value, input_dst_container_opacity.value),
+			'fontFamily': document.querySelector("#select_dst_font").value + ', sans-serif',
+			'fontSize': document.querySelector("#input_dst_font_size").value,
+			'color': document.querySelector("#input_dst_font_color").value,
+			'backgroundColor': hexToRgba(document.querySelector("#input_dst_container_color").value, document.querySelector("#input_dst_container_opacity").value),
 			'border': 'none',
 			'display': 'block',
 			'overflow': 'hidden',
 			'z-index': '2147483647'
 		})
-		.offset({top:dst_top, left:dst_left})
+		.offset({top:textarea_rect.dst_top, left:textarea_rect.dst_left})
+
+	if (!document.querySelector("#dst_textarea_container")) {
+		console.log('appending dst_textarea_container to html body');
+		dst_textarea_container$.appendTo('body');
+	} else {
+		console.log('src_textarea_container has already exist');
+	}
+
+	document.querySelector("#dst_textarea").value = "This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height.";
 
 	document.querySelector("#dst_textarea").style.width = '100%';
 	document.querySelector("#dst_textarea").style.height = '100%';
 	document.querySelector("#dst_textarea").style.border = 'none';
 	document.querySelector("#dst_textarea").style.display = 'inline-block';
 	document.querySelector("#dst_textarea").style.overflow = 'hidden';
-	document.querySelector("#dst_textarea").style.allow = "fullscreen";
+	document.querySelector("#dst_textarea").style.allow="fullscreen";
 
 	document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif";
 	document.querySelector("#dst_textarea").style.color = dst_font_color;
-	document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(input_dst_container_color.value, input_dst_container_opacity.value);
+	document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_dst_container_color").value, document.querySelector("#input_dst_container_opacity").value);
 	document.querySelector("#dst_textarea").style.fontSize=String(dst_font_size)+'px';
+
 	document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
 		document.querySelector("#dst_textarea").style.position='absolute';
 		document.querySelector("#dst_textarea").style.width = '100%';
 		document.querySelector("#dst_textarea").style.height = '100%';
 
-		//console.log('dst_width = ', getRect(document.querySelector("#dst_textarea")).width);
-		dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/getRect(sample_video_frame).width;
-		//console.log('dst_container_width_factor = ', dst_container_width_factor);
-		input_dst_container_width_factor.value = dst_container_width_factor;
-		chrome.storage.sync.set({'dst_container_width_factor' : dst_container_width_factor},(()=>{}));
+		if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+			document.querySelector("#checkbox_centerize_dst").checked = false;
+		}
 
-		//console.log('dst_height = ', getRect(document.querySelector("#dst_textarea")).height);
-		dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/getRect(sample_video_frame).height;
-		//console.log('dst_container_height_factor = ', dst_container_height_factor);
-		input_dst_container_height_factor.value = dst_container_height_factor;
-		chrome.storage.sync.set({'dst_container_height_factor' : dst_container_height_factor},(()=>{}));
+		video_info = getVideoPlayerInfo();
+		if (video_info) {
+			dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/video_info.width;
+			//console.log('dst_container_width_factor = ', dst_container_width_factor);
+			document.querySelector("#input_dst_container_width_factor").value = dst_container_width_factor;
+			saveData("dst_container_width_factor", dst_container_width_factor);
+
+			dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/video_info.height;
+			//console.log('dst_container_height_factor = ', dst_container_height_factor);
+			document.querySelector("#input_dst_container_height_factor").value = dst_container_height_factor;
+			saveData("dst_container_height_factor", dst_container_height_factor);
+		} else {
+			dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/window.innerWidth;
+			//console.log('dst_container_width_factor = ', dst_container_width_factor);
+			document.querySelector("#input_dst_container_width_factor").value = dst_container_width_factor;
+			saveData("dst_container_width_factor", dst_container_width_factor);
+
+			dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/window.innerHeight;
+			//console.log('dst_container_height_factor = ', dst_container_height_factor);
+			document.querySelector("#input_dst_container_height_factor").value = dst_container_height_factor;
+			saveData("dst_container_height_factor", dst_container_height_factor);
+		}
+	});
+
+	document.querySelector("#dst_textarea").offsetParent.ondrag = (function(){
+		document.querySelector("#dst_textarea").style.position='absolute';
+
+		if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+			document.querySelector("#checkbox_centerize_dst").checked = false;
+		}
+
+		video_info = getVideoPlayerInfo();
+		if (video_info) {
+			dst_container_top_factor = (getRect(document.querySelector("#dst_textarea_container")).top - video_info.top)/video_info.height;
+			if (dst_container_top_factor <= 0) {
+				dst_container_top_factor = 0;
+			}
+			document.querySelector("#input_dst_container_top_factor").value = dst_container_top_factor;
+			//console.log('dst_container_top_factor = ', dst_container_top_factor);
+			saveData("dst_container_top_factor", dst_container_top_factor);
+
+			dst_container_left_factor = (getRect(document.querySelector("#dst_textarea_container")).left - video_info.left)/video_info.width;
+			if (dst_container_left_factor <= 0) {
+				dst_container_left_factor = 0;
+			}
+			document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
+			//console.log('dst_container_left_factor = ', dst_container_left_factor);
+			saveData("dst_container_left_factor", dst_container_left_factor);
+		} else {
+			dst_container_top_factor = getRect(document.querySelector("#dst_textarea_container")).top/window.innerHeight;
+			if (dst_container_top_factor <= 0) {
+				dst_container_top_factor = 0;
+			}
+			document.querySelector("#input_dst_container_top_factor").value = dst_container_top_factor;
+			//console.log('dst_container_top_factor = ', dst_container_top_factor);
+			saveData("dst_container_top_factor", dst_container_top_factor);
+
+			dst_container_left_factor = getRect(document.querySelector("#dst_textarea_container")).left/window.innerWidth;
+			if (dst_container_left_factor <= 0) {
+				dst_container_left_factor = 0;
+			}
+			document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
+			//console.log('dst_container_left_factor = ', dst_container_left_factor);
+			saveData("dst_container_left_factor", dst_container_left_factor);
+		}
 	});
 }
+
+
+
+function getVideoPlayerInfo() {
+	var elements = document.querySelectorAll('video, iframe');
+	//console.log('elements = ',  elements);
+	var largestVideoElement = null;
+	var largestSize = 0;
+
+	for (var i=0; i<elements.length; i++) {
+		var rect = getRect(elements[i]);
+		//console.log('rect', rect);
+		if (rect.width > 0) {
+			var size = rect.width * rect.height;
+			if (size > largestSize) {
+				largestSize = size;
+				largestVideoElement = elements[i];
+			}
+			var videoPlayerID = elements[i].id;
+			var style = window.getComputedStyle(elements[i]);
+			//console.log('videoPlayerID = ',  videoPlayerID);
+			var position = style.position !== 'static' ? style.position : 'relative';
+			var zIndex = style.zIndex !== 'auto' && style.zIndex !== '0' ? parseInt(style.zIndex) : 1;
+
+			return {
+				element: elements[i],
+				id: elements[i].id,
+				top: rect.top,
+				left: rect.left,
+				width: rect.width,
+				height: rect.height,
+				position: position,
+				zIndex: zIndex,
+			};
+		}
+	}
+	//console.log('No video player found');
+	return null;
+}
+
+
