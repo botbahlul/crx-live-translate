@@ -36,12 +36,14 @@
 		min-height: 500px;
 	}
 
+/*
 	#sample_video_frame {
 		width: 640px;
 		height: 360px;
 		background-color: blue;
 		margin: 10px auto;
 	}
+
 	#src_textarea_container {
 		display: block,
 		width: 720px,
@@ -68,6 +70,14 @@
 		height: 100%,
 		margin: 10px auto;
 		text-align: left;
+	}
+*/
+
+	#my_yt_iframe {
+		width: 640px;
+		height: 360px;
+		background-color: blue;
+		margin: 10px auto;
 	}
 
 	#select_src_font {
@@ -160,7 +170,7 @@
 </head>
 <body>
 
-	<h1 style="font-size: 16px">Live Translate v0.2.3</h1> 
+	<h1 style="font-size: 16px">Live Translate v0.2.4</h1> 
 	<br>
 	<h2 style="font-size: 14px">Options</h2> 
 
@@ -255,17 +265,14 @@
 
 			<div class="column right-column" id='column2'>
 
-					<div id="sample_video_frame" style="background-color: blue">
-
-						<div id="src_textarea_container">
-							<div id="src_textarea" style="background-color: rgba(0,0,0,0.3)" style="color: #ffff00">Recognized Audio Text</div>
+				<div class="iframe_header_unit">
+					<div class="iframe_container">
+						<div class="yt_iframe">
+							<iframe id="my_yt_iframe" width="640" height="360" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope;" allowfullscreen="true" class="fillWidth"></iframe>
 						</div>
-
-						<div id="dst_textarea_container">
-							<div id="dst_textarea" style="background-color: rgba(0,0,0,0.3)" style="color: #ffff00">Translation Text</div>
-						</div>
-
 					</div>
+				</div>
+
 			</div>
 
 		</div>
