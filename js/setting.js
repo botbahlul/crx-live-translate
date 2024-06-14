@@ -1,7 +1,7 @@
 var select_src_language, select_src_dialect;
-var src, src_language_index, src_dialect, src_dialect_index, show_src;
+var src, src_language_index, src_dialect, src_dialect_index, show_src, show_timestamp_src, checkbox_show_timestamp_src;
 var select_dst_language, select_dst_dialect;
-var dst, dst_language_index, dst_dialect, dst_dialect_index, show_dst;
+var dst, dst_language_index, dst_dialect, dst_dialect_index, show_dst, show_timestamp_dst, checkbox_show_timestamp_dst;
 var src_fonts, dst_fonts;
 
 var select_src_font, input_src_font_size, input_src_font_color;
@@ -26,8 +26,65 @@ var dst_textarea_container, dst_textarea;
 var input_pause_threshold;
 var pause_threshold;
 
+var sample_text_1 = "This is the text sample of how the subtitles will be shown.";
+var sample_text_2 = "It may looks different on different video width and video height.";
+var start_time_1, end_time_1, startTimestamp1, endTimestamp1, timestamped_sample_text_1;
+var start_time_2, end_time_2, startTimestamp2, endTimestamp2, timestamped_sample_text_2;
+var timestamped_sample_text, sample_text;
+var timestamp_separator = "-->";
+
+start_time_1 = new Date();
+console.log('start_time_1 = ', start_time_1);
+
+end_time_1 = new Date(start_time_1.getTime()); // Create a new Date object based on start_time_1
+end_time_1.setSeconds(end_time_1.getSeconds() + 10);
+console.log('end_time_1 = ', end_time_1);
+
+startTimestamp1 = formatTimestamp(start_time_1);
+console.log('startTimestamp1 = ', startTimestamp1);
+
+endTimestamp1 = formatTimestamp(end_time_1);
+console.log('endTimestamp1 = ', endTimestamp1);
+
+timestamped_sample_text_1 = `${startTimestamp1} ${timestamp_separator} ${endTimestamp1} : ${sample_text_1}`;
+console.log('timestamped_sample_text_1 = ', timestamped_sample_text_1);
+
+start_time_2 = new Date(end_time_1.getTime()); // Create a new Date object based on end_time_1
+start_time_2.setSeconds(start_time_2.getSeconds() + 30);
+console.log('start_time_2 = ', start_time_2);
+
+end_time_2 = new Date(start_time_2.getTime()); // Create a new Date object based on start_time
+end_time_2.setSeconds(end_time_2.getSeconds() + 10);
+console.log('end_time_2 = ', end_time_2);
+
+startTimestamp2 = formatTimestamp(start_time_2);
+console.log('startTimestamp2 = ', startTimestamp2);
+
+endTimestamp2 = formatTimestamp(end_time_2);
+console.log('endTimestamp2 = ', endTimestamp2);
+
+timestamped_sample_text_1 = `${startTimestamp1} ${timestamp_separator} ${endTimestamp1} : ${sample_text_1}`;
+console.log('timestamped_sample_text_1 = ', timestamped_sample_text_1);
+
+timestamped_sample_text_2 = `${startTimestamp2} ${timestamp_separator} ${endTimestamp2} : ${sample_text_2}`;
+console.log('timestamped_sample_text_2 = ', timestamped_sample_text_2);
+
+timestamped_sample_text = timestamped_sample_text_1 + "\n" + timestamped_sample_text_2;
+console.log('timestamped_sample_text = ', timestamped_sample_text);
+
+//var timestamps = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : /;
+sample_text = removeTimestamps(timestamped_sample_text);
+console.log('sample_text = ', sample_text);
+
+
 select_src_language = document.querySelector("#select_src_language");
 select_src_dialect = document.querySelector("#select_src_dialect");
+
+checkbox_show_src = document.querySelector("#checkbox_show_src");
+checkbox_show_dst = document.querySelector("#checkbox_show_dst");
+
+checkbox_show_timestamp_src = document.querySelector("#checkbox_show_timestamp_src");
+checkbox_show_timestamp_dst = document.querySelector("#checkbox_show_timestamp_dst");
 
 select_src_font = document.querySelector("#select_src_font");
 input_src_font_size = document.querySelector("#input_src_font_size");
@@ -75,7 +132,6 @@ input_dst_container_color = document.querySelector("#input_dst_container_color")
 input_dst_container_opacity = document.querySelector("#input_dst_container_opacity");
 
 input_pause_threshold = document.querySelector("#input_pause_threshold");
-
 
 src_textarea_container = document.querySelector("#src_textarea_container");
 src_textarea = document.querySelector("#src_textarea");
@@ -148,13 +204,41 @@ function CheckStoredValues() {
 	chrome.storage.sync.get(['show_src'], function(result) {
 		show_src = result.show_src;
 		console.log('show_src =', show_src);
-		if (show_src) checkbox_show_src.checked=true;
+		if (show_src) {
+			checkbox_show_src.checked = true;
+		} else {
+			checkbox_show_src.checked = false;
+		}
 	});
 
 	chrome.storage.sync.get(['show_dst'], function(result) {
 		show_dst = result.show_dst;
 		console.log('show_dst =', show_dst);
-		if (show_dst) checkbox_show_dst.checked=true;
+		if (show_dst) {
+			checkbox_show_dst.checked = true;
+		} else {
+			checkbox_show_dst.checked = false;
+		}
+	});
+
+	chrome.storage.sync.get(['show_timestamp_src'], function(result) {
+		show_timestamp_src = result.show_timestamp_src;
+		console.log('show_timestamp_src =', show_timestamp_src);
+		if (show_timestamp_src) {
+			checkbox_show_timestamp_src.checked = true;
+		} else {
+			checkbox_show_timestamp_src.checked = false;
+		}
+	});
+
+	chrome.storage.sync.get(['show_timestamp_dst'], function(result) {
+		show_timestamp_dst = result.show_timestamp_dst;
+		console.log('show_timestamp_dst =', show_timestamp_dst);
+		if (show_timestamp_dst) {
+			checkbox_show_timestamp_dst.checked = true;
+		} else {
+			checkbox_show_timestamp_dst.checked = false;
+		}
 	});
 
 	chrome.storage.sync.get(['pause_threshold'], function(result) {
@@ -449,11 +533,25 @@ select_dst_dialect.addEventListener('change', function(){
 checkbox_show_src.addEventListener('change', function(){
 	chrome.storage.sync.set({'show_src' : checkbox_show_src.checked},(()=>{}));
 	console.log('checkbox_show_src.checked =', checkbox_show_src.checked);
+	update_sample_text();
 });
 
 checkbox_show_dst.addEventListener('change', function(){
 	chrome.storage.sync.set({'show_dst' : checkbox_show_dst.checked},(()=>{}));
 	console.log('checkbox_show_dst.checked =', checkbox_show_dst.checked);
+	update_sample_text();
+});
+
+checkbox_show_timestamp_src.addEventListener('change', function(){
+	chrome.storage.sync.set({'show_timestamp_src' : checkbox_show_timestamp_src.checked},(()=>{}));
+	console.log('checkbox_show_timestamp_src.checked =', checkbox_show_timestamp_src.checked);
+	update_sample_text();
+});
+
+checkbox_show_timestamp_dst.addEventListener('change', function(){
+	chrome.storage.sync.set({'show_timestamp_dst' : checkbox_show_timestamp_dst.checked},(()=>{}));
+	console.log('checkbox_show_timestamp_dst.checked =', checkbox_show_timestamp_dst.checked);
+	update_sample_text();
 });
 
 input_pause_threshold.addEventListener('change', function(){
@@ -523,6 +621,8 @@ save_button.addEventListener('click', function(){
 		'dst_dialect': select_dst_dialect.value,
 		'show_src': checkbox_show_src.checked,
 		'show_dst': checkbox_show_dst.checked,
+		'show_timestamp_src': checkbox_show_timestamp_src.checked,
+		'show_timestamp_dst': checkbox_show_timestamp_dst.checked,
 		'pause_threshold': input_pause_threshold.value,
 
 		'src_selected_font_index': select_src_font.selectedIndex,
@@ -558,6 +658,8 @@ save_button.addEventListener('click', function(){
 		console.log('save dst_dialect = ', select_dst_dialect.value);
 		console.log('save show_src = ', checkbox_show_src.checked);
 		console.log('save show_dst = ', checkbox_show_dst.checked);
+		console.log('save show_timestamp_src = ', checkbox_show_timestamp_src.checked);
+		console.log('save show_timestamp_dst = ', checkbox_show_timestamp_dst.checked);
 		console.log('save pause_threshold = ', input_pause_threshold.value);
 		console.log('save src_selected_font_index = ', select_src_font.selectedIndex);
 		console.log('save src_selected_font = ', select_src_font.value);
@@ -1057,7 +1159,6 @@ function getRect(element) {
 
 
 function get_textarea_rect() {
-
 	src_width = document.querySelector("#input_src_container_width_factor").value*getRect(document.querySelector("#my_yt_iframe")).width;
 	//console.log('src_width =', src_width);
 
@@ -1108,13 +1209,160 @@ function get_textarea_rect() {
 function regenerate_textarea() {
 	var textarea_rect = get_textarea_rect();
 
-	if (document.querySelector("#src_textarea_container")) {
-		document.querySelector("#src_textarea_container").style.fontFamily = document.querySelector("#select_src_font").value + ", sans-serif";
-		document.querySelector("#src_textarea_container").style.width = String(textarea_rect.src_width)+'px';
-		document.querySelector("#src_textarea_container").style.height = String(textarea_rect.src_height)+'px';
-		document.querySelector("#src_textarea_container").style.top = String(textarea_rect.src_top)+'px';
-		document.querySelector("#src_textarea_container").style.left = String(textarea_rect.src_left)+'px';
+	if (document.querySelector("#checkbox_show_src").checked) {
+		saveData('show_src', show_src);
+		//if (!document.querySelector("#src_textarea_container")) {
+		//	create_modal_text_area();
+		//}
+		if (document.querySelector("#src_textarea_container")) {
+			document.querySelector("#src_textarea_container").style.display = 'block';
+			document.querySelector("#src_textarea_container").style.fontFamily = document.querySelector("#select_src_font").value + ", sans-serif";
+			document.querySelector("#src_textarea_container").style.width = String(textarea_rect.src_width)+'px';
+			document.querySelector("#src_textarea_container").style.height = String(textarea_rect.src_height)+'px';
+			document.querySelector("#src_textarea_container").style.top = String(textarea_rect.src_top)+'px';
+			document.querySelector("#src_textarea_container").style.left = String(textarea_rect.src_left)+'px';
 
+			var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
+				.width(textarea_rect.src_width)
+				.height(textarea_rect.src_height)
+				.resizable().draggable({
+					cancel: 'text',
+					start: function (){
+						$('#src_textarea').focus();
+					},
+					stop: function (){
+						$('#src_textarea').focus();
+					}
+				})
+				.css({
+					'position': 'absolute',
+					'fontFamily': document.querySelector("#select_src_font").value + ', sans-serif',
+					'fontSize': document.querySelector("#input_src_font_size").value,
+					'color': document.querySelector("#input_src_font_color").value,
+					'backgroundColor': hexToRgba(document.querySelector("#input_src_container_color").value, document.querySelector("#input_src_container_opacity").value),
+					'border': 'none',
+					'display': 'block',
+					'overflow': 'hidden',
+					'z-index': '2147483647'
+				})
+				.offset({top:textarea_rect.src_top, left:textarea_rect.src_left})
+
+			if (document.querySelector("#checkbox_show_timestamp_src").checked) {
+				document.querySelector("#src_textarea").value = timestamped_sample_text;
+			}
+			else {
+				document.querySelector("#src_textarea").value = removeTimestamps(timestamped_sample_text);
+			}
+
+			document.querySelector("#src_textarea").style.width = String(textarea_rect.src_width)+'px';
+			document.querySelector("#src_textarea").style.height = String(textarea_rect.src_height)+'px';
+			document.querySelector("#src_textarea").style.width = '100%';
+			document.querySelector("#src_textarea").style.height = '100%';
+			document.querySelector("#src_textarea").style.border = 'none';
+			document.querySelector("#src_textarea").style.display = 'inline-block';
+			document.querySelector("#src_textarea").style.overflow = 'hidden';
+
+			document.querySelector("#src_textarea").style.fontFamily = document.querySelector("#select_src_font").value + ", sans-serif";
+			document.querySelector("#src_textarea").style.fontSize=String(document.querySelector("#input_src_font_size").value)+'px';
+			document.querySelector("#src_textarea").style.color = document.querySelector("#input_src_font_color").value;
+			document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_src_container_color").value, document.querySelector("#input_src_container_opacity").value);
+
+		} else {
+			console.log('src_textarea_container has already exist');
+		}
+	} else {
+		saveData('show_src', show_src);
+		if (document.querySelector("#src_textarea_container")) {
+			document.querySelector("#src_textarea_container").style.display = 'none';
+		}
+	}
+
+
+	if (document.querySelector("#checkbox_show_dst").checked) {
+		saveData('show_dst', show_dst);
+		//if (!document.querySelector("#dst_textarea_container")) {
+		//	create_modal_text_area();
+		//}
+		if (document.querySelector("#dst_textarea_container")) {
+			document.querySelector("#dst_textarea_container").style.display = 'block';
+			document.querySelector("#dst_textarea_container").style.fontFamily = document.querySelector("#select_dst_font").value + ", sans-serif";
+			document.querySelector("#dst_textarea_container").style.width = String(textarea_rect.dst_width)+'px';
+			document.querySelector("#dst_textarea_container").style.height = String(textarea_rect.dst_height)+'px';
+			document.querySelector("#dst_textarea_container").style.top = String(textarea_rect.dst_top)+'px';
+			document.querySelector("#dst_textarea_container").style.left = String(textarea_rect.dst_left)+'px';
+
+			var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
+				.width(textarea_rect.dst_width)
+				.height(textarea_rect.dst_height)
+				.resizable().draggable({
+					cancel: 'text',
+					start: function (){
+						$('#dst_textarea').focus();
+					},
+					stop: function (){
+						$('#dst_textarea').focus();
+					}
+				})
+				.css({
+					'position': 'absolute',
+					'fontFamily': document.querySelector("#select_dst_font").value + ', sans-serif',
+					'fontSize': document.querySelector("#input_dst_font_size").value,
+					'color': document.querySelector("#input_dst_font_color").value,
+					'backgroundColor': hexToRgba(document.querySelector("#input_dst_container_color").value, document.querySelector("#input_dst_container_opacity").value),
+					'border': 'none',
+					'display': 'block',
+					'overflow': 'hidden',
+					'z-index': '2147483647'
+				})
+				.offset({top:textarea_rect.dst_top, left:textarea_rect.dst_left})
+
+			if (document.querySelector("#checkbox_show_timestamp_dst").checked) {
+				document.querySelector("#dst_textarea").value = timestamped_sample_text;
+			}
+			else {
+				document.querySelector("#dst_textarea").value = removeTimestamps(timestamped_sample_text);
+			}
+
+			document.querySelector("#dst_textarea").style.width = String(textarea_rect.dst_width)+'px';
+			document.querySelector("#dst_textarea").style.height = String(textarea_rect.dst_height)+'px';
+			document.querySelector("#dst_textarea").style.width = '100%';
+			document.querySelector("#dst_textarea").style.height = '100%';
+			document.querySelector("#dst_textarea").style.border = 'none';
+			document.querySelector("#dst_textarea").style.display = 'inline-block';
+			document.querySelector("#dst_textarea").style.overflow = 'hidden';
+
+			document.querySelector("#dst_textarea").style.fontFamily = document.querySelector("#select_dst_font").value + ", sans-serif";
+			document.querySelector("#dst_textarea").style.fontSize=String(document.querySelector("#input_dst_font_size").value)+'px';
+			document.querySelector("#dst_textarea").style.color = document.querySelector("#input_dst_font_color").value;
+			document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_dst_container_color").value, document.querySelector("#input_dst_container_opacity").value);
+
+		} else {
+			console.log('dst_textarea_container has already exist');
+		}
+
+	} else {
+		saveData('show_dst', show_dst);
+		if (document.querySelector("#dst_textarea_container")) {
+			document.querySelector("#dst_textarea_container").style.display = 'none';
+		}
+	}
+}
+
+
+function create_modal_text_area() {
+	console.log("Create modal text area");
+
+	src_container_width_factor = document.querySelector("#input_src_container_width_factor").value;
+	src_container_height_factor = document.querySelector("#input_src_container_height_factor").value;
+
+	dst_container_width_factor = document.querySelector("#input_dst_container_width_factor").value;
+	dst_container_height_factor = document.querySelector("#input_dst_container_height_factor").value;
+
+	var textarea_rect = get_textarea_rect();
+	video_info = getVideoPlayerInfo();
+
+	if (document.querySelector("#checkbox_show_src").checked) {
+		saveData("show_src", show_src);
 		var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
 			.width(textarea_rect.src_width)
 			.height(textarea_rect.src_height)
@@ -1140,34 +1388,116 @@ function regenerate_textarea() {
 			})
 			.offset({top:textarea_rect.src_top, left:textarea_rect.src_left})
 
-		document.querySelector("#src_textarea").value = "This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height.";
+		if (!document.querySelector("#src_textarea_container")) {
+			console.log('appending src_textarea_container to html body');
+			src_textarea_container$.appendTo('body');
+		} else {
+			console.log('src_textarea_container has already exist');
+		}
 
-		document.querySelector("#src_textarea").style.width = String(textarea_rect.src_width)+'px';
-		document.querySelector("#src_textarea").style.height = String(textarea_rect.src_height)+'px';
+		if (document.querySelector("#checkbox_show_timestamp_src").checked) {
+			document.querySelector("#src_textarea").value = timestamped_sample_text;
+		} else {
+			document.querySelector("#src_textarea").value = removeTimestamps(timestamped_sample_text);
+		}
+
 		document.querySelector("#src_textarea").style.width = '100%';
 		document.querySelector("#src_textarea").style.height = '100%';
 		document.querySelector("#src_textarea").style.border = 'none';
 		document.querySelector("#src_textarea").style.display = 'inline-block';
 		document.querySelector("#src_textarea").style.overflow = 'hidden';
+		document.querySelector("#src_textarea").style.allow="fullscreen";
 
-		document.querySelector("#src_textarea").style.fontFamily = document.querySelector("#select_src_font").value + ", sans-serif";
-		document.querySelector("#src_textarea").style.fontSize=String(document.querySelector("#input_src_font_size").value)+'px';
-		document.querySelector("#src_textarea").style.color = document.querySelector("#input_src_font_color").value;
+		document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
+		document.querySelector("#src_textarea").style.color = src_font_color;
 		document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_src_container_color").value, document.querySelector("#input_src_container_opacity").value);
-		
+		document.querySelector("#src_textarea").style.fontSize=String(src_font_size)+'px';
 
+		document.querySelector("#src_textarea").offsetParent.onresize = (function(){
+			if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
+				document.querySelector("#checkbox_centerize_src").checked = false;
+			}
+
+			document.querySelector("#src_textarea").style.position='absolute';
+			document.querySelector("#src_textarea").style.width = '100%';
+			document.querySelector("#src_textarea").style.height = '100%';
+
+			video_info = getVideoPlayerInfo();
+			if (video_info) {
+				src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/video_info.width;
+				//console.log('src_container_width_factor = ', src_container_width_factor);
+				document.querySelector("#input_src_container_width_factor").value = src_container_width_factor;
+				saveData("src_container_width_factor", src_container_width_factor);
+
+				src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/video_info.height;
+				//console.log('src_container_height_factor = ', src_container_height_factor);
+				document.querySelector("#input_src_container_height_factor").value = src_container_height_factor;
+				saveData("src_container_height_factor", src_container_height_factor);
+			} else {
+				src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/window.innerWidth;
+				//console.log('src_container_width_factor = ', src_container_width_factor);
+				document.querySelector("#input_src_container_width_factor").value = src_container_width_factor;
+				saveData("src_container_width_factor", src_container_width_factor);
+
+				src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/window.innerHeight;
+				//console.log('src_container_height_factor = ', src_container_height_factor);
+				document.querySelector("#input_src_container_height_factor").value = src_container_height_factor;
+				saveData("src_container_height_factor", src_container_height_factor);
+			}
+		});
+
+		document.querySelector("#src_textarea").offsetParent.ondrag = (function(){
+			if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
+				document.querySelector("#checkbox_centerize_src").checked = false;
+			}
+
+			document.querySelector("#src_textarea").style.position='absolute';
+
+			video_info = getVideoPlayerInfo();
+			if (video_info) {
+				src_container_top_factor = (getRect(document.querySelector("#src_textarea_container")).top - video_info.top)/video_info.height;
+				if (src_container_top_factor <= 0) {
+					src_container_top_factor = 0;
+				}
+				document.querySelector("#input_src_container_top_factor").value = src_container_top_factor;
+				//console.log('src_container_top_factor = ', src_container_top_factor);
+				saveData("src_container_top_factor", src_container_top_factor);
+
+				src_container_left_factor = (getRect(document.querySelector("#src_textarea_container")).left - video_info.left)/video_info.width;
+				if (src_container_left_factor <= 0) {
+					src_container_left_factor = 0;
+				}
+				document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
+				//console.log('src_container_left_factor = ', src_container_left_factor);
+				saveData("src_container_left_factor", src_container_left_factor);
+			} else {
+				src_container_top_factor = getRect(document.querySelector("#src_textarea_container")).top/window.innerHeight;
+				if (src_container_top_factor <= 0) {
+					src_container_top_factor = 0;
+				}
+				document.querySelector("#input_src_container_top_factor").value = src_container_top_factor;
+				//console.log('src_container_top_factor = ', src_container_top_factor);
+				saveData("src_container_top_factor", src_container_top_factor);
+
+				src_container_left_factor = getRect(document.querySelector("#src_textarea_container")).left/window.innerWidth;
+				if (src_container_left_factor <= 0) {
+					src_container_left_factor = 0;
+				}
+				document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
+				//console.log('src_container_left_factor = ', src_container_left_factor);
+				saveData("src_container_left_factor", src_container_left_factor);
+			}
+		});
 	} else {
-		console.log('src_textarea_container has already exist');
+		saveData("show_src", show_src);
+		if (document.querySelector("#src_textarea_container")) {
+			document.querySelector("#src_textarea_container").style.display = 'none';
+		}
 	}
 
 
-	if (document.querySelector("#dst_textarea_container")) {
-		document.querySelector("#dst_textarea_container").style.fontFamily = document.querySelector("#select_dst_font").value + ", sans-serif";
-		document.querySelector("#dst_textarea_container").style.width = String(textarea_rect.dst_width)+'px';
-		document.querySelector("#dst_textarea_container").style.height = String(textarea_rect.dst_height)+'px';
-		document.querySelector("#dst_textarea_container").style.top = String(textarea_rect.dst_top)+'px';
-		document.querySelector("#dst_textarea_container").style.left = String(textarea_rect.dst_left)+'px';
-
+	if (document.querySelector("#checkbox_show_dst").checked) {
+		saveData("show_dst", show_dst);
 		var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
 			.width(textarea_rect.dst_width)
 			.height(textarea_rect.dst_height)
@@ -1193,282 +1523,112 @@ function regenerate_textarea() {
 			})
 			.offset({top:textarea_rect.dst_top, left:textarea_rect.dst_left})
 
-		document.querySelector("#dst_textarea").value = "This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height.";
+		if (!document.querySelector("#dst_textarea_container")) {
+			console.log('appending dst_textarea_container to html body');
+			dst_textarea_container$.appendTo('body');
+		} else {
+			console.log('src_textarea_container has already exist');
+		}
 
-		document.querySelector("#dst_textarea").style.width = String(textarea_rect.dst_width)+'px';
-		document.querySelector("#dst_textarea").style.height = String(textarea_rect.dst_height)+'px';
+		if (document.querySelector("#checkbox_show_timestamp_dst").checked) {
+			document.querySelector("#dst_textarea").value = timestamped_sample_text;
+		} else {
+			document.querySelector("#dst_textarea").value = removeTimestamps(timestamped_sample_text);
+		}
+
 		document.querySelector("#dst_textarea").style.width = '100%';
 		document.querySelector("#dst_textarea").style.height = '100%';
 		document.querySelector("#dst_textarea").style.border = 'none';
 		document.querySelector("#dst_textarea").style.display = 'inline-block';
 		document.querySelector("#dst_textarea").style.overflow = 'hidden';
+		document.querySelector("#dst_textarea").style.allow="fullscreen";
 
-		document.querySelector("#dst_textarea").style.fontFamily = document.querySelector("#select_dst_font").value + ", sans-serif";
-		document.querySelector("#dst_textarea").style.fontSize=String(document.querySelector("#input_dst_font_size").value)+'px';
-		document.querySelector("#dst_textarea").style.color = document.querySelector("#input_dst_font_color").value;
+		document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif";
+		document.querySelector("#dst_textarea").style.color = dst_font_color;
 		document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_dst_container_color").value, document.querySelector("#input_dst_container_opacity").value);
+		document.querySelector("#dst_textarea").style.fontSize=String(dst_font_size)+'px';
 
+		document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
+			document.querySelector("#dst_textarea").style.position='absolute';
+			document.querySelector("#dst_textarea").style.width = '100%';
+			document.querySelector("#dst_textarea").style.height = '100%';
+
+			if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+				document.querySelector("#checkbox_centerize_dst").checked = false;
+			}
+
+			video_info = getVideoPlayerInfo();
+			if (video_info) {
+				dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/video_info.width;
+				//console.log('dst_container_width_factor = ', dst_container_width_factor);
+				document.querySelector("#input_dst_container_width_factor").value = dst_container_width_factor;
+				saveData("dst_container_width_factor", dst_container_width_factor);
+
+				dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/video_info.height;
+				//console.log('dst_container_height_factor = ', dst_container_height_factor);
+				document.querySelector("#input_dst_container_height_factor").value = dst_container_height_factor;
+				saveData("dst_container_height_factor", dst_container_height_factor);
+			} else {
+				dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/window.innerWidth;
+				//console.log('dst_container_width_factor = ', dst_container_width_factor);
+				document.querySelector("#input_dst_container_width_factor").value = dst_container_width_factor;
+				saveData("dst_container_width_factor", dst_container_width_factor);
+
+				dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/window.innerHeight;
+				//console.log('dst_container_height_factor = ', dst_container_height_factor);
+				document.querySelector("#input_dst_container_height_factor").value = dst_container_height_factor;
+				saveData("dst_container_height_factor", dst_container_height_factor);
+			}
+		});
+
+		document.querySelector("#dst_textarea").offsetParent.ondrag = (function(){
+			document.querySelector("#dst_textarea").style.position='absolute';
+
+			if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+				document.querySelector("#checkbox_centerize_dst").checked = false;
+			}
+
+			video_info = getVideoPlayerInfo();
+			if (video_info) {
+				dst_container_top_factor = (getRect(document.querySelector("#dst_textarea_container")).top - video_info.top)/video_info.height;
+				if (dst_container_top_factor <= 0) {
+					dst_container_top_factor = 0;
+				}
+				document.querySelector("#input_dst_container_top_factor").value = dst_container_top_factor;
+				//console.log('dst_container_top_factor = ', dst_container_top_factor);
+				saveData("dst_container_top_factor", dst_container_top_factor);
+
+				dst_container_left_factor = (getRect(document.querySelector("#dst_textarea_container")).left - video_info.left)/video_info.width;
+				if (dst_container_left_factor <= 0) {
+					dst_container_left_factor = 0;
+				}
+				document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
+				//console.log('dst_container_left_factor = ', dst_container_left_factor);
+				saveData("dst_container_left_factor", dst_container_left_factor);
+			} else {
+				dst_container_top_factor = getRect(document.querySelector("#dst_textarea_container")).top/window.innerHeight;
+				if (dst_container_top_factor <= 0) {
+					dst_container_top_factor = 0;
+				}
+				document.querySelector("#input_dst_container_top_factor").value = dst_container_top_factor;
+				//console.log('dst_container_top_factor = ', dst_container_top_factor);
+				saveData("dst_container_top_factor", dst_container_top_factor);
+
+				dst_container_left_factor = getRect(document.querySelector("#dst_textarea_container")).left/window.innerWidth;
+				if (dst_container_left_factor <= 0) {
+					dst_container_left_factor = 0;
+				}
+				document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
+				//console.log('dst_container_left_factor = ', dst_container_left_factor);
+				saveData("dst_container_left_factor", dst_container_left_factor);
+			}
+		});
 	} else {
-		console.log('dst_textarea_container has already exist');
+		saveData("show_dst", show_dst);
+		if (document.querySelector("#dst_textarea_container")) {
+			document.querySelector("#dst_textarea_container").style.display = 'none';
+		}
 	}
-}
-
-
-function create_modal_text_area() {
-	console.log("Create modal text area");
-
-	src_container_width_factor = document.querySelector("#input_src_container_width_factor").value;
-	src_container_height_factor = document.querySelector("#input_src_container_height_factor").value;
-
-	dst_container_width_factor = document.querySelector("#input_dst_container_width_factor").value;
-	dst_container_height_factor = document.querySelector("#input_dst_container_height_factor").value;
-
-	var textarea_rect = get_textarea_rect();
-	video_info = getVideoPlayerInfo();
-
-	var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
-		.width(textarea_rect.src_width)
-		.height(textarea_rect.src_height)
-		.resizable().draggable({
-			cancel: 'text',
-			start: function (){
-				$('#src_textarea').focus();
-			},
-			stop: function (){
-				$('#src_textarea').focus();
-			}
-		})
-		.css({
-			'position': 'absolute',
-			'fontFamily': document.querySelector("#select_src_font").value + ', sans-serif',
-			'fontSize': document.querySelector("#input_src_font_size").value,
-			'color': document.querySelector("#input_src_font_color").value,
-			'backgroundColor': hexToRgba(document.querySelector("#input_src_container_color").value, document.querySelector("#input_src_container_opacity").value),
-			'border': 'none',
-			'display': 'block',
-			'overflow': 'hidden',
-			'z-index': '2147483647'
-		})
-		.offset({top:textarea_rect.src_top, left:textarea_rect.src_left})
-
-	if (!document.querySelector("#src_textarea_container")) {
-		console.log('appending src_textarea_container to html body');
-		src_textarea_container$.appendTo('body');
-	} else {
-		console.log('src_textarea_container has already exist');
-	}
-
-	document.querySelector("#src_textarea").value = "This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height.";
-
-	document.querySelector("#src_textarea").style.width = '100%';
-	document.querySelector("#src_textarea").style.height = '100%';
-	document.querySelector("#src_textarea").style.border = 'none';
-	document.querySelector("#src_textarea").style.display = 'inline-block';
-	document.querySelector("#src_textarea").style.overflow = 'hidden';
-	document.querySelector("#src_textarea").style.allow="fullscreen";
-
-	document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
-	document.querySelector("#src_textarea").style.color = src_font_color;
-	document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_src_container_color").value, document.querySelector("#input_src_container_opacity").value);
-	document.querySelector("#src_textarea").style.fontSize=String(src_font_size)+'px';
-
-	document.querySelector("#src_textarea").offsetParent.onresize = (function(){
-		if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
-			document.querySelector("#checkbox_centerize_src").checked = false;
-		}
-
-		document.querySelector("#src_textarea").style.position='absolute';
-		document.querySelector("#src_textarea").style.width = '100%';
-		document.querySelector("#src_textarea").style.height = '100%';
-
-		video_info = getVideoPlayerInfo();
-		if (video_info) {
-			src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/video_info.width;
-			//console.log('src_container_width_factor = ', src_container_width_factor);
-			document.querySelector("#input_src_container_width_factor").value = src_container_width_factor;
-			saveData("src_container_width_factor", src_container_width_factor);
-
-			src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/video_info.height;
-			//console.log('src_container_height_factor = ', src_container_height_factor);
-			document.querySelector("#input_src_container_height_factor").value = src_container_height_factor;
-			saveData("src_container_height_factor", src_container_height_factor);
-		} else {
-			src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/window.innerWidth;
-			//console.log('src_container_width_factor = ', src_container_width_factor);
-			document.querySelector("#input_src_container_width_factor").value = src_container_width_factor;
-			saveData("src_container_width_factor", src_container_width_factor);
-
-			src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/window.innerHeight;
-			//console.log('src_container_height_factor = ', src_container_height_factor);
-			document.querySelector("#input_src_container_height_factor").value = src_container_height_factor;
-			saveData("src_container_height_factor", src_container_height_factor);
-		}
-	});
-
-	document.querySelector("#src_textarea").offsetParent.ondrag = (function(){
-		if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
-			document.querySelector("#checkbox_centerize_src").checked = false;
-		}
-
-		document.querySelector("#src_textarea").style.position='absolute';
-
-		video_info = getVideoPlayerInfo();
-		if (video_info) {
-			src_container_top_factor = (getRect(document.querySelector("#src_textarea_container")).top - video_info.top)/video_info.height;
-			if (src_container_top_factor <= 0) {
-				src_container_top_factor = 0;
-			}
-			document.querySelector("#input_src_container_top_factor").value = src_container_top_factor;
-			//console.log('src_container_top_factor = ', src_container_top_factor);
-			saveData("src_container_top_factor", src_container_top_factor);
-
-			src_container_left_factor = (getRect(document.querySelector("#src_textarea_container")).left - video_info.left)/video_info.width;
-			if (src_container_left_factor <= 0) {
-				src_container_left_factor = 0;
-			}
-			document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
-			//console.log('src_container_left_factor = ', src_container_left_factor);
-			saveData("src_container_left_factor", src_container_left_factor);
-		} else {
-			src_container_top_factor = getRect(document.querySelector("#src_textarea_container")).top/window.innerHeight;
-			if (src_container_top_factor <= 0) {
-				src_container_top_factor = 0;
-			}
-			document.querySelector("#input_src_container_top_factor").value = src_container_top_factor;
-			//console.log('src_container_top_factor = ', src_container_top_factor);
-			saveData("src_container_top_factor", src_container_top_factor);
-
-			src_container_left_factor = getRect(document.querySelector("#src_textarea_container")).left/window.innerWidth;
-			if (src_container_left_factor <= 0) {
-				src_container_left_factor = 0;
-			}
-			document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
-			//console.log('src_container_left_factor = ', src_container_left_factor);
-			saveData("src_container_left_factor", src_container_left_factor);
-		}
-	});
-
-	var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
-		.width(textarea_rect.dst_width)
-		.height(textarea_rect.dst_height)
-		.resizable().draggable({
-			cancel: 'text',
-			start: function (){
-				$('#dst_textarea').focus();
-			},
-			stop: function (){
-				$('#dst_textarea').focus();
-			}
-		})
-		.css({
-			'position': 'absolute',
-			'fontFamily': document.querySelector("#select_dst_font").value + ', sans-serif',
-			'fontSize': document.querySelector("#input_dst_font_size").value,
-			'color': document.querySelector("#input_dst_font_color").value,
-			'backgroundColor': hexToRgba(document.querySelector("#input_dst_container_color").value, document.querySelector("#input_dst_container_opacity").value),
-			'border': 'none',
-			'display': 'block',
-			'overflow': 'hidden',
-			'z-index': '2147483647'
-		})
-		.offset({top:textarea_rect.dst_top, left:textarea_rect.dst_left})
-
-	if (!document.querySelector("#dst_textarea_container")) {
-		console.log('appending dst_textarea_container to html body');
-		dst_textarea_container$.appendTo('body');
-	} else {
-		console.log('src_textarea_container has already exist');
-	}
-
-	document.querySelector("#dst_textarea").value = "This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height. This is the text sample of how the subtitles will be shown. It may looks different on different video width and video height.";
-
-	document.querySelector("#dst_textarea").style.width = '100%';
-	document.querySelector("#dst_textarea").style.height = '100%';
-	document.querySelector("#dst_textarea").style.border = 'none';
-	document.querySelector("#dst_textarea").style.display = 'inline-block';
-	document.querySelector("#dst_textarea").style.overflow = 'hidden';
-	document.querySelector("#dst_textarea").style.allow="fullscreen";
-
-	document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif";
-	document.querySelector("#dst_textarea").style.color = dst_font_color;
-	document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_dst_container_color").value, document.querySelector("#input_dst_container_opacity").value);
-	document.querySelector("#dst_textarea").style.fontSize=String(dst_font_size)+'px';
-
-	document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
-		document.querySelector("#dst_textarea").style.position='absolute';
-		document.querySelector("#dst_textarea").style.width = '100%';
-		document.querySelector("#dst_textarea").style.height = '100%';
-
-		if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
-			document.querySelector("#checkbox_centerize_dst").checked = false;
-		}
-
-		video_info = getVideoPlayerInfo();
-		if (video_info) {
-			dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/video_info.width;
-			//console.log('dst_container_width_factor = ', dst_container_width_factor);
-			document.querySelector("#input_dst_container_width_factor").value = dst_container_width_factor;
-			saveData("dst_container_width_factor", dst_container_width_factor);
-
-			dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/video_info.height;
-			//console.log('dst_container_height_factor = ', dst_container_height_factor);
-			document.querySelector("#input_dst_container_height_factor").value = dst_container_height_factor;
-			saveData("dst_container_height_factor", dst_container_height_factor);
-		} else {
-			dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/window.innerWidth;
-			//console.log('dst_container_width_factor = ', dst_container_width_factor);
-			document.querySelector("#input_dst_container_width_factor").value = dst_container_width_factor;
-			saveData("dst_container_width_factor", dst_container_width_factor);
-
-			dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/window.innerHeight;
-			//console.log('dst_container_height_factor = ', dst_container_height_factor);
-			document.querySelector("#input_dst_container_height_factor").value = dst_container_height_factor;
-			saveData("dst_container_height_factor", dst_container_height_factor);
-		}
-	});
-
-	document.querySelector("#dst_textarea").offsetParent.ondrag = (function(){
-		document.querySelector("#dst_textarea").style.position='absolute';
-
-		if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
-			document.querySelector("#checkbox_centerize_dst").checked = false;
-		}
-
-		video_info = getVideoPlayerInfo();
-		if (video_info) {
-			dst_container_top_factor = (getRect(document.querySelector("#dst_textarea_container")).top - video_info.top)/video_info.height;
-			if (dst_container_top_factor <= 0) {
-				dst_container_top_factor = 0;
-			}
-			document.querySelector("#input_dst_container_top_factor").value = dst_container_top_factor;
-			//console.log('dst_container_top_factor = ', dst_container_top_factor);
-			saveData("dst_container_top_factor", dst_container_top_factor);
-
-			dst_container_left_factor = (getRect(document.querySelector("#dst_textarea_container")).left - video_info.left)/video_info.width;
-			if (dst_container_left_factor <= 0) {
-				dst_container_left_factor = 0;
-			}
-			document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
-			//console.log('dst_container_left_factor = ', dst_container_left_factor);
-			saveData("dst_container_left_factor", dst_container_left_factor);
-		} else {
-			dst_container_top_factor = getRect(document.querySelector("#dst_textarea_container")).top/window.innerHeight;
-			if (dst_container_top_factor <= 0) {
-				dst_container_top_factor = 0;
-			}
-			document.querySelector("#input_dst_container_top_factor").value = dst_container_top_factor;
-			//console.log('dst_container_top_factor = ', dst_container_top_factor);
-			saveData("dst_container_top_factor", dst_container_top_factor);
-
-			dst_container_left_factor = getRect(document.querySelector("#dst_textarea_container")).left/window.innerWidth;
-			if (dst_container_left_factor <= 0) {
-				dst_container_left_factor = 0;
-			}
-			document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
-			//console.log('dst_container_left_factor = ', dst_container_left_factor);
-			saveData("dst_container_left_factor", dst_container_left_factor);
-		}
-	});
 }
 
 
@@ -1511,3 +1671,22 @@ function getVideoPlayerInfo() {
 }
 
 
+function formatTimestamp(timestamp) {
+	// Convert startTimestamp to string
+	const timestampString = timestamp.toISOString();
+
+	// Extract date and time parts
+	const datePart = timestampString.slice(0, 10);
+	const timePart = timestampString.slice(11, 23);
+
+	// Concatenate date and time parts with a space in between
+	return `${datePart} ${timePart}`;
+}
+
+
+function removeTimestamps(transcript) {
+    var timestampPattern = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : /;
+    var lines = transcript.split('\n');
+    var cleanedLines = lines.map(line => line.replace(timestampPattern, ''));
+    return cleanedLines.join('\n');
+}

@@ -60,7 +60,7 @@ chrome.action.onClicked.addListener((tab) => {
 			files:['js/moment.min.js']}),
 		chrome.scripting.executeScript({
 			target: {tabId: tab.id},
-			func: 	onLoad
+			func: onLoad
 		});
 
 	} else {
@@ -79,6 +79,7 @@ chrome.action.onClicked.addListener((tab) => {
 function onLoad() {
 
 	var action, recognition, recognizing, src, dst, src_dialect, dst_dialect;
+	var show_src, show_dst, show_timestamp_src, show_timestamp_dst;
 
 	var src_selected_font, src_font_size, src_font_color;
 	var src_container_width_factor, src_container_height_factor;
@@ -103,9 +104,9 @@ function onLoad() {
 	var timestamp_separator = "-->";
 	var session_start_time, session_end_time;
 
-	function formatTimestamp(startTimestamp) {
-		// Convert startTimestamp to string
-		const timestampString = startTimestamp.toISOString();
+	function formatTimestamp(timestamp) {
+		// Convert timestamp to string
+		const timestampString = timestamp.toISOString();
 
 		// Extract date and time parts
 		const datePart = timestampString.slice(0, 10);
@@ -123,7 +124,8 @@ function onLoad() {
 		console.log('onload: response =', response);
 	});
 
-	chrome.storage.sync.get([ 'recognizing', 'src_dialect', 'dst_dialect', 'show_src', 'show_dst', 'pause_threshold', 
+	chrome.storage.sync.get([ 'recognizing', 'src_dialect', 'dst_dialect', 'show_src', 'show_dst', 
+			'show_timestamp_src', 'show_timestamp_dst', 'pause_threshold', 
 			'src_selected_font', 'src_font_size', 'src_font_color', 'src_container_width_factor', 'src_container_height_factor', 
 			'src_container_top_factor', 'src_container_left_factor', 'centerize_src', 'src_container_color', 'src_container_opacity', 
 			'dst_selected_font', 'dst_font_size', 'dst_font_color', 'dst_container_width_factor', 'dst_container_height_factor', 
@@ -173,70 +175,75 @@ function onLoad() {
 		show_dst = result.show_dst;
 		//console.log('show_dst', result.show_dst);
 
+		show_timestamp_src = result.show_timestamp_src;
+		//console.log('show_timestamp_dst =', result.show_timestamp_dst);
+		show_timestamp_dst = result.show_timestamp_dst;
+		//console.log('show_timestamp_dst', result.show_timestamp_dst);
+
 		pause_threshold = result.pause_threshold;
 		//console.log('pause_threshold =', result.pause_threshold);
 
 
 		src_selected_font = result.src_selected_font;
-		console.log('src_selected_font =', result.src_selected_font);
+		//console.log('src_selected_font =', result.src_selected_font);
 
 		src_font_size = result.src_font_size;
-		console.log('src_font_size =', result.src_font_size);
+		//console.log('src_font_size =', result.src_font_size);
 
 		src_font_color = result.src_font_color;
-		console.log('src_font_color =', result.src_font_color);
+		//console.log('src_font_color =', result.src_font_color);
 
 		src_container_width_factor = result.src_container_width_factor;
-		console.log('result.src_container_width_factor =', result.src_container_width_factor);
+		//console.log('result.src_container_width_factor =', result.src_container_width_factor);
 
 		src_container_height_factor = result.src_container_height_factor;
-		console.log('result.src_container_height_factor =', result.src_container_height_factor);
+		//console.log('result.src_container_height_factor =', result.src_container_height_factor);
 
 		src_container_top_factor = result.src_container_top_factor;
-		console.log('result.src_container_top_factor =', result.src_container_top_factor);
+		//console.log('result.src_container_top_factor =', result.src_container_top_factor);
 
 		src_container_left_factor = result.src_container_left_factor;
-		console.log('result.src_container_left_factor =', result.src_container_left_factor);
+		//console.log('result.src_container_left_factor =', result.src_container_left_factor);
 
 		centerize_src = result.centerize_src;
-		console.log('result.centerize_src =', result.centerize_src);
+		//console.log('result.centerize_src =', result.centerize_src);
 
 		src_container_color = result.src_container_color;
-		console.log('result.src_container_color =', result.src_container_color);
+		//console.log('result.src_container_color =', result.src_container_color);
 
 		src_container_opacity = result.src_container_opacity;
-		console.log('result.src_container_opacity =', result.src_container_opacity);
+		//console.log('result.src_container_opacity =', result.src_container_opacity);
 
 
 		dst_selected_font = result.dst_selected_font;
-		console.log('dst_selected_font =', result.dst_selected_font);
+		//console.log('dst_selected_font =', result.dst_selected_font);
 
 		dst_font_size = result.dst_font_size;
-		console.log('dst_font_size =', result.dst_font_size);
+		//console.log('dst_font_size =', result.dst_font_size);
 
 		dst_font_color = result.dst_font_color;
-		console.log('dst_font_color =', result.dst_font_color);
+		//console.log('dst_font_color =', result.dst_font_color);
 
 		dst_container_width_factor = result.dst_container_width_factor;
-		console.log('result.dst_container_width_factor =', result.dst_container_width_factor);
+		//console.log('result.dst_container_width_factor =', result.dst_container_width_factor);
 
 		dst_container_height_factor = result.dst_container_height_factor;
-		console.log('result.dst_container_height_factor =', result.dst_container_height_factor);
+		//console.log('result.dst_container_height_factor =', result.dst_container_height_factor);
 
 		dst_container_top_factor = result.dst_container_top_factor;
-		console.log('result.dst_container_top_factor =', result.dst_container_top_factor);
+		//console.log('result.dst_container_top_factor =', result.dst_container_top_factor);
 
 		dst_container_left_factor = result.dst_container_left_factor;
-		console.log('result.dst_container_left_factor =', result.dst_container_left_factor);
+		//console.log('result.dst_container_left_factor =', result.dst_container_left_factor);
 
 		centerize_dst = result.centerize_dst;
-		console.log('result.centerize_dst =', result.centerize_dst);
+		//console.log('result.centerize_dst =', result.centerize_dst);
 
 		dst_container_color = result.dst_container_color;
-		console.log('result.dst_container_color =', result.dst_container_color);
+		//console.log('result.dst_container_color =', result.dst_container_color);
 
 		dst_container_opacity = result.dst_container_opacity;
-		console.log('result.dst_container_opacity =', result.dst_container_opacity);
+		//console.log('result.dst_container_opacity =', result.dst_container_opacity);
 
 
 		// create_modal_textarea
@@ -789,7 +796,13 @@ function onLoad() {
 							uniqueText = uniqueText + '\n';
 						}
 
-						if (uniqueText) saveTranscript(uniqueText);
+						//if (uniqueText) saveTranscript(uniqueText);
+						if (show_timestamp_src) {
+							if (uniqueText) saveTranscript(uniqueText);
+						} else {
+							if (uniqueText) saveTranscript(removeTimestamps(uniqueText));
+						}
+
 
 						if (uniqueText) var tt=gtranslate(uniqueText,src,dst).then((result => {
 							result = result.replace();
@@ -803,7 +816,12 @@ function onLoad() {
 							result = formatText(result);
 							result = result.replace(/\n\s*$/, '');
 							timestamped_translated_final_and_interim_transcript = result + "\n";
-							if (timestamped_translated_final_and_interim_transcript) saveTranslatedTranscript(timestamped_translated_final_and_interim_transcript);
+							//if (timestamped_translated_final_and_interim_transcript) saveTranslatedTranscript(timestamped_translated_final_and_interim_transcript);
+							if (show_timestamp_dst) {
+								if (timestamped_translated_final_and_interim_transcript) saveTranslatedTranscript(timestamped_translated_final_and_interim_transcript);
+							} else {
+								if (timestamped_translated_final_and_interim_transcript) saveTranslatedTranscript(removeTimestamps(timestamped_translated_final_and_interim_transcript));
+							}
 						}));
 					}
 
@@ -885,7 +903,13 @@ function onLoad() {
 							document.querySelector("#src_textarea").value = uniqueText;
 						}
 
-						if (uniqueText && document.querySelector("#src_textarea")) document.querySelector("#src_textarea").value = uniqueText;
+						//if (uniqueText && document.querySelector("#src_textarea")) document.querySelector("#src_textarea").value = uniqueText;
+						if (show_timestamp_src) {
+							if (uniqueText && document.querySelector("#src_textarea")) document.querySelector("#src_textarea").value = uniqueText;
+						} else {
+							if (uniqueText && document.querySelector("#src_textarea")) document.querySelector("#src_textarea").value = removeTimestamps(uniqueText);
+						}
+
 						if (document.querySelector("#src_textarea")) document.querySelector("#src_textarea").scrollTop = document.querySelector("#src_textarea").scrollHeight;
 
 					} else {
@@ -928,13 +952,30 @@ function onLoad() {
 									var translated_uniqueText = translated_uniqueLines.join('\n');
 									//console.log('translated_uniqueText = ', translated_uniqueText);
 								}
+
 								var displayed_translation = translated_uniqueText + result;
 								displayed_translation = formatText(displayed_translation);
+
 								if (getFirstWord(displayed_translation).includes('undefined')) displayed_translation = displayed_translation.replace('undefined', '');
+
 								if (all_translated_transcripts.length == 1) {
-									if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = result;
+
+									//if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = result;
+									if (show_timestamp_dst) {
+										if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = result;
+									} else {
+										if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = removeTimestamps(result);
+									}
+
 								} else {
-									if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = displayed_translation;
+
+									//if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = displayed_translation;
+									if (show_timestamp_dst) {
+										if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = displayed_translation;
+									} else {
+										if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = removeTimestamps(displayed_translation);
+									}
+
 								}
 
 								//if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value=result;
@@ -1702,6 +1743,14 @@ function onLoad() {
 
 			// Return the first word
 			return words[0];
+		}
+
+
+		function removeTimestamps(transcript) {
+			var timestampPattern = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : /;
+			var lines = transcript.split('\n');
+			var cleanedLines = lines.map(line => line.replace(timestampPattern, ''));
+			return cleanedLines.join('\n');
 		}
 
 
