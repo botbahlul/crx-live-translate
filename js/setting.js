@@ -518,10 +518,8 @@ function CheckStoredValues() {
 select_src_language.addEventListener('change', function(){
 	console.log('select_src_language.addEventListener("change")');
 	update_src_country();
-	//chrome.storage.sync.set({'src' : src},(()=>{}));
 	//chrome.runtime.sendMessage({ cmd: "src", data: { value: src } })
 	console.log('src = ', src);
-	//chrome.storage.sync.set({'src_language_index' : select_src_language.value},(()=>{}));
 	update_sample_text();
 	saveData('src', src);
 	saveData('src_language_index', select_src_language.selectedIndex);
@@ -529,8 +527,6 @@ select_src_language.addEventListener('change', function(){
 
 select_src_dialect.addEventListener('change', function(){
 	console.log('select_src_dialect.addEventListener("change")');
-	//chrome.storage.sync.set({'src' : src},(()=>{}));
-	//chrome.storage.sync.set({'src_dialect' : select_src_dialect.value},(()=>{}));
 	//chrome.runtime.sendMessage({ cmd: "src_dialect", data: { value: src_dialect } })
 	console.log('src_dialect = ', src_dialect);
 	saveData('src', src);
@@ -540,14 +536,7 @@ select_src_dialect.addEventListener('change', function(){
 select_dst_language.addEventListener('change', function(){
 	console.log('select_dst_language.addEventListener("change")');
 	update_dst_country();
-	//chrome.storage.sync.set({'dst' : dst},(()=>{}));
 	//chrome.runtime.sendMessage({ cmd: "dst", data: { value: dst } })
-	//chrome.storage.sync.set({'dst_language_index' : select_dst_language.value},(()=>{}));
-	//if (document.querySelector("#src_textarea_container")) {
-	//	regenerate_textarea();
-	//} else {
-	//	create_modal_text_area();
-	//}
 	update_sample_text();
 	saveData('dst', dst);
 	saveData('dst_language_index', dst_language_index);
@@ -555,9 +544,7 @@ select_dst_language.addEventListener('change', function(){
 
 select_dst_dialect.addEventListener('change', function(){
 	console.log('select_dst_dialect.addEventListener("change")');
-	//chrome.storage.sync.set({'dst' : dst},(()=>{}));
 	console.log('dst = ', dst);
-	//chrome.storage.sync.set({'dst_dialect' : select_dst_dialect.value},(()=>{}));
 	//chrome.runtime.sendMessage({ cmd: "dst_dialect", data: { value: dst_dialect } })
 	console.log('dst_dialect = ', dst_dialect);
 	saveData('dst', dst);
@@ -566,7 +553,6 @@ select_dst_dialect.addEventListener('change', function(){
 
 checkbox_show_src.addEventListener('change', function(){
 	console.log('checkbox_show_src.addEventListener("change")');
-	//chrome.storage.sync.set({'show_src' : checkbox_show_src.checked},(()=>{}));
 	console.log('checkbox_show_src.checked = ', checkbox_show_src.checked);
 	update_sample_text();
 	saveData('show_src', show_src);
@@ -574,7 +560,6 @@ checkbox_show_src.addEventListener('change', function(){
 
 checkbox_show_dst.addEventListener('change', function(){
 	console.log('checkbox_show_dst.addEventListener("change")');
-	//chrome.storage.sync.set({'show_dst' : checkbox_show_dst.checked},(()=>{}));
 	console.log('checkbox_show_dst.checked = ', checkbox_show_dst.checked);
 	update_sample_text();
 	saveData('show_dst', show_dst);
@@ -582,7 +567,6 @@ checkbox_show_dst.addEventListener('change', function(){
 
 checkbox_show_timestamp_src.addEventListener('change', function(){
 	console.log('checkbox_show_timestamp_src.addEventListener("change")');
-	//chrome.storage.sync.set({'show_timestamp_src' : checkbox_show_timestamp_src.checked},(()=>{}));
 	console.log('checkbox_show_timestamp_src.checked = ', checkbox_show_timestamp_src.checked);
 	update_sample_text();
 	saveData('show_timestamp_src', show_timestamp_src);
@@ -590,7 +574,6 @@ checkbox_show_timestamp_src.addEventListener('change', function(){
 
 checkbox_show_timestamp_dst.addEventListener('change', function(){
 	console.log('checkbox_show_timestamp_dst.addEventListener("change")');
-	//chrome.storage.sync.set({'show_timestamp_dst' : checkbox_show_timestamp_dst.checked},(()=>{}));
 	console.log('checkbox_show_timestamp_dst.checked = ', checkbox_show_timestamp_dst.checked);
 	update_sample_text();
 	saveData('show_timestamp_dst', show_timestamp_dst);
@@ -598,7 +581,6 @@ checkbox_show_timestamp_dst.addEventListener('change', function(){
 
 input_pause_threshold.addEventListener('change', function(){
 	console.log('input_pause_threshold.addEventListener.addEventListener("change")');
-	//chrome.storage.sync.set({'pause_threshold' : input_pause_threshold.value},(()=>{}));
 	console.log('pause_threshold = ', pause_threshold);
 	saveData('pause_threshold', pause_threshold);
 });
@@ -1173,22 +1155,12 @@ function update_sample_text() {
 
 document.addEventListener('fullscreenchange', function(event) {
 	console.log('document.addEventListener("fullscreenchange")');
-	//if (document.querySelector("#src_textarea_container") || document.querySelector("#dst_textarea_container")) {
-	//	regenerate_textarea();
-	//} else {
-	//	create_modal_text_area();
-	//}
 	update_sample_text();
 });
 
 
 window.addEventListener('resize', function(event){
 	console.log('window.addEventListener("resize")');
-	//if (document.querySelector("#src_textarea_container") || document.querySelector("#dst_textarea_container")) {
-	//	regenerate_textarea();
-	//} else {
-	//	create_modal_text_area();
-	//}
 	update_sample_text();
 });
 
@@ -1350,16 +1322,6 @@ function regenerate_textarea() {
 				}
 			}));
 
-			//console.log('show_timestamp_src = ', show_timestamp_src);
-			//if (document.querySelector("#checkbox_show_timestamp_src").checked) {
-			//	document.querySelector("#src_textarea").value = src_timestamped_sample_text;
-			//	console.log('src_timestamped_sample_text = ', src_timestamped_sample_text);
-			//}
-			//else {
-			//	document.querySelector("#src_textarea").value = removeTimestamps(src_timestamped_sample_text);
-			//	console.log('removeTimestamps(src_timestamped_sample_text) = ', removeTimestamps(src_timestamped_sample_text));
-			//}
-
 			document.querySelector("#src_textarea").style.width = String(textarea_rect.src_width)+'px';
 			document.querySelector("#src_textarea").style.height = String(textarea_rect.src_height)+'px';
 			document.querySelector("#src_textarea").style.width = '100%';
@@ -1456,16 +1418,6 @@ function regenerate_textarea() {
 					}
 				}
 			}));
-
-			//console.log('show_timestamp_dst = ', show_timestamp_dst);
-			//if (document.querySelector("#checkbox_show_timestamp_dst").checked) {
-			//	document.querySelector("#dst_textarea").value = dst_timestamped_sample_text;
-			//	console.log('dst_timestamped_sample_text = ', dst_timestamped_sample_text);
-			//}
-			//else {
-			//	document.querySelector("#dst_textarea").value = removeTimestamps(dst_timestamped_sample_text);
-			//	console.log('removeTimestamps(dst_timestamped_sample_text) = ', removeTimestamps(dst_timestamped_sample_text));
-			//}
 
 			document.querySelector("#dst_textarea").style.width = String(textarea_rect.dst_width)+'px';
 			document.querySelector("#dst_textarea").style.height = String(textarea_rect.dst_height)+'px';
@@ -1565,16 +1517,6 @@ function create_modal_text_area() {
 			}
 
 		}));
-
-		//show_timestamp_src = document.querySelector("#checkbox_show_timestamp_src").checked;
-		//console.log('show_timestamp_src = ', show_timestamp_src);
-		//if (document.querySelector("#checkbox_show_timestamp_src").checked) {
-		//	document.querySelector("#src_textarea").value = src_timestamped_sample_text;
-		//	console.log('src_timestamped_sample_text = ', src_timestamped_sample_text);
-		//} else {
-		//	document.querySelector("#src_textarea").value = removeTimestamps(src_timestamped_sample_text);
-		//	console.log('removeTimestamps(src_timestamped_sample_text) = ', removeTimestamps(src_timestamped_sample_text));
-		//}
 
 		document.querySelector("#src_textarea").style.width = '100%';
 		document.querySelector("#src_textarea").style.height = '100%';
@@ -1730,16 +1672,6 @@ function create_modal_text_area() {
 				console.log('removeTimestamps(dst_timestamped_sample_text) = ', removeTimestamps(dst_timestamped_sample_text));
 			}
 		}));
-
-		//show_timestamp_dst = document.querySelector("#checkbox_show_timestamp_dst").checked;
-		//console.log('show_timestamp_dst = ', show_timestamp_dst);
-		//if (document.querySelector("#checkbox_show_timestamp_dst").checked) {
-		//	document.querySelector("#dst_textarea").value = dst_timestamped_sample_text;
-		//	console.log('dst_timestamped_sample_text = ', dst_timestamped_sample_text);
-		//} else {
-		//	document.querySelector("#dst_textarea").value = removeTimestamps(dst_timestamped_sample_text);
-		//	console.log('removeTimestamps(dst_timestamped_sample_text) = ', removeTimestamps(dst_timestamped_sample_text));
-		//}
 
 		document.querySelector("#dst_textarea").style.width = '100%';
 		document.querySelector("#dst_textarea").style.height = '100%';
@@ -1995,19 +1927,15 @@ function formatText(text) {
 	text = text.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
 
     // Match timestamps in the text
-    //const timestamps = text.match(/\d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3}/g);
-	//const timestamps = text.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/g);
 	const timestamps = text.match(/(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: /);
 
     if (timestamps) {
         // Split the text based on timestamps
-        //const lines = text.split(/(?=\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/);
 		const lines = text.split(timestamps);
 
         let formattedText = "";
         for (let line of lines) {
             // Replace the separator format in the timestamps
-            //line = line.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) *--> *(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/, '$1 --> $2');
 			line = line.replace(timestamps, '$1 --> $2');
             
             // Add the formatted line to the result
@@ -2022,9 +1950,6 @@ function formatText(text) {
 
 
 function createTimeStampedSampleText() {
-	//start_time_1 = new Date();
-	//console.log('start_time_1 = ', start_time_1);
-
 	end_time_1 = new Date(start_time_1.getTime()); // Create a new Date object based on start_time_1
 	end_time_1.setSeconds(end_time_1.getSeconds() + 10);
 	//console.log('end_time_1 = ', end_time_1);
@@ -2035,7 +1960,6 @@ function createTimeStampedSampleText() {
 	endTimestamp1 = formatTimestamp(end_time_1);
 	//console.log('endTimestamp1 = ', endTimestamp1);
 
-	//timestamped_sample_text_1 = `${startTimestamp1} ${timestamp_separator} ${endTimestamp1} : ${sample_text_1}`;
 	timestamped_sample_text_1 = startTimestamp1 + ' ' + timestamp_separator + ' ' + endTimestamp1 + ' : ' + sample_text_1;
 	//console.log('timestamped_sample_text_1 = ', timestamped_sample_text_1);
 
@@ -2053,7 +1977,6 @@ function createTimeStampedSampleText() {
 	endTimestamp2 = formatTimestamp(end_time_2);
 	//console.log('endTimestamp2 = ', endTimestamp2);
 
-	//timestamped_sample_text_2 = `${startTimestamp2} ${timestamp_separator} ${endTimestamp2} : ${sample_text_2}`;
 	timestamped_sample_text_2 = startTimestamp2 + ' ' + timestamp_separator + ' ' + endTimestamp2 + ' : ' + sample_text_2;
 	//console.log('timestamped_sample_text_2 = ', timestamped_sample_text_2);
 

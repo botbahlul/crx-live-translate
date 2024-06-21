@@ -1,7 +1,6 @@
 var recognizing = false;
 
 chrome.action.onClicked.addListener((tab) => {
-
 	recognizing=!recognizing;
 
 	if (recognizing) {
@@ -38,7 +37,7 @@ chrome.action.onClicked.addListener((tab) => {
 			};
 		});
 
-		console.log('Start button clicked to start: recognizing = ', recognizing);
+		console.log('Start button clicked to start: recognizing =', recognizing);
 		chrome.storage.sync.set({'recognizing' : recognizing},(()=>{}));
 		chrome.action.setIcon({path: 'mic-listening.png'});
 
@@ -70,7 +69,7 @@ chrome.action.onClicked.addListener((tab) => {
 		chrome.storage.sync.set({'recognizing' : recognizing},(()=>{}));
 		chrome.action.setBadgeText({text: ''});
 		chrome.action.setIcon({path: 'mic.png'});
-		console.log('Start button clicked to end: recognizing = ', recognizing);
+		console.log('Start button clicked to end: recognizing =', recognizing);
 		return;
 	};
 });
@@ -99,12 +98,14 @@ function onLoad() {
 	var all_final_transcripts = [], formatted_all_final_transcripts;
 	var all_translated_transcripts = [], formatted_all_translated_transcripts;
 	var transcript_is_final = false;
+	var displayed_transcript, displayed_translation;
 
 	var video_info;
 	var timestamp_separator = "-->";
 	var session_start_time, session_end_time;
 
-	function formatTimestamp(timestamp) {
+
+	function formatTimestampToISOLocalString(timestamp) {
 		// Convert timestamp to string
 		const timestampString = timestamp.toISOString();
 
@@ -117,11 +118,11 @@ function onLoad() {
 	}
 
 
-	session_start_time = formatTimestamp(new Date());
-	console.log('session_start_time = ', session_start_time);
+	session_start_time = formatTimestampToISOLocalString(new Date());
+	console.log('session_start_time =', session_start_time);
 
 	chrome.runtime.onMessage.addListener(function (response, sendResponse) {
-		console.log('onload: response = ', response);
+		console.log('onload: response =', response);
 	});
 
 	chrome.storage.sync.get([ 'recognizing', 'src_dialect', 'dst_dialect', 'show_src', 'show_dst', 
@@ -132,11 +133,11 @@ function onLoad() {
 			'dst_container_top_factor', 'dst_container_left_factor', 'centerize_dst', 'dst_container_color', 'dst_container_opacity'], function(result) {
 
 		recognizing = result.recognizing;
-		console.log('onLoad: recognizing = ', recognizing);
+		console.log('onLoad: recognizing =', recognizing);
 
 		src_dialect = result.src_dialect;
 		if (!src_dialect) src_dialect='en-US';
-		//console.log('src_dialect = ',src_dialect);
+		//console.log('src_dialect =',src_dialect);
 		src = src_dialect.split('-')[0];
 		if (src_dialect === "yue-Hant-HK") {
 			src = "zh-TW";
@@ -150,7 +151,7 @@ function onLoad() {
 		if (src_dialect === "cmn-Hant-TW") {
 			src = "zh-TW";
 		};
-		console.log('src = ', src);
+		console.log('src =', src);
 
 		dst_dialect = result.dst_dialect;
 		if (!dst_dialect) dst_dialect='en-US';
@@ -168,446 +169,84 @@ function onLoad() {
 		if (dst_dialect === "cmn-Hant-TW") {
 			dst = "zh-TW";
 		};
-		console.log('dst = ', dst);
+		console.log('dst =', dst);
 
 		show_src = result.show_src;
-		//console.log('show_src = ', result.show_src);
+		//console.log('show_src =', result.show_src);
 		show_dst = result.show_dst;
 		//console.log('show_dst', result.show_dst);
 
 		show_timestamp_src = result.show_timestamp_src;
-		//console.log('show_timestamp_dst = ', result.show_timestamp_dst);
+		//console.log('show_timestamp_dst =', result.show_timestamp_dst);
 		show_timestamp_dst = result.show_timestamp_dst;
 		//console.log('show_timestamp_dst', result.show_timestamp_dst);
 
 		pause_threshold = result.pause_threshold;
-		//console.log('pause_threshold = ', result.pause_threshold);
+		//console.log('pause_threshold =', result.pause_threshold);
 
 
 		src_selected_font = result.src_selected_font;
-		//console.log('src_selected_font = ', result.src_selected_font);
+		//console.log('src_selected_font =', result.src_selected_font);
 
 		src_font_size = result.src_font_size;
-		//console.log('src_font_size = ', result.src_font_size);
+		//console.log('src_font_size =', result.src_font_size);
 
 		src_font_color = result.src_font_color;
-		//console.log('src_font_color = ', result.src_font_color);
+		//console.log('src_font_color =', result.src_font_color);
 
 		src_container_width_factor = result.src_container_width_factor;
-		//console.log('result.src_container_width_factor = ', result.src_container_width_factor);
+		//console.log('result.src_container_width_factor =', result.src_container_width_factor);
 
 		src_container_height_factor = result.src_container_height_factor;
-		//console.log('result.src_container_height_factor = ', result.src_container_height_factor);
+		//console.log('result.src_container_height_factor =', result.src_container_height_factor);
 
 		src_container_top_factor = result.src_container_top_factor;
-		//console.log('result.src_container_top_factor = ', result.src_container_top_factor);
+		//console.log('result.src_container_top_factor =', result.src_container_top_factor);
 
 		src_container_left_factor = result.src_container_left_factor;
-		//console.log('result.src_container_left_factor = ', result.src_container_left_factor);
+		//console.log('result.src_container_left_factor =', result.src_container_left_factor);
 
 		centerize_src = result.centerize_src;
-		//console.log('result.centerize_src = ', result.centerize_src);
+		//console.log('result.centerize_src =', result.centerize_src);
 
 		src_container_color = result.src_container_color;
-		//console.log('result.src_container_color = ', result.src_container_color);
+		//console.log('result.src_container_color =', result.src_container_color);
 
 		src_container_opacity = result.src_container_opacity;
-		//console.log('result.src_container_opacity = ', result.src_container_opacity);
+		//console.log('result.src_container_opacity =', result.src_container_opacity);
 
 
 		dst_selected_font = result.dst_selected_font;
-		//console.log('dst_selected_font = ', result.dst_selected_font);
+		//console.log('dst_selected_font =', result.dst_selected_font);
 
 		dst_font_size = result.dst_font_size;
-		//console.log('dst_font_size = ', result.dst_font_size);
+		//console.log('dst_font_size =', result.dst_font_size);
 
 		dst_font_color = result.dst_font_color;
-		//console.log('dst_font_color = ', result.dst_font_color);
+		//console.log('dst_font_color =', result.dst_font_color);
 
 		dst_container_width_factor = result.dst_container_width_factor;
-		//console.log('result.dst_container_width_factor = ', result.dst_container_width_factor);
+		//console.log('result.dst_container_width_factor =', result.dst_container_width_factor);
 
 		dst_container_height_factor = result.dst_container_height_factor;
-		//console.log('result.dst_container_height_factor = ', result.dst_container_height_factor);
+		//console.log('result.dst_container_height_factor =', result.dst_container_height_factor);
 
 		dst_container_top_factor = result.dst_container_top_factor;
-		//console.log('result.dst_container_top_factor = ', result.dst_container_top_factor);
+		//console.log('result.dst_container_top_factor =', result.dst_container_top_factor);
 
 		dst_container_left_factor = result.dst_container_left_factor;
-		//console.log('result.dst_container_left_factor = ', result.dst_container_left_factor);
+		//console.log('result.dst_container_left_factor =', result.dst_container_left_factor);
 
 		centerize_dst = result.centerize_dst;
-		//console.log('result.centerize_dst = ', result.centerize_dst);
+		//console.log('result.centerize_dst =', result.centerize_dst);
 
 		dst_container_color = result.dst_container_color;
-		//console.log('result.dst_container_color = ', result.dst_container_color);
+		//console.log('result.dst_container_color =', result.dst_container_color);
 
 		dst_container_opacity = result.dst_container_opacity;
-		//console.log('result.dst_container_opacity = ', result.dst_container_opacity);
+		//console.log('result.dst_container_opacity =', result.dst_container_opacity);
 
-
-		// create_modal_textarea
-		video_info = getVideoPlayerInfo();
-		//console.log("video_info = ", video_info);
-		if (video_info) {
-			console.log('Extension is starting');
-			console.log("Video player found!");
-			console.log("video_info.id = ", video_info.id);
-			//console.log("Top:", video_info.top);
-			//console.log("Left:", video_info.left);
-			//console.log("Width:", video_info.width);
-			//console.log("Height:", video_info.height);
-			console.log("video_info.position = ", video_info.position);
-			console.log("video_info.zIndex = ", video_info.zIndex);
-
-			src_width = src_container_width_factor*video_info.width;
-			//console.log('src_width = ', src_width);
-
-			src_height = src_container_height_factor*video_info.height;
-			//console.log('src_height = ', src_height);
-
-			src_top = video_info.top + src_container_top_factor*video_info.height;
-			//console.log('src_top = ', src_top);
-
-			if (centerize_src) {
-				src_left = video_info.left + 0.5*(video_info.width-src_width);
-				//console.log('src_left = ', src_left);
-			} else {
-				src_left = src_container_left_factor*video_info.width;;
-			}
-
-			dst_width = dst_container_width_factor*video_info.width;
-			//console.log('dst_width = ', dst_width);
-
-			dst_height = dst_container_height_factor*video_info.height;
-			//console.log('dst_height = ', dst_height);
-
-			dst_top = video_info.top + dst_container_top_factor*video_info.height;
-			//console.log('dst_top = ', dst_top);
-
-			if (centerize_dst) {
-				dst_left = video_info.left + 0.5*(video_info.width-dst_width);
-				//console.log('dst_left = ', dst_left);
-			} else {
-				dst_left = dst_container_left_factor*video_info.width;;
-			}
-
-		} else {
-			console.log("No video player found on this page.");
-
-			src_width = src_container_width_factor*window.innerWidth;
-			//console.log('src_width = ', src_width);
-
-			src_height = src_container_height_factor*window.innerHeight;
-			//console.log('src_height = ', src_height);
-
-			src_top = src_container_top_factor*window.innerHeight;
-			//console.log('src_top = ', src_top);
-
-			if (centerize_src) {
-				src_left = 0.5*(window.innerWidth-src_width);
-				//console.log('src_left = ', src_left);
-			} else {
-				src_left = src_container_left_factor*video_info.width;;
-			}
-
-			dst_width = dst_container_width_factor*window.innerWidth;
-			//console.log('dst_width = ', dst_width);
-
-			dst_height = dst_container_height_factor*window.innerHeight;
-			//console.log('dst_height = ', dst_height);
-
-			dst_top = dst_container_top_factor*window.innerHeight;
-			//console.log('dst_top = ', dst_top);
-
-			if (centerize_dst) {
-				dst_left = 0.5*(window.innerWidth-dst_width);
-				//console.log('dst_left = ', dst_left);
-			} else {
-				dst_left = dst_container_left_factor*video_info.width;
-			}
-		}
-
-
-		var icon_text_listening = src.toUpperCase()+':'+dst.toUpperCase();
-
-		chrome.runtime.sendMessage({ cmd: 'icon_text_listening', data: { value: icon_text_listening } });
-
-		//var vContainer = document.querySelector('#' + video_info.id).parentElement;
-		var vContainer = video_info.element.parentElement;
-		//console.log('vContainer = ', vContainer);
-
-		var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
-			.width(src_width)
-			.height(src_height)
-			.resizable().draggable({
-				cancel: 'text',
-				start: function (){
-					$('#src_textarea').focus();
-				},
-				stop: function (){
-					$('#src_textarea').focus();
-				}
-			})
-			.css({
-				'position': 'absolute',
-				'fontFamily': src_selected_font + ', sans-serif',
-				'fontSize': src_font_size,
-				'color': src_font_color,
-				'backgroundColor': hexToRgba(src_container_color, src_container_opacity),
-				'border': 'none',
-				'display': 'block',
-				'overflow': 'hidden',
-				'z-index': '2147483647'
-			})
-			.offset({top:src_top, left:src_left})
-
-		if (!document.querySelector("#src_textarea_container")) {
-			console.log('appending src_textarea_container to html body');
-			src_textarea_container$.appendTo('body');
-			//src_textarea_container$.appendTo(vContainer);
-		} else {
-			console.log('src_textarea_container has already exist');
-		};
-
-		document.querySelector("#src_textarea").style.width = '100%';
-		document.querySelector("#src_textarea").style.height = '100%';
-		document.querySelector("#src_textarea").style.border = 'none';
-		document.querySelector("#src_textarea").style.display = 'inline-block';
-		document.querySelector("#src_textarea").style.overflow = 'hidden';
-
-		document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
-		document.querySelector("#src_textarea").style.color = src_font_color;
-		document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(src_container_color, src_container_opacity);
-		document.querySelector("#src_textarea").style.fontSize=String(src_font_size)+'px';
-
-		document.querySelector("#src_textarea").offsetParent.onresize = (function(){
-
-			if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
-				centerize_src = false;
-			}
-
-			document.querySelector("#src_textarea").style.position='absolute';
-			document.querySelector("#src_textarea").style.width = '100%';
-			document.querySelector("#src_textarea").style.height = '100%';
-
-			video_info = getVideoPlayerInfo();
-			if (video_info) {
-				//console.log('src_width = ', getRect(document.querySelector("#src_textarea")).width);
-				//console.log('video_info.width = ', video_info.width);
-				src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/video_info.width;
-				if (src_container_width_factor < 0) {
-					src_container_width_factor = 0;
-				}
-				//console.log('src_container_width_factor = ', src_container_width_factor);
-				saveData('src_container_width_factor', src_container_width_factor);
-
-				//console.log('src_height = ', getRect(document.querySelector("#src_textarea")).height);
-				//console.log('video_info.height = ', video_info.height);
-				src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/video_info.height;
-				if (src_container_height_factor < 0) {
-					src_container_height_factor = 0;
-				}
-				//console.log('src_container_height_factor = ', src_container_height_factor);
-				saveData('src_container_height_factor', src_container_height_factor);
-			} else {
-				//console.log('src_width = ', getRect(document.querySelector("#src_textarea")).width);
-				//console.log('window.innerWidth = ', window.innerWidth);
-				src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/window.innerWidth;
-				if (src_container_width_factor < 0) {
-					src_container_width_factor = 0;
-				}
-				//console.log('src_container_width_factor = ', src_container_width_factor);
-				saveData('src_container_width_factor', src_container_width_factor);
-
-				//console.log('src_height = ', getRect(document.querySelector("#src_textarea")).height);
-				//console.log('window.innerHeight = ', window.innerHeight);
-				src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/window.innerHeight;
-				if (src_container_height_factor < 0) {
-					src_container_height_factor = 0;
-				}
-				//console.log('src_container_height_factor = ', src_container_height_factor);
-				saveData('src_container_height_factor', src_container_height_factor);
-			}
-
-		});
-
-
-		document.querySelector("#src_textarea").offsetParent.ondrag = (function(){
-
-			if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
-				centerize_src = false;
-			}
-
-			document.querySelector("#dst_textarea").style.position='absolute';
-
-			video_info = getVideoPlayerInfo();
-			if (video_info) {
-				src_container_top_factor = (getRect(document.querySelector("#src_textarea_container")).top - video_info.top)/video_info.height;
-				if (src_container_top_factor < 0) {
-					src_container_top_factor = 0;
-				}
-				//console.log('src_container_top_factor = ', src_container_top_factor);
-				saveData("src_container_top_factor", src_container_top_factor);
-
-				src_container_left_factor = (getRect(document.querySelector("#src_textarea_container")).left - video_info.left)/video_info.width;
-				if (src_container_left_factor < 0) {
-					src_container_left_factor = 0;
-				}
-				//console.log('src_container_left_factor = ', src_container_left_factor);
-				saveData("src_container_left_factor", src_container_left_factor);
-			} else {
-				src_container_top_factor = getRect(document.querySelector("#src_textarea_container")).top/window.innerHeight;
-				if (src_container_top_factor < 0) {
-					src_container_top_factor = 0;
-				}
-				//console.log('src_container_top_factor = ', src_container_top_factor);
-				saveData("src_container_top_factor", src_container_top_factor);
-
-				src_container_left_factor = (getRect(document.querySelector("#src_textarea_container")).left - video_info.left)/window.innerWidth;
-				if (src_container_left_factor < 0) {
-					src_container_left_factor = 0;
-				}
-				//console.log('src_container_left_factor = ', src_container_left_factor);
-				saveData("src_container_left_factor", src_container_left_factor);
-			}
-		});
-
-
-		var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
-			.width(dst_width)
-			.height(dst_height)
-			.resizable().draggable({
-				cancel: 'text',
-				start: function (){
-					$('#dst_textarea').focus();
-				},
-				stop: function (){
-					$('#dst_textarea').focus();
-				}
-			})
-			.css({
-				'position': 'absolute',
-				'fontFamily': dst_selected_font + ', sans-serif',
-				'fontSize': dst_font_size,
-				'color': dst_font_color,
-				'backgroundColor': hexToRgba(dst_container_color, dst_container_opacity),
-				'border': 'none',
-				'display': 'block',
-				'overflow': 'hidden',
-				'z-index': '2147483647'
-			})
-			.offset({top:dst_top, left:dst_left})
-
-		if (!document.querySelector("#dst_textarea_container")) {
-			console.log('appending dst_textarea_container to html body');
-			dst_textarea_container$.appendTo('body');
-			//dst_textarea_container$.appendTo(vContainer);
-		} else {
-			console.log('src_textarea_container has already exist');
-		};
-
-		document.querySelector("#dst_textarea").style.width = '100%';
-		document.querySelector("#dst_textarea").style.height = '100%';
-		document.querySelector("#dst_textarea").style.border = 'none';
-		document.querySelector("#dst_textarea").style.display = 'inline-block';
-		document.querySelector("#dst_textarea").style.overflow = 'hidden';
-
-		document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif"
-		document.querySelector("#dst_textarea").style.color = dst_font_color;
-		document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(dst_container_color, dst_container_opacity);
-		document.querySelector("#dst_textarea").style.fontSize=String(dst_font_size)+'px';
-
-		document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
-
-			if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
-				centerize_dst = false;
-			}
-
-			document.querySelector("#dst_textarea").style.position='absolute';
-			document.querySelector("#dst_textarea").style.width = '100%';
-			document.querySelector("#dst_textarea").style.height = '100%';
-
-			video_info = getVideoPlayerInfo();
-			if (video_info) {
-				//console.log('dst_width = ', getRect(document.querySelector("#dst_textarea")).width);
-				//console.log('video_info.width = ', video_info.width);
-				dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/video_info.width;
-				if (dst_container_width_factor < 0) {
-					dst_container_width_factor = 0;
-				}
-				//console.log('dst_container_width_factor = ', dst_container_width_factor);
-				saveData('dst_container_width_factor', dst_container_width_factor);
-
-				//console.log('dst_height = ', getRect(document.querySelector("#dst_textarea")).height);
-				//console.log('video_info.height = ', video_info.height);
-				dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/video_info.height;
-				if (dst_container_height_factor < 0) {
-					dst_container_height_factor = 0;
-				}
-				//console.log('dst_container_height_factor = ', dst_container_height_factor);
-				saveData('dst_container_height_factor', dst_container_height_factor);
-			} else {
-				//console.log('dst_width = ', getRect(document.querySelector("#dst_textarea")).width);
-				//console.log('window.innerWidth = ', window.innerWidth);
-				dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/window.innerWidth;
-				if (dst_container_width_factor < 0) {
-					dst_container_width_factor = 0;
-				}
-				//console.log('dst_container_width_factor = ', dst_container_width_factor);
-				saveData('dst_container_width_factor', dst_container_width_factor);
-
-				//console.log('dst_height = ', getRect(document.querySelector("#dst_textarea")).height);
-				//console.log('video_info.height = ', video_info.height);
-				dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/window.innerHeight;
-				if (dst_container_height_factor < 0) {
-					dst_container_height_factor = 0;
-				}
-				//console.log('dst_container_height_factor = ', dst_container_height_factor);
-				saveData('dst_container_height_factor', dst_container_height_factor);
-			}
-		});
-
-
-		document.querySelector("#dst_textarea").offsetParent.ondrag = (function(){
-
-			if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
-				centerize_dst = false;
-			}
-
-			document.querySelector("#dst_textarea").style.position='absolute';
-
-			if (video_info) {
-				dst_container_top_factor = (getRect(document.querySelector("#dst_textarea_container")).top - video_info.top)/video_info.height;
-				if (dst_container_top_factor < 0) {
-					dst_container_top_factor = 0;
-				}
-				//console.log('dst_container_top_factor = ', dst_container_top_factor);
-				saveData("dst_container_top_factor", dst_container_top_factor);
-
-				dst_container_left_factor = (getRect(document.querySelector("#dst_textarea_container")).left - video_info.left)/video_info.width;
-				if (dst_container_left_factor < 0) {
-					dst_container_left_factor = 0;
-				}
-				//console.log('dst_container_left_factor = ', dst_container_left_factor);
-				saveData("dst_container_left_factor", dst_container_left_factor);
-			} else {
-				dst_container_top_factor = getRect(document.querySelector("#dst_textarea_container")).top/window.innerHeight;
-				if (dst_container_top_factor < 0) {
-					dst_container_top_factor = 0;
-				}
-				//console.log('dst_container_top_factor = ', dst_container_top_factor);
-				saveData("dst_container_top_factor", dst_container_top_factor);
-
-				dst_container_left_factor = getRect(document.querySelector("#dst_textarea_container")).left/window.innerWidth;
-				if (dst_container_left_factor < 0) {
-					dst_container_left_factor = 0;
-				}
-				//console.log('dst_container_left_factor = ', dst_container_left_factor);
-				saveData("dst_container_left_factor", dst_container_left_factor);
-			}
-		});
-
+		create_modal_textarea();
 
 		window.addEventListener('resize', function(event){
 			regenerate_textarea();
@@ -644,11 +283,11 @@ function onLoad() {
 			interim_transcript = '';
 			if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
 			if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
-			console.log('onload: stopping because recognizing = ', recognizing);
+			console.log('onload: stopping because recognizing =', recognizing);
 			return;
 		};
 
-		console.log('initializing recognition: recognizing = ', recognizing);
+		console.log('initializing recognition: recognizing =', recognizing);
 
 		document.documentElement.scrollTop = video_info.top; // For modern browsers
 		document.body.scrollTop = video_info.top; // For older browsers
@@ -675,24 +314,24 @@ function onLoad() {
 			recognition.onstart = function() {
 				final_transcript = '';
 				interim_transcript = '';
-				startTimestamp = formatTimestamp(new Date());
-				resetpause_timeout();
+				startTimestamp = formatTimestampToISOLocalString(new Date());
+				resetPauseTimeout();
 
 				if (!recognizing) {
 					//recognizing = false;
 					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
 					if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
-					console.log('recognition.onstart: stopping because recognizing = ', recognizing);
+					console.log('recognition.onstart: stopping because recognizing =', recognizing);
 					return;
 				} else {
-					console.log('recognition.onstart: recognizing = ', recognizing);
+					console.log('recognition.onstart: recognizing =', recognizing);
 					recognition.lang = src_dialect;
 				}
 			};
 
 
 			recognition.onspeechstart = function(event) {
-				console.log('recognition.onspeechstart: recognizing = ', recognizing);
+				console.log('recognition.onspeechstart: recognizing =', recognizing);
 				final_transcript = '';
 				interim_transcript = '';
 				start_timestamp = Date.now();
@@ -700,7 +339,7 @@ function onLoad() {
 			};
 
 			recognition.onspeechend = function(event) {
-				console.log('recognition.onspeechend: recognizing = ', recognizing);
+				console.log('recognition.onspeechend: recognizing =', recognizing);
 				final_transcript = '';
 				interim_transcript = '';
 				if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
@@ -712,12 +351,12 @@ function onLoad() {
 //---------------------------------------------------------------ONERROR--------------------------------------------------------------//
 
 			recognition.onerror = function(event) {
-				resetpause_timeout(); // Reset timeout on error as well
+				resetPauseTimeout(); // Reset timeout on error as well
 				if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
 				if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
 
 				if (event.error === 'no-speech') {
-					console.log('recognition.no-speech: recognizing = ', recognizing);
+					console.log('recognition.no-speech: recognizing =', recognizing);
 					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
 
 				}
@@ -725,7 +364,7 @@ function onLoad() {
 					alert('No microphone was found, ensure that a microphone is installed and that microphone settings are configured correctly');
 					var icon_text_no_mic = 'NOMIC';
 					chrome.runtime.sendMessage({ cmd: 'icon_text_no_mic', data: { value: icon_text_no_mic } })
-					console.log('recognition.audio-capture: recognizing = ', recognizing);
+					console.log('recognition.audio-capture: recognizing =', recognizing);
 					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
 					if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
 				}
@@ -741,7 +380,7 @@ function onLoad() {
 					}
 					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
 					if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
-					console.log('recognition.not-allowed: recognizing = ', recognizing);
+					console.log('recognition.not-allowed: recognizing =', recognizing);
 				}
 			};
 
@@ -750,71 +389,74 @@ function onLoad() {
 			recognition.onend = function() {
 				//final_transcript = '';
 				//interim_transcript = '';
-				session_end_time = formatTimestamp(new Date());
-				console.log('session_end_time = ', session_end_time);
+				session_end_time = formatTimestampToISOLocalString(new Date());
+				//console.log('session_end_time =', session_end_time);
 
 				if (!recognizing) {
 					final_transcript = '';
 					interim_transcript = '';
 
-					console.log('recognition.onend: stopping because recognizing = ', recognizing);
+					console.log('recognition.onend: stopping because recognizing =', recognizing);
 
 					var t = formatted_all_final_transcripts + timestamped_final_and_interim_transcript;
 					if (t) {
+						t = formatTranscript(t);
+						//console.log('t =', t);
 						// Split text into an array of lines
 						var lines = t.trim().split('\n');
 						// Use a Set to filter out duplicate lines
-						var uniqueLines = [...new Set(lines)];
-						//console.log('uniqueLines = ', uniqueLines);
+						var unique_lines = [...new Set(lines)];
+						unique_lines = removeDuplicates(unique_lines);
+						//console.log('unique_lines =', unique_lines);
 
 						// Join the unique lines back into a single string
-						var uniqueText;
-						var newUniqueLines = [];
+						var unique_text;
+						var newunique_lines = [];
 						var timestamps = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/;
 
-						if (uniqueLines.length===1 && uniqueLines[0] != '' && uniqueLines[0] != 'undefined') {
-							const timestamps = uniqueLines[0].match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/g);
+						if (unique_lines.length === 1 && unique_lines[0] != '' && unique_lines[0] != 'undefined') {
+							const timestamps = unique_lines[0].match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/g);
 							if (!timestamps) {
-								var lastUniqueLines = `${session_start_time} ${timestamp_separator} ${session_end_time} : ${uniqueLines[0]}`;
-								console.log('lastUniqueLines = ', lastUniqueLines);
-								uniqueLines[0] = lastUniqueLines;
-								uniqueText = newUniqueLines.join('\n');
-								uniqueText = uniqueText + '\n';
+								var lastunique_lines = `${session_start_time} ${timestamp_separator} ${session_end_time} : ${unique_lines[0]}`;
+								//console.log('lastunique_lines =', lastunique_lines);
+								unique_lines[0] = lastunique_lines;
+								unique_text = newunique_lines.join('\n');
+								unique_text = unique_text + '\n';
 							}
 						}
-						else if (uniqueLines.length>1 && uniqueLines[uniqueLines.length-1] != '' && !timestamps.test(uniqueLines[uniqueLines.length-1])) {
-							var lastUniqueLines = `${startTimestamp} ${timestamp_separator} ${session_end_time} : ${uniqueLines[uniqueLines.length-1]}`;
-							console.log('lastUniqueLines = ', lastUniqueLines);
-							uniqueLines[uniqueLines.length-1] = lastUniqueLines;
-							for (var i = 0; i < uniqueLines.length; i++) {
-								newUniqueLines.push(uniqueLines[i]);
+						else if (unique_lines.length>1 && unique_lines[unique_lines.length-1] != '' && !timestamps.test(unique_lines[unique_lines.length-1])) {
+							var lastunique_lines = `${startTimestamp} ${timestamp_separator} ${session_end_time} : ${unique_lines[unique_lines.length-1]}`;
+							//console.log('lastunique_lines =', lastunique_lines);
+							unique_lines[unique_lines.length-1] = lastunique_lines;
+							for (var i = 0; i < unique_lines.length; i++) {
+								newunique_lines.push(unique_lines[i]);
 							}
-							console.log('newUniqueLines = ', newUniqueLines);
-							uniqueText = newUniqueLines.join('\n');
-							uniqueText = uniqueText + '\n';
+							//console.log('newunique_lines =', newunique_lines);
+							unique_text = newunique_lines.join('\n');
+							unique_text = unique_text + '\n';
 						}
-						else if (uniqueLines.length>1 && uniqueLines[uniqueLines.length-1] != '' && timestamps.test(uniqueLines[uniqueLines.length-1])) {
-							uniqueText = uniqueLines.join('\n');
-							uniqueText = uniqueText + '\n';
+						else if (unique_lines.length>1 && unique_lines[unique_lines.length-1] != '' && timestamps.test(unique_lines[unique_lines.length-1])) {
+							unique_text = unique_lines.join('\n');
+							unique_text = unique_text + '\n';
 						}
 
 						// SAVING TRANSCRIPTIONS
-						if (uniqueText) {
-							uniqueText = uniqueText.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-							uniqueText = removeEmptySentences(uniqueText);
-							uniqueText = uniqueText + '\n';
-							//console.log('uniqueText = ', uniqueText);
+						if (unique_text) {
+							unique_text = unique_text.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+							unique_text = removeEmptySentences(unique_text);
+							unique_text = removePeriodOnlySentences(unique_text);
+							//console.log('unique_text =', unique_text);
 
 							if (show_timestamp_src) {
-								saveTranscript(uniqueText);
+								saveTranscript(unique_text);
 							} else {
-								saveTranscript(removeTimestamps(uniqueText));
+								saveTranscript(removeTimestamps(unique_text));
 							}
 						}
 
 
 						// SAVING TRANSLATIONS
-						if (uniqueText) var tt=gtranslate(uniqueText,src,dst).then((result => {
+						if (unique_text) var tt = gtranslate(unique_text, src, dst).then((result => {
 							result = result.replace(/(\d+),(\d+)/g, '$1.$2');
 
 							result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
@@ -838,19 +480,19 @@ function onLoad() {
 							result = result.replace(',.', ',');
 							result = result.replace('. .', '.');
 
-							result = capitalizeSentences(result);
-							result = formatText(result);
+							result = convertDatesToISOFormat(result);
+							result = formatTranscript(result);
 
 							result = result.replace(/\n\s*$/, '');
 
 							timestamped_translated_final_and_interim_transcript = result + "\n";
-							//console.log('timestamped_translated_final_and_interim_transcript = ', timestamped_translated_final_and_interim_transcript);
+							//console.log('timestamped_translated_final_and_interim_transcript =', timestamped_translated_final_and_interim_transcript);
 
 							if (timestamped_translated_final_and_interim_transcript) {
 								timestamped_translated_final_and_interim_transcript = timestamped_translated_final_and_interim_transcript.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
 								timestamped_translated_final_and_interim_transcript = timestamped_translated_final_and_interim_transcript.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
 								timestamped_translated_final_and_interim_transcript = removeEmptySentences(timestamped_translated_final_and_interim_transcript);
-								timestamped_translated_final_and_interim_transcript = timestamped_translated_final_and_interim_transcript + "\n"
+								timestamped_translated_final_and_interim_transcript = removePeriodOnlySentences(timestamped_translated_final_and_interim_transcript);
 
 								if (show_timestamp_dst) {
 									saveTranslatedTranscript(timestamped_translated_final_and_interim_transcript);
@@ -863,8 +505,8 @@ function onLoad() {
 							all_translated_transcripts = [];
 							timestamped_translated_final_and_interim_transcript = '';
 							lines = '';
-							uniqueLines = [];
-							uniqueText = '';
+							unique_lines = [];
+							unique_text = '';
 							t = '';
 
 						}));
@@ -875,7 +517,7 @@ function onLoad() {
 					return;
 
 				} else {
-					console.log('recognition.onend: keep recognizing because recognizing = ', recognizing);
+					console.log('recognition.onend: keep recognizing because recognizing =', recognizing);
 					recognition.start();
 					start_timestamp = Date.now();
 					translate_time =  Date.now();
@@ -888,17 +530,20 @@ function onLoad() {
 //---------------------------------------------------------------ONRESULT--------------------------------------------------------------//
 
 			recognition.onresult = function(event) {
-				console.log('recognition.onresult: recognizing = ', recognizing);
-				resetpause_timeout();
+				console.log('recognition.onresult: recognizing =', recognizing);
+				resetPauseTimeout();
 
 				if (!recognizing) {
+
 					final_transcript = '';
 					interim_transcript = '';
 					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
 					if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
-					console.log('recognition.onresult: stopping because recognizing = ', recognizing);
+					console.log('recognition.onresult: stopping because recognizing =', recognizing);
 					return;
+
 				} else {
+
 					recognition.lang = src_dialect;
 					interim_transcript = '';
 
@@ -907,16 +552,15 @@ function onLoad() {
 							transcript_is_final = true;
 							interim_transcript = '';
 							interim_started = false;
-							endTimestamp = formatTimestamp(new Date());
+							endTimestamp = formatTimestampToISOLocalString(new Date());
 							final_transcript += `${startTimestamp} ${timestamp_separator} ${endTimestamp} : ${capitalize(event.results[i][0].transcript)}`;
 							final_transcript = final_transcript + '.\n'
 							all_final_transcripts.push(`${final_transcript}`);
-							formatted_all_final_transcripts = all_final_transcripts.join("");
 						} else {
 							transcript_is_final = false;
 							if (!interim_started) {
 								// Capture the timestamp only when the interim result starts
-								startTimestamp = formatTimestamp(new Date());
+								startTimestamp = formatTimestampToISOLocalString(new Date());
 								interim_started = true; // Set the flag to true
 							}
 							interim_transcript += event.results[i][0].transcript;
@@ -925,55 +569,61 @@ function onLoad() {
 						}
 					}
 
-					timestamped_final_and_interim_transcript = final_transcript + interim_transcript;
+					timestamped_final_and_interim_transcript = final_transcript + '\n' + interim_transcript;
+
 					if (containsColon(timestamped_final_and_interim_transcript)) {
-						timestamped_final_and_interim_transcript = capitalizeSentences(timestamped_final_and_interim_transcript);
-						//console.log('capitalizeSentences(timestamped_final_and_interim_transcript) = ', timestamped_final_and_interim_transcript);
+						timestamped_final_and_interim_transcript = formatTranscript(timestamped_final_and_interim_transcript);
+						timestamped_final_and_interim_transcript = removeEmptyLines(timestamped_final_and_interim_transcript);
+						//console.log('formatTranscript(timestamped_final_and_interim_transcript) =', timestamped_final_and_interim_transcript);
 					}
 
-					formatted_all_final_transcripts = all_final_transcripts.join("");
-					//console.log('formatted_all_final_transcripts = ', formatted_all_final_transcripts);
+					if (all_final_transcripts.length > 0) {
+						all_final_transcripts = removeDuplicates(all_final_transcripts);
+						formatted_all_final_transcripts = all_final_transcripts.join("\n");
+						//console.log('formatted_all_final_transcripts =', formatted_all_final_transcripts);
+					}
+
+					if (formatted_all_final_transcripts) {
+						displayed_transcript = formatted_all_final_transcripts + '\n' + interim_transcript;
+						//console.log('formatted_all_final_transcripts: displayed_transcript =', displayed_transcript);
+					} else {
+						displayed_transcript = timestamped_final_and_interim_transcript;
+						//console.log('!formatted_all_final_transcripts: displayed_transcript =', displayed_transcript);
+					}
+					displayed_transcript = formatTranscript(displayed_transcript);
+
+					//console.log('displayed_transcript =', displayed_transcript);
+					if (displayed_transcript) {
+						// Split text into an array of lines
+						var lines = displayed_transcript.trim().split('\n');
+						// Use a Set to filter out duplicate lines
+						var unique_lines = [...new Set(lines)];
+						// Join the unique lines back into a single string
+						var unique_text = unique_lines.join('\n');
+						//console.log('unique_text =', unique_text);
+					}
+
+					if (unique_text && getFirstWord(unique_text).includes('undefined')) unique_text = unique_text.replace('undefined', '');
+					if (unique_text) unique_text = removeEmptyLines(unique_text);
 
 					if (show_src) {
-						document.querySelector("#src_textarea_container").style.display = 'block';
-
-						var displayed_transcript;
-						if (formatted_all_final_transcripts) {
-							displayed_transcript = formatted_all_final_transcripts + timestamped_final_and_interim_transcript;
-						} else {
-							displayed_transcript = timestamped_final_and_interim_transcript;
-						}
-						//console.log('displayed_transcript = ', displayed_transcript);
-						if (displayed_transcript) {
-							// Split text into an array of lines
-							var lines = displayed_transcript.trim().split('\n');
-							// Use a Set to filter out duplicate lines
-							var uniqueLines = [...new Set(lines)];
-							// Join the unique lines back into a single string
-							var uniqueText = uniqueLines.join('\n');
-							//console.log('document.querySelector("#src_textarea").value = ', uniqueText);
-							if (getFirstWord(uniqueText).includes('undefined')) uniqueText = uniqueText.replace('undefined', '');
-						}
-
-						//if (uniqueText && document.querySelector("#src_textarea")) document.querySelector("#src_textarea").value = uniqueText;
+						if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'block';
 						if (show_timestamp_src) {
-							if (uniqueText && document.querySelector("#src_textarea")) document.querySelector("#src_textarea").value = uniqueText;
+							if (unique_text && document.querySelector("#src_textarea")) document.querySelector("#src_textarea").value = unique_text;
 						} else {
-							if (uniqueText && document.querySelector("#src_textarea")) document.querySelector("#src_textarea").value = removeTimestamps(capitalizeSentences(uniqueText));
+							if (unique_text && document.querySelector("#src_textarea")) document.querySelector("#src_textarea").value = removeTimestamps(unique_text);
 						}
-
 						if (document.querySelector("#src_textarea")) document.querySelector("#src_textarea").scrollTop = document.querySelector("#src_textarea").scrollHeight;
-
 					} else {
 						if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
 					}
 
 
 					if (show_dst) {
-						//var  t = uniqueText;
+						//var  t = unique_text; // CAN'T BE USED BECAUSE GOOGLE TRANSLATE SERVER WILL RESPOND WITH 403 AFTER SOME REQUESTS
 						var t = timestamped_final_and_interim_transcript;
 						if ((Date.now() - translate_time > 1000) && recognizing) {
-							if (t) var tt=gtranslate(t,src,dst).then((result => {
+							if (t) var tt = gtranslate(t, src, dst).then((result => {
 								if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'block';
 								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").style.display = 'inline-block';
 
@@ -1005,56 +655,49 @@ function onLoad() {
 								result = result.replace(',.', ',');
 								result = result.replace('. .', '.');
 
-								result = capitalizeSentences(result);
-								result = formatText(result);
+								result = convertDatesToISOFormat(result);
+								result = formatTranscript(result);
 
 								result = result.replace(/\n\s*$/, '');
 
-								const timestamps = result.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/g);
+								result = removeEmptyLines(result);
 
+								var timestamps = result.match(/(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: /);
+
+								//console.log('transcript_is_final =', transcript_is_final);
 								if (transcript_is_final) {
+									//console.log('transcript_is_final');
 									all_translated_transcripts.push(`${result}`);
-									//console.log('all_translated_transcripts = ', all_translated_transcripts);
+									all_translated_transcripts = removeDuplicates(all_translated_transcripts);
+									//console.log('all_translated_transcripts =', all_translated_transcripts);
 									formatted_all_translated_transcripts = all_translated_transcripts.join("");
-									//console.log('formatted_all_translated_transcripts = ', formatted_all_translated_transcripts);
+									//console.log('formatted_all_translated_transcripts =', formatted_all_translated_transcripts);
 								}
 
-								//console.log('formatted_all_translated_transcripts = ', formatted_all_translated_transcripts);
-								if (formatted_all_translated_transcripts) {
-									var translated_lines = formatted_all_translated_transcripts.trim().split('\n');
-									var translated_uniqueLines = [...new Set(translated_lines)];
-									var translated_uniqueText = translated_uniqueLines.join('\n');
-									//console.log('translated_uniqueText = ', translated_uniqueText);
+								//console.log('formatted_all_translated_transcripts =', formatted_all_translated_transcripts);
+								var translated_unique_text;
+								if (all_translated_transcripts.length > 0) {
+									all_translated_transcripts = removeDuplicates(all_translated_transcripts);
+									translated_unique_text = all_translated_transcripts.join('\n');
+									//console.log('translated_unique_text =', translated_unique_text);
 								}
 
-								//var displayed_translation = translated_uniqueText + result;
-								var displayed_translation;
-								//displayed_translation = formatText(displayed_translation);
-								if (translated_uniqueText) {
-									displayed_translation = translated_uniqueText + result;
-								} else {
-									displayed_translation = result;
-								}
+								displayed_translation = translated_unique_text + '\n' + result;
+								displayed_translation = formatTranscript(displayed_translation);
 
 								if (getFirstWord(displayed_translation).includes('undefined')) displayed_translation = displayed_translation.replace('undefined', '');
 
 								var displayed_translation_lines = displayed_translation.trim().split('\n');
-								var displayed_translation_uniqueLines = [...new Set(displayed_translation_lines)];
-								var displayed_translation_uniqueText = displayed_translation_uniqueLines.join('\n');
-								displayed_translation = displayed_translation_uniqueText;
-								displayed_translation = capitalizeSentences(displayed_translation);
-								displayed_translation = formatText(displayed_translation);
-								var displayed_translation_lines = displayed_translation.trim().split('\n');
-								var displayed_translation_uniqueLines = [...new Set(displayed_translation_lines)];
-								var displayed_translation_uniqueText = displayed_translation_uniqueLines.join('\n');
-								displayed_translation = displayed_translation_uniqueText;
-								//displayed_translation = removeDuplicateLines(displayed_translation);
+								var displayed_translation_unique_lines = [...new Set(displayed_translation_lines)];
+								displayed_translation_unique_lines = removeDuplicates(displayed_translation_unique_lines);
+								displayed_translation= displayed_translation_unique_lines.join('\n');
+
 								if (show_timestamp_dst) {
-									console.log('displayed_translation = ', displayed_translation);
-									if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = displayed_translation;
+									//console.log('displayed_translation =', displayed_translation);
+									if (displayed_translation && document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = displayed_translation;
 								} else {
-									//console.log('removeTimestamps(displayed_translation) = ', removeTimestamps(displayed_translation));
-									if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = removeTimestamps(displayed_translation);
+									//console.log('removeTimestamps(displayed_translation) =', removeTimestamps(displayed_translation));
+									if (displayed_translation && document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = removeTimestamps(displayed_translation);
 								}
 
 								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
@@ -1073,7 +716,7 @@ function onLoad() {
 
 
 			if (recognizing) {
-				console.log('starting recognition: recognizing = ', recognizing);
+				console.log('starting recognition: recognizing =', recognizing);
 				recognition.start();
 				start_timestamp = Date.now();
 				translate_time =  Date.now();
@@ -1081,7 +724,7 @@ function onLoad() {
 
 
 			chrome.runtime.onMessage.addListener(function (response, sendResponse) {
-				console.log('on initializing: response = ', response);
+				console.log('on initializing: response =', response);
 				if (response = 'start') {
 					recognizing=true;
 				}
@@ -1105,20 +748,76 @@ function onLoad() {
 		};
 
 
+		// FUNCTIONS
+		var translate = async (t, src, dst) => {
+			return new Promise((resolve, reject) => {
+				const url = 'https://clients5.google.com/translate_a/single?dj=1&dt=t&dt=sp&dt=ld&dt=bd&client=dict-chrome-ex&sl=' 
+							+ src + '&tl=' + dst + '&q=' + encodeURIComponent(t);
+				var xmlHttp = new XMLHttpRequest();
+
+				xmlHttp.onreadystatechange = function() {
+					if (xmlHttp.readyState === 4) {
+						if (xmlHttp.status === 200) {
+							try {
+								let response = JSON.parse(xmlHttp.responseText);
+								let translatedText = response.sentences.map(sentence => sentence.trans).join('');
+								resolve(translatedText);
+							} catch (e) {
+								reject('Error parsing response: ' + e.message);
+							}
+						} else {
+							reject('Request failed with status: ' + xmlHttp.status);
+						}
+					}
+				};
+
+				xmlHttp.open('GET', url, true);
+				xmlHttp.send();
+			});
+		};
+
+
+		var gtranslate = async (t, src, dst) => {
+			return new Promise((resolve, reject) => {
+				const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=' + src + '&tl=' + dst + '&dt=t&q=' + encodeURIComponent(t);
+				var xmlHttp = new XMLHttpRequest();
+
+				xmlHttp.onreadystatechange = function() {
+					if (xmlHttp.readyState === 4) {
+						if (xmlHttp.status === 200) {
+							try {
+								let response = JSON.parse(xmlHttp.responseText)[0];
+								let translatedText = response.map(segment => segment[0]).join('');
+								resolve(translatedText);
+							} catch (e) {
+								reject('Error parsing response: ' + e.message);
+							}
+						} else {
+							reject('Request failed with status: ' + xmlHttp.status);
+						}
+					}
+				};
+
+				xmlHttp.open('GET', url, true);
+				xmlHttp.send();
+			});
+		};
+
+
 		var two_line = /\n\n/g;
 		var one_line = /\n/g;
 		function linebreak(s) {
 			return s.replace(two_line, '<p></p>').replace(one_line, '<br>');
 		};
 
+
 		function remove_linebreak(s) {
 			return s.replace(two_line, '').replace(one_line, '');
 		};
 
+
 		var first_char = /\S/;
 		function capitalize(s) {
-			//return s.replace(first_char, function(m) { return m.toUpperCase(); });
-
 			// Check if the sentence is not empty
 			if (s && s.length > 0) {
 				// Capitalize the first character and concatenate it with the rest of the sentence
@@ -1129,6 +828,224 @@ function onLoad() {
 			}
 
 		};
+
+
+		function containsColon(sentence) {
+			const colon = sentence.match(/\s*: /);
+			// Check if the sentence includes the colon character
+			return sentence.includes(colon);
+		}
+
+
+		function getFirstWord(sentence) {
+			// Trim the sentence to remove any leading or trailing whitespace
+			let trimmedSentence = sentence.trim();
+
+			// Split the sentence into an array of words
+			let words = trimmedSentence.split(/\s+/);
+
+			// Return the first word
+			return words[0];
+		}
+
+
+		function removeTimestamps(transcript) {
+			var timestampPattern = /(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: /;
+			var lines = transcript.split('\n');
+			var cleanedLines = lines.map(line => line.replace(timestampPattern, ''));
+			return cleanedLines.join('\n');
+		}
+
+
+		function formatTranscript(transcript) {
+			// Replace URL-encoded spaces with regular spaces
+			transcript = transcript.replace(/%20/g, ' ');
+			transcript = transcript.trim();
+			transcript = transcript.replace(/(\d{2}:\d{2}:\d{2}\.\d{3}): /g, '$1 : ');
+			transcript = transcript.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+			transcript = transcript.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+
+			// Match timestamps in the transcript
+			const timestamps = transcript.match(/(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: /);
+
+			if (timestamps) {
+				// Split the transcript based on timestamps
+				const lines = transcript.split(timestamps);
+
+				let formattedTranscript = "";
+				for (let line of lines) {
+					line = line.trim();
+					// Replace the separator format in the timestamps
+					line = line.replace(timestamps, '$1 --> $2');
+
+					const colon = line.match(/\s*: /);
+					const parts = line.split(colon);
+					if (parts.length === 2) {
+						const capitalizedSentence = (parts[1].trimLeft()).charAt(0).toUpperCase() + (parts[1].trimLeft()).slice(1);
+						line = parts[0] + colon + capitalizedSentence;
+					}
+
+					// Add the formatted line to the result
+					if (line !== '') formattedTranscript += line.trim() + "\n";
+				}
+        
+				const regex = /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : [^]+?)(?=\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} -->|\s*$)/g;
+				const matches = formattedTranscript.match(regex);
+				if (regex && formattedTranscript) formattedTranscript = matches.join('');
+
+				return formattedTranscript.trim(); // Trim any leading/trailing whitespace from the final result
+
+			} else {
+				return transcript.trim();
+			}
+		}
+
+
+		function removeDuplicateLines(transcript) {
+			const lines = transcript.split('\n'); // Split the input into individual lines
+			const seen = {}; // Object to track unique lines
+			const result = [];
+
+			lines.forEach(line => {
+				const parts = line.split(' : '); // Split line into timestamp and sentence
+				if (parts.length === 2) {
+					const timestamp = parts[0].trim(); // Extract and trim the timestamp
+					const sentence = parts[1].trim(); // Extract and trim the sentence
+					const key = `${timestamp} : ${sentence}`; // Create a unique key
+
+					if (!seen[key]) { // Check if the key is already seen
+						seen[key] = true; // Mark the key as seen
+						result.push(line); // Add the unique line to the result
+					}
+				}
+			});
+
+			return result.join('\n'); // Join the unique lines back into a single string
+		}
+
+
+		function removeEmptyLines(transcript) {
+			// Split the transcript into individual lines
+			const lines = transcript.split('\n');
+			// Filter out empty lines and join the remaining lines back into a single string
+			const nonEmptyLines = lines.filter(line => line.trim() !== '');
+			return nonEmptyLines.join('\n');
+		}
+
+
+		function removePeriodOnlyLines(transcript) {
+			// Split the transcript into individual lines
+			const lines = transcript.split('\n');
+			// Filter out empty lines and join the remaining lines back into a single string
+			const nonEmptyLines = lines.filter(line => line.trim() !== '.');
+			return nonEmptyLines.join('\n');
+		}
+
+
+		function removeEmptySentences(transcript) {
+			const lines = transcript.split('\n'); // Split the input into individual lines
+			const result = lines.filter(line => {
+				//const parts = line.split(' : '); // Split line into timestamp and sentence
+				//return parts.length === 2 && parts[1].trim() !== ''; // Keep lines with non-empty sentences
+				const parts = line.split(' : ');
+				if (parts.length === 2) {
+					const sentence = parts[1].trim().replace(/[\u200B-\u200D\uFEFF]/g, ''); // Remove zero-width characters
+					//console.log(`Sentence: "${sentence}" Length: ${sentence.length}`);
+					return sentence !== '';
+				}
+				return true;
+			});
+			return result.join('\n'); // Join the remaining lines back into a single string
+		}
+
+
+		function removePeriodOnlySentences(transcript) {
+			// Split the transcript into individual lines
+			const lines = transcript.split('\n');
+    
+			// Filter out lines where the sentence part contains only a period character
+			const result = lines.filter(line => {
+				const parts = line.split(' : ');
+				if (parts.length === 2) {
+					const sentence = parts[1].trim().replace(/[\u200B-\u200D\uFEFF]/g, ''); // Remove zero-width characters
+					//console.log(`Sentence: "${sentence}" Length: ${sentence.length}`);
+					return sentence !== '.';
+				}
+				return true;
+			});
+			return result.join('\n'); // Join the remaining lines back into a single string
+		}
+
+
+		function removeDuplicates(transcript_array) {
+			// Create a Set to store unique entries
+			let unique_transcript_array = new Set();
+
+			// Iterate through each transcript
+			transcript_array.forEach(transcript => {
+				// Split the transcript by newline to get individual lines
+				let lines = transcript.split('\n');
+
+				// Add each line to the Set (Sets automatically handle duplicates)
+				lines.forEach(line => {
+					if (line !== '') {
+						unique_transcript_array.add(line.trim());
+					}
+				});
+			});
+
+			// Convert the Set back to an array and return it
+			return Array.from(unique_transcript_array);
+		}
+
+
+		function formatTimestampToISOLocalString(timestamp_value) {
+			// Function to convert a single timestamp from GMT to local time
+			function convertTimestamp(timestamp) {
+				// Create a Date object from the GMT timestamp
+				let date = new Date(timestamp + ' GMT');
+				// Return the local time in the same format as the original
+				return date.getFullYear() + '-' +
+					String(date.getMonth() + 1).padStart(2, '0') + '-' +
+					String(date.getDate()).padStart(2, '0') + ' ' +
+					String(date.getHours()).padStart(2, '0') + ':' +
+					String(date.getMinutes()).padStart(2, '0') + ':' +
+					String(date.getSeconds()).padStart(2, '0') + '.' +
+					String(date.getMilliseconds()).padStart(3, '0');
+			}
+
+			// Convert timestamp_value to string
+			const timestamp_string = timestamp_value.toISOString();
+
+			// Extract date and time parts
+			const date_part = timestamp_string.slice(0, 10);
+			const time_part = timestamp_string.slice(11, 23);
+			const timestamp_ISO_String = `${date_part} ${time_part}`;
+
+			// Regular expression to match the timestamps in the string
+			const time_regex = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/g;
+			const local_timestamp_string = timestamp_ISO_String.replace(time_regex, match => convertTimestamp(match));
+
+			// Concatenate date and time parts with a space in between
+			return local_timestamp_string.trim();
+		}
+
+
+		function convertDatesToISOFormat(transcript) {
+			// Function to convert a single date from "dd-mm-yyyy" to "yyyy-mm-dd" format
+			function convertDate(date) {
+				const [day, month, year] = date.split('-');
+				return `${year}-${month}-${day}`;
+			}
+
+			// Regular expression to match the dates in the transcript
+			const dateRegex = /\b(\d{2})-(\d{2})-(\d{4})\b/g;
+
+			// Replace each date in the transcript with its ISO format equivalent
+			const modifiedTranscript = transcript.replace(dateRegex, match => convertDate(match));
+
+			return modifiedTranscript;
+		}
 
 
 		function saveTranscript(timestamped_final_and_interim_transcript) {
@@ -1175,20 +1092,7 @@ function onLoad() {
 		}
 
 
-		function formatTimestamp(startTimestamp) {
-			// Convert startTimestamp to string
-			const timestampString = startTimestamp.toISOString();
-
-			// Extract date and time parts
-			const datePart = timestampString.slice(0, 10);
-			const timePart = timestampString.slice(11, 23);
-
-			// Concatenate date and time parts with a space in between
-			return `${datePart} ${timePart}`;
-		}
-
-
-		function resetpause_timeout() {
+		function resetPauseTimeout() {
 			clearTimeout(pause_timeout);
 			pause_timeout = setTimeout(function() {
 				console.log("No speech detected for " + pause_threshold / 1000 + " seconds, stopping recognition");
@@ -1197,15 +1101,370 @@ function onLoad() {
 		}
 
 
-		function containsColon(sentence) {
-			// Check if the sentence includes the colon character
-			return sentence.includes(':');
-		}
+		function create_modal_textarea() {
+			video_info = getVideoPlayerInfo();
+			//console.log("video_info = ", video_info);
+			if (video_info) {
+				console.log('Extension is starting');
+				console.log("Video player found!");
+				console.log("video_info.id = ", video_info.id);
+				//console.log("Top:", video_info.top);
+				//console.log("Left:", video_info.left);
+				//console.log("Width:", video_info.width);
+				//console.log("Height:", video_info.height);
+				console.log("video_info.position = ", video_info.position);
+				console.log("video_info.zIndex = ", video_info.zIndex);
+
+				src_width = src_container_width_factor*video_info.width;
+				//console.log('src_width =', src_width);
+
+				src_height = src_container_height_factor*video_info.height;
+				//console.log('src_height =', src_height);
+
+				src_top = video_info.top + src_container_top_factor*video_info.height;
+				//console.log('src_top =', src_top);
+
+				if (centerize_src) {
+					src_left = video_info.left + 0.5*(video_info.width-src_width);
+					//console.log('src_left =', src_left);
+				} else {
+					src_left = src_container_left_factor*video_info.width;;
+				}
+
+				dst_width = dst_container_width_factor*video_info.width;
+				//console.log('dst_width =', dst_width);
+
+				dst_height = dst_container_height_factor*video_info.height;
+				//console.log('dst_height =', dst_height);
+
+				dst_top = video_info.top + dst_container_top_factor*video_info.height;
+				//console.log('dst_top =', dst_top);
+
+				if (centerize_dst) {
+					dst_left = video_info.left + 0.5*(video_info.width-dst_width);
+					//console.log('dst_left =', dst_left);
+				} else {
+					dst_left = dst_container_left_factor*video_info.width;;
+				}
+
+			} else {
+				console.log("No video player found on this page.");
+
+				src_width = src_container_width_factor*window.innerWidth;
+				//console.log('src_width =', src_width);
+
+				src_height = src_container_height_factor*window.innerHeight;
+				//console.log('src_height =', src_height);
+
+				src_top = src_container_top_factor*window.innerHeight;
+				//console.log('src_top =', src_top);
+
+				if (centerize_src) {
+					src_left = 0.5*(window.innerWidth-src_width);
+					//console.log('src_left =', src_left);
+				} else {
+					src_left = src_container_left_factor*video_info.width;;
+				}
+
+				dst_width = dst_container_width_factor*window.innerWidth;
+				//console.log('dst_width =', dst_width);
+
+				dst_height = dst_container_height_factor*window.innerHeight;
+				//console.log('dst_height =', dst_height);
+
+				dst_top = dst_container_top_factor*window.innerHeight;
+				//console.log('dst_top =', dst_top);
+
+				if (centerize_dst) {
+					dst_left = 0.5*(window.innerWidth-dst_width);
+					//console.log('dst_left =', dst_left);
+				} else {
+					dst_left = dst_container_left_factor*video_info.width;
+				}
+			}
 
 
-		function containsSpaceCharacter(sentence) {
-			// Check if the sentence includes the colon character
-			return sentence.includes('\%20');
+			var icon_text_listening = src.toUpperCase()+':'+dst.toUpperCase();
+
+			chrome.runtime.sendMessage({ cmd: 'icon_text_listening', data: { value: icon_text_listening } });
+
+			//var vContainer = document.querySelector('#' + video_info.id).parentElement;
+			var vContainer = video_info.element.parentElement;
+			//console.log('vContainer =', vContainer);
+
+			var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
+				.width(src_width)
+				.height(src_height)
+				.resizable().draggable({
+					cancel: 'text',
+					start: function (){
+						$('#src_textarea').focus();
+					},
+					stop: function (){
+						$('#src_textarea').focus();
+					}
+				})
+				.css({
+					'position': 'absolute',
+					'fontFamily': src_selected_font + ', sans-serif',
+					'fontSize': src_font_size,
+					'color': src_font_color,
+					'backgroundColor': hexToRgba(src_container_color, src_container_opacity),
+					'border': 'none',
+					'display': 'block',
+					'overflow': 'hidden',
+					'z-index': '2147483647'
+				})
+				.offset({top:src_top, left:src_left})
+
+			if (!document.querySelector("#src_textarea_container")) {
+				console.log('appending src_textarea_container to html body');
+				src_textarea_container$.appendTo('body');
+				//src_textarea_container$.appendTo(vContainer);
+			} else {
+				console.log('src_textarea_container has already exist');
+			};
+
+			document.querySelector("#src_textarea").style.width = '100%';
+			document.querySelector("#src_textarea").style.height = '100%';
+			document.querySelector("#src_textarea").style.border = 'none';
+			document.querySelector("#src_textarea").style.display = 'inline-block';
+			document.querySelector("#src_textarea").style.overflow = 'hidden';
+
+			document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
+			document.querySelector("#src_textarea").style.color = src_font_color;
+			document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(src_container_color, src_container_opacity);
+			document.querySelector("#src_textarea").style.fontSize=String(src_font_size)+'px';
+
+			document.querySelector("#src_textarea").offsetParent.onresize = (function(){
+
+				if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
+					centerize_src = false;
+					saveData('centerize_src', centerize_src);
+				}
+
+				document.querySelector("#src_textarea").style.position='absolute';
+				document.querySelector("#src_textarea").style.width = '100%';
+				document.querySelector("#src_textarea").style.height = '100%';
+
+				video_info = getVideoPlayerInfo();
+				if (video_info) {
+					//console.log('src_width =', getRect(document.querySelector("#src_textarea")).width);
+					//console.log('video_info.width =', video_info.width);
+					src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/video_info.width;
+					if (src_container_width_factor < 0) {
+						src_container_width_factor = 0;
+					}
+					//console.log('src_container_width_factor =', src_container_width_factor);
+					saveData('src_container_width_factor', src_container_width_factor);
+
+					//console.log('src_height =', getRect(document.querySelector("#src_textarea")).height);
+					//console.log('video_info.height =', video_info.height);
+					src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/video_info.height;
+					if (src_container_height_factor < 0) {
+						src_container_height_factor = 0;
+					}
+					//console.log('src_container_height_factor =', src_container_height_factor);
+					saveData('src_container_height_factor', src_container_height_factor);
+				} else {
+					//console.log('src_width =', getRect(document.querySelector("#src_textarea")).width);
+					//console.log('window.innerWidth =', window.innerWidth);
+					src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/window.innerWidth;
+					if (src_container_width_factor < 0) {
+						src_container_width_factor = 0;
+					}
+					//console.log('src_container_width_factor =', src_container_width_factor);
+					saveData('src_container_width_factor', src_container_width_factor);
+
+					//console.log('src_height =', getRect(document.querySelector("#src_textarea")).height);
+					//console.log('window.innerHeight =', window.innerHeight);
+					src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/window.innerHeight;
+					if (src_container_height_factor < 0) {
+						src_container_height_factor = 0;
+					}
+					//console.log('src_container_height_factor =', src_container_height_factor);
+					saveData('src_container_height_factor', src_container_height_factor);
+				}
+			});
+
+
+			document.querySelector("#src_textarea").offsetParent.ondrag = (function(){
+
+				if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
+					centerize_src = false;
+					saveData('centerize_src', centerize_src);
+				}
+
+				document.querySelector("#dst_textarea").style.position='absolute';
+
+				video_info = getVideoPlayerInfo();
+				if (video_info) {
+					src_container_top_factor = (getRect(document.querySelector("#src_textarea_container")).top - video_info.top)/video_info.height;
+					if (src_container_top_factor < 0) {
+						src_container_top_factor = 0;
+					}
+					//console.log('src_container_top_factor =', src_container_top_factor);
+					saveData("src_container_top_factor", src_container_top_factor);
+
+					src_container_left_factor = (getRect(document.querySelector("#src_textarea_container")).left - video_info.left)/video_info.width;
+					if (src_container_left_factor < 0) {
+						src_container_left_factor = 0;
+					}
+					//console.log('src_container_left_factor =', src_container_left_factor);
+					saveData("src_container_left_factor", src_container_left_factor);
+				} else {
+					src_container_top_factor = getRect(document.querySelector("#src_textarea_container")).top/window.innerHeight;
+					if (src_container_top_factor < 0) {
+						src_container_top_factor = 0;
+					}
+					//console.log('src_container_top_factor =', src_container_top_factor);
+					saveData("src_container_top_factor", src_container_top_factor);
+
+					src_container_left_factor = (getRect(document.querySelector("#src_textarea_container")).left - video_info.left)/window.innerWidth;
+					if (src_container_left_factor < 0) {
+						src_container_left_factor = 0;
+					}
+					//console.log('src_container_left_factor =', src_container_left_factor);
+					saveData("src_container_left_factor", src_container_left_factor);
+				}
+			});
+
+
+			var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
+				.width(dst_width)
+				.height(dst_height)
+				.resizable().draggable({
+					cancel: 'text',
+					start: function (){
+						$('#dst_textarea').focus();
+					},
+					stop: function (){
+						$('#dst_textarea').focus();
+					}
+				})
+				.css({
+					'position': 'absolute',
+					'fontFamily': dst_selected_font + ', sans-serif',
+					'fontSize': dst_font_size,
+					'color': dst_font_color,
+					'backgroundColor': hexToRgba(dst_container_color, dst_container_opacity),
+					'border': 'none',
+					'display': 'block',
+					'overflow': 'hidden',
+					'z-index': '2147483647'
+				})
+				.offset({top:dst_top, left:dst_left})
+
+			if (!document.querySelector("#dst_textarea_container")) {
+				console.log('appending dst_textarea_container to html body');
+				dst_textarea_container$.appendTo('body');
+				//dst_textarea_container$.appendTo(vContainer);
+			} else {
+				console.log('src_textarea_container has already exist');
+			};
+
+			document.querySelector("#dst_textarea").style.width = '100%';
+			document.querySelector("#dst_textarea").style.height = '100%';
+			document.querySelector("#dst_textarea").style.border = 'none';
+			document.querySelector("#dst_textarea").style.display = 'inline-block';
+			document.querySelector("#dst_textarea").style.overflow = 'hidden';
+
+			document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif"
+			document.querySelector("#dst_textarea").style.color = dst_font_color;
+			document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(dst_container_color, dst_container_opacity);
+			document.querySelector("#dst_textarea").style.fontSize=String(dst_font_size)+'px';
+
+			document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
+
+				if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+					centerize_dst = false;
+					saveData('centerize_dst', centerize_dst);
+				}
+
+				document.querySelector("#dst_textarea").style.position='absolute';
+				document.querySelector("#dst_textarea").style.width = '100%';
+				document.querySelector("#dst_textarea").style.height = '100%';
+
+				video_info = getVideoPlayerInfo();
+				if (video_info) {
+					//console.log('dst_width =', getRect(document.querySelector("#dst_textarea")).width);
+					//console.log('video_info.width =', video_info.width);
+					dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/video_info.width;
+					if (dst_container_width_factor < 0) {
+						dst_container_width_factor = 0;
+					}
+					//console.log('dst_container_width_factor =', dst_container_width_factor);
+					saveData('dst_container_width_factor', dst_container_width_factor);
+
+					//console.log('dst_height =', getRect(document.querySelector("#dst_textarea")).height);
+					//console.log('video_info.height =', video_info.height);
+					dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/video_info.height;
+					if (dst_container_height_factor < 0) {
+						dst_container_height_factor = 0;
+					}
+					//console.log('dst_container_height_factor =', dst_container_height_factor);
+					saveData('dst_container_height_factor', dst_container_height_factor);
+				} else {
+					//console.log('dst_width =', getRect(document.querySelector("#dst_textarea")).width);
+					//console.log('window.innerWidth =', window.innerWidth);
+					dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/window.innerWidth;
+					if (dst_container_width_factor < 0) {
+						dst_container_width_factor = 0;
+					}
+					//console.log('dst_container_width_factor =', dst_container_width_factor);
+					saveData('dst_container_width_factor', dst_container_width_factor);
+
+					//console.log('dst_height =', getRect(document.querySelector("#dst_textarea")).height);
+					//console.log('video_info.height =', video_info.height);
+					dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/window.innerHeight;
+					if (dst_container_height_factor < 0) {
+						dst_container_height_factor = 0;
+					}
+					//console.log('dst_container_height_factor =', dst_container_height_factor);
+					saveData('dst_container_height_factor', dst_container_height_factor);
+				}
+			});
+
+
+			document.querySelector("#dst_textarea").offsetParent.ondrag = (function(){
+
+				if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+					centerize_dst = false;
+					saveData('centerize_dst', centerize_dst);
+				}
+
+				document.querySelector("#dst_textarea").style.position='absolute';
+
+				if (video_info) {
+					dst_container_top_factor = (getRect(document.querySelector("#dst_textarea_container")).top - video_info.top)/video_info.height;
+					if (dst_container_top_factor < 0) {
+						dst_container_top_factor = 0;
+					}
+					//console.log('dst_container_top_factor =', dst_container_top_factor);
+					saveData("dst_container_top_factor", dst_container_top_factor);
+
+					dst_container_left_factor = (getRect(document.querySelector("#dst_textarea_container")).left - video_info.left)/video_info.width;
+					if (dst_container_left_factor < 0) {
+						dst_container_left_factor = 0;
+					}
+					//console.log('dst_container_left_factor =', dst_container_left_factor);
+					saveData("dst_container_left_factor", dst_container_left_factor);
+				} else {
+					dst_container_top_factor = getRect(document.querySelector("#dst_textarea_container")).top/window.innerHeight;
+					if (dst_container_top_factor < 0) {
+						dst_container_top_factor = 0;
+					}
+					//console.log('dst_container_top_factor =', dst_container_top_factor);
+					saveData("dst_container_top_factor", dst_container_top_factor);
+
+					dst_container_left_factor = getRect(document.querySelector("#dst_textarea_container")).left/window.innerWidth;
+					if (dst_container_left_factor < 0) {
+						dst_container_left_factor = 0;
+					}
+					//console.log('dst_container_left_factor =', dst_container_left_factor);
+					saveData("dst_container_left_factor", dst_container_left_factor);
+				}
+			});
 		}
 
 
@@ -1329,7 +1588,7 @@ function onLoad() {
 
 		function getVideoPlayerInfo() {
 			var elements = document.querySelectorAll('video, iframe');
-			//console.log('elements = ',  elements);
+			//console.log('elements =',  elements);
 			var largestVideoElement = null;
 			var largestSize = 0;
 
@@ -1405,75 +1664,75 @@ function onLoad() {
 				//console.log("Height:", video_info.height);
 
 				src_width = src_container_width_factor*video_info.width;
-				//console.log('src_width = ', src_width);
+				//console.log('src_width =', src_width);
 
 				src_height = src_container_height_factor*video_info.height;
-				//console.log('src_height = ', src_width);
+				//console.log('src_height =', src_width);
 
 				src_top = video_info.top + src_container_top_factor*video_info.height;
-				//console.log('src_top = ', src_top);
+				//console.log('src_top =', src_top);
 
 				if (centerize_src) {
 					src_left = video_info.left + 0.5*(video_info.width-src_width);
-					//console.log('src_left = ', src_left);
+					//console.log('src_left =', src_left);
 				} else {
 					src_left = video_info.left + src_container_left_factor*video_info.width;
-					//console.log('src_left = ', src_left);
+					//console.log('src_left =', src_left);
 				}
 
 				dst_width = dst_container_width_factor*video_info.width;
-				//console.log('dst_width = ', dst_width);
+				//console.log('dst_width =', dst_width);
 		
 				dst_height = dst_container_height_factor*video_info.height;
-				//console.log('dst_height = ', dst_height);
+				//console.log('dst_height =', dst_height);
 
 				dst_top = video_info.top + dst_container_top_factor*video_info.height;
-				//console.log('dst_top = ', dst_top);
+				//console.log('dst_top =', dst_top);
 
 				if (centerize_dst) {
 					dst_left = video_info.left + 0.5*(video_info.width-dst_width);
-					//console.log('dst_left = ', dst_left);
+					//console.log('dst_left =', dst_left);
 				} else {
 					dst_left = video_info.left + dst_container_left_factor*video_info.width;
-					//console.log('dst_left = ', dst_left);
+					//console.log('dst_left =', dst_left);
 				}
 
 			} else {
 				console.log("No video player found on this page");
 
 				src_width = src_container_width_factor*window.innerWidth;
-				//console.log('src_width = ', src_width);
+				//console.log('src_width =', src_width);
 
 				src_height = src_container_height_factor*window.innerHeight;
-				//console.log('src_height = ', src_width);
+				//console.log('src_height =', src_width);
 
 				src_top = src_container_top_factor*window.innerHeight;
-				//console.log('src_top = ', src_top);
+				//console.log('src_top =', src_top);
 
 				if (centerize_src) {
 					src_left = 0.5*(window.innerWidth-src_width);
-					//console.log('src_left = ', src_left);
+					//console.log('src_left =', src_left);
 				} else {
 					src_left = src_container_left_factor*window.innerWidth;
-					//console.log('src_left = ', src_left);
+					//console.log('src_left =', src_left);
 				}
 
 
 				dst_width = dst_container_width_factor*window.innerWidth;
-				//console.log('dst_width = ', dst_width);
+				//console.log('dst_width =', dst_width);
 
 				dst_height = dst_container_height_factor*window.innerHeight;
-				//console.log('dst_height = ', dst_height);
+				//console.log('dst_height =', dst_height);
 
 				dst_top = dst_container_top_factor*window.innerHeight;
-				//console.log('dst_top = ', dst_top);
+				//console.log('dst_top =', dst_top);
 
 				if (centerize_dst) {
 					dst_left = 0.5*(window.innerWidth-dst_width);
-					//console.log('dst_left = ', dst_left);
+					//console.log('dst_left =', dst_left);
 				} else {
 					dst_left = dst_container_left_factor*window.innerWidth;
-					//console.log('dst_left = ', dst_left);
+					//console.log('dst_left =', dst_left);
 				}
 			}
 
@@ -1538,12 +1797,6 @@ function onLoad() {
 		function getVideoPlayerContainerInfo() {
 			// Check for <video> elements
 			var videoPlayer = document.querySelector('video');
-    
-
-			//if (!videoPlayer) {
-			//	// If no <video> element found, check for <iframe> elements
-			//	videoPlayer = document.querySelector('iframe[src*="youtube"], iframe[src*="vimeo"]');
-			//}
     
 			if (!videoPlayer) {
 				// If no <video> element found, check for <iframe> elements
@@ -1663,17 +1916,17 @@ function onLoad() {
 				'centerize_dst': centerize_dst,
 
 			}, function() {
-				console.log('save src_container_width_factor = ', src_container_width_factor);
-				console.log('save src_container_height_factor = ', src_container_height_factor);
-				console.log('save src_container_top_factor = ', src_container_top_factor);
-				console.log('save src_container_left_factor = ', src_container_left_factor);
-				console.log('save centerize_src = ', centerize_src);
+				console.log('save src_container_width_factor =', src_container_width_factor);
+				console.log('save src_container_height_factor =', src_container_height_factor);
+				console.log('save src_container_top_factor =', src_container_top_factor);
+				console.log('save src_container_left_factor =', src_container_left_factor);
+				console.log('save centerize_src =', centerize_src);
 
-				console.log('save dst_container_width_factor = ', dst_container_width_factor);
-				console.log('save dst_container_height_factor = ', dst_container_height_factor);
-				console.log('save dst_container_top_factor = ', dst_container_top_factor);
-				console.log('save dst_container_left_factor = ', dst_container_left_factor);
-				console.log('save centerize_dst = ', centerize_dst);
+				console.log('save dst_container_width_factor =', dst_container_width_factor);
+				console.log('save dst_container_height_factor =', dst_container_height_factor);
+				console.log('save dst_container_top_factor =', dst_container_top_factor);
+				console.log('save dst_container_left_factor =', dst_container_left_factor);
+				console.log('save centerize_dst =', centerize_dst);
 
 				if (chrome.runtime.lastError) {
 					console.error("Error setting data: ", chrome.runtime.lastError);
@@ -1682,7 +1935,6 @@ function onLoad() {
 				}
 			});
 		}
-
 
 
 		function updateContainerStyle(containerInfo) {
@@ -1755,194 +2007,6 @@ function onLoad() {
 				textarea.style.zIndex = containerInfo.zIndex + 1; // Ensure it is above the container
 			}
 		}
-
-
-		function getFirstWord(sentence) {
-			// Trim the sentence to remove any leading or trailing whitespace
-			let trimmedSentence = sentence.trim();
-
-			// Split the sentence into an array of words
-			let words = trimmedSentence.split(/\s+/);
-
-			// Return the first word
-			return words[0];
-		}
-
-
-		function removeTimestamps(transcript) {
-			var timestampPattern = /(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: /;
-			var lines = transcript.split('\n');
-			var cleanedLines = lines.map(line => line.replace(timestampPattern, ''));
-			return cleanedLines.join('\n');
-		}
-
-
-		function capitalizeSentences(transcription) {
-			//console.log('transcription = ', transcription);
-
-			// Split the transcription into individual lines
-			const lines = transcription.split('\n');
-    
-			// Iterate over each line
-			for (let i = 0; i < lines.length; i++) {
-				lines[i] = lines[i].trim();
-				// Split each line by colon to separate startTimestamp and sentence
-				//const parts = lines[i].split(' : ');
-				const colon = lines[i].match(/\s*: /);
-				const parts = lines[i].split(colon);
-				//console.log('parts[0] = ', parts[0]);
-				//console.log('parts[1] = ', parts[1]);
-
-				// If the line is in the correct format (startTimestamp : sentence)
-				if (parts.length === 2) {
-					// Capitalize the first character of the sentence
-					const capitalizedSentence = (parts[1].trimLeft()).charAt(0).toUpperCase() + (parts[1].trimLeft()).slice(1);
-
-					// Replace the original sentence with the capitalized one
-					//lines[i] = parts[0] + ' : ' + capitalizedSentence;
-					lines[i] = parts[0] + colon + capitalizedSentence;
-					//console.log('i = ', i );
-					//console.log('lines[i] = ', lines[i] );
-				}
-			}
-    
-			// Join the lines back into a single string and return
-			//console.log('lines.join("\n") = ', lines.join('\n'));
-			return lines.join('\n');
-		}
-
-
-		function formatText(text) {
-			// Replace URL-encoded spaces with regular spaces
-			text = text.replace(/%20/g, ' ');
-			text = text.trim();
-			text = text.replace(/(\d{2}:\d{2}:\d{2}\.\d{3}): /g, '$1 : ');
-			text = text.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-			text = text.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-
-			// Match timestamps in the text
-			//const timestamps = text.match(/\d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3}/g);
-			//const timestamps = text.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/g);
-			const timestamps = text.match(/(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: /);
-
-			if (timestamps) {
-				// Split the text based on timestamps
-				//const lines = text.split(/(?=\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/);
-				const lines = text.split(timestamps);
-
-				let formattedText = "";
-				for (let line of lines) {
-					// Replace the separator format in the timestamps
-					//line = line.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) *--> *(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/, '$1 --> $2');
-					line = line.replace(timestamps, '$1 --> $2');
-            
-					// Add the formatted line to the result
-					formattedText += line.trim() + "\n";
-				}
-        
-				return formattedText.trim(); // Trim any leading/trailing whitespace from the final result
-
-			} else {
-				return text.trim();
-			}
-		}
-
-
-		function removeDuplicateLines(transcript) {
-			const lines = transcript.split('\n'); // Split the input into individual lines
-			const seen = {}; // Object to track unique lines
-			const result = [];
-
-			lines.forEach(line => {
-				const parts = line.split(' : '); // Split line into timestamp and sentence
-				if (parts.length === 2) {
-					const timestamp = parts[0].trim(); // Extract and trim the timestamp
-					const sentence = parts[1].trim(); // Extract and trim the sentence
-					const key = `${timestamp} : ${sentence}`; // Create a unique key
-
-					if (!seen[key]) { // Check if the key is already seen
-						seen[key] = true; // Mark the key as seen
-						result.push(line); // Add the unique line to the result
-					}
-				}
-			});
-
-			return result.join('\n'); // Join the unique lines back into a single string
-		}
-
-
-		function removeEmptyLines(transcript) {
-			// Split the transcript into individual lines
-			const lines = transcript.split('\n');
-			// Filter out empty lines and join the remaining lines back into a single string
-			const nonEmptyLines = lines.filter(line => line.trim() !== '');
-			return nonEmptyLines.join('\n');
-		}
-
-
-		function removeEmptySentences(transcript) {
-			const lines = transcript.split('\n'); // Split the input into individual lines
-			const result = lines.filter(line => {
-				const parts = line.split(' : '); // Split line into timestamp and sentence
-				return parts.length === 2 && parts[1].trim() !== ''; // Keep lines with non-empty sentences
-			});
-			return result.join('\n'); // Join the remaining lines back into a single string
-		}
-
-
-		var translate = async (t, src, dst) => {
-			return new Promise((resolve, reject) => {
-				const url = 'https://clients5.google.com/translate_a/single?dj=1&dt=t&dt=sp&dt=ld&dt=bd&client=dict-chrome-ex&sl=' 
-							+ src + '&tl=' + dst + '&q=' + encodeURIComponent(t);
-				var xmlHttp = new XMLHttpRequest();
-
-				xmlHttp.onreadystatechange = function() {
-					if (xmlHttp.readyState === 4) {
-						if (xmlHttp.status === 200) {
-							try {
-								let response = JSON.parse(xmlHttp.responseText);
-								let translatedText = response.sentences.map(sentence => sentence.trans).join('');
-								resolve(translatedText);
-							} catch (e) {
-								reject('Error parsing response: ' + e.message);
-							}
-						} else {
-							reject('Request failed with status: ' + xmlHttp.status);
-						}
-					}
-				};
-
-				xmlHttp.open('GET', url, true);
-				xmlHttp.send();
-			});
-		};
-
-
-		var gtranslate = async (t, src, dst) => {
-			return new Promise((resolve, reject) => {
-				const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=' + src + '&tl=' + dst + '&dt=t&q=' + encodeURIComponent(t);
-				var xmlHttp = new XMLHttpRequest();
-
-				xmlHttp.onreadystatechange = function() {
-					if (xmlHttp.readyState === 4) {
-						if (xmlHttp.status === 200) {
-							try {
-								let response = JSON.parse(xmlHttp.responseText)[0];
-								let translatedText = response.map(segment => segment[0]).join('');
-								resolve(translatedText);
-							} catch (e) {
-								reject('Error parsing response: ' + e.message);
-							}
-						} else {
-							reject('Request failed with status: ' + xmlHttp.status);
-						}
-					}
-				};
-
-				xmlHttp.open('GET', url, true);
-				xmlHttp.send();
-			});
-		};
 
 	});
 
