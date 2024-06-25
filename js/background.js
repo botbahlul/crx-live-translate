@@ -735,37 +735,10 @@ function onLoad() {
 				speech_start_time = Date.now();
 				translate_time =  Date.now();
 			}
-/*
-			else {
-				console.log('stoping recognition: recognizing =', recognizing);
-				recognition.stop();
 
-				final_transcript = '';
-				interim_transcript = '';
-				if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
-				if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
-				console.log('recognition.onresult: stopping because recognizing =', recognizing);
-				return;
-			}
-*/
 
 			chrome.runtime.onMessage.addListener(function (response, sendResponse) {
 				console.log('on initializing: response =', response);
-
-				if (typeof response === 'object' && response !== null && response.hasOwnProperty('variable_name') && response.hasOwnProperty('variable_value')) {
-					const {variable_name, variable_value} = response
-					if (variable_name === 'changed_src') {
-						console.log('changed_src =', variable_value);
-					}
-
-					if (response === 'changed_dst') {
-						console.log('changed_dst =', variable_value);
-						//dst = variable_value;
-						//saveData('dst', dst);
-					}
-				}
-
-
 
 				if (response === 'start') {
 					recognizing = true;
