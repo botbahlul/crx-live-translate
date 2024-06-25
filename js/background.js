@@ -1,5 +1,8 @@
 var recognizing = false;
 
+//var changed_src, changed_dst;
+
+
 chrome.action.onClicked.addListener((tab) => {
 	recognizing=!recognizing;
 
@@ -36,6 +39,33 @@ chrome.action.onClicked.addListener((tab) => {
 				chrome.action.setIcon({path: 'mic-slashed.png'});
 			};
 		});
+
+
+/*
+		var changed_src = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_src') {
+				changed_src = request.data.value;
+
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_src', variable_value: changed_src});
+				});
+			};
+		});
+
+		var changed_dst = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_dst') {
+				changed_dst = request.data.value;
+
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_dst', variable_value: changed_dst});
+				});
+			};
+		});
+*/
+
+
 
 		console.log('Start button clicked to start: recognizing =', recognizing);
 		chrome.storage.sync.set({'recognizing' : recognizing},(()=>{}));
@@ -92,6 +122,7 @@ function onLoad() {
 	var dst_width, dst_height, dst_top, dst_left;
 	var dst_container_color, dst_container_opacity;
 
+	var session_start_time, session_end_time;
 	var startTimestamp, endTimestamp, timestamped_final_and_interim_transcript, timestamped_translated_final_and_interim_transcript;
 	var interim_started = false;
 	var pause_timeout, pause_threshold = 5000, input_pause_threshold; // 5 seconds artificial pause threshold;
@@ -102,7 +133,9 @@ function onLoad() {
 
 	var video_info;
 	var timestamp_separator = "-->";
-	var session_start_time, session_end_time;
+
+	var changed_src, changed_dst;
+
 
 
 	function formatTimestampToISOLocalString(timestamp) {
@@ -125,7 +158,7 @@ function onLoad() {
 		console.log('onload: response =', response);
 	});
 
-	chrome.storage.sync.get([ 'recognizing', 'src_dialect', 'dst_dialect', 'show_src', 'show_dst', 
+	chrome.storage.sync.get(['recognizing', 'src_dialect', 'dst_dialect', 'show_src', 'show_dst', 
 			'show_timestamp_src', 'show_timestamp_dst', 'pause_threshold', 
 			'src_selected_font', 'src_font_size', 'src_font_color', 'src_container_width_factor', 'src_container_height_factor', 
 			'src_container_top_factor', 'src_container_left_factor', 'centerize_src', 'src_container_color', 'src_container_opacity', 
@@ -136,7 +169,7 @@ function onLoad() {
 		console.log('onLoad: recognizing =', recognizing);
 
 		src_dialect = result.src_dialect;
-		if (!src_dialect) src_dialect='en-US';
+		if (!src_dialect) src_dialect = 'en-US';
 		//console.log('src_dialect =',src_dialect);
 		src = src_dialect.split('-')[0];
 		if (src_dialect === "yue-Hant-HK") {
@@ -154,7 +187,7 @@ function onLoad() {
 		console.log('src =', src);
 
 		dst_dialect = result.dst_dialect;
-		if (!dst_dialect) dst_dialect='en-US';
+		if (!dst_dialect) dst_dialect = 'en-US';
 		//console.log('dst_dialect', dst_dialect);
 		dst = dst_dialect.split('-')[0];
 		if (dst_dialect === "yue-Hant-HK") {
@@ -296,7 +329,7 @@ function onLoad() {
 		var interim_transcript = '';
 		document.querySelector("#src_textarea_container").style.display = 'none';
 		document.querySelector("#dst_textarea_container").style.display = 'none';
-		var start_timestamp = Date.now();
+		var speech_start_time = Date.now();
 		var translate_time = Date.now();
 
 		if (!(('webkitSpeechRecognition'||'SpeechRecognition') in window)) {
@@ -334,7 +367,7 @@ function onLoad() {
 				console.log('recognition.onspeechstart: recognizing =', recognizing);
 				final_transcript = '';
 				interim_transcript = '';
-				start_timestamp = Date.now();
+				speech_start_time = Date.now();
 				translate_time = Date.now();
 			};
 
@@ -343,7 +376,7 @@ function onLoad() {
 				final_transcript = '';
 				interim_transcript = '';
 				if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
-				start_timestamp = Date.now();
+				speech_start_time = Date.now();
 				translate_time = Date.now();
 			};
 
@@ -358,7 +391,6 @@ function onLoad() {
 				if (event.error === 'no-speech') {
 					console.log('recognition.no-speech: recognizing =', recognizing);
 					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
-
 				}
 				if (event.error === 'audio-capture') {
 					alert('No microphone was found, ensure that a microphone is installed and that microphone settings are configured correctly');
@@ -369,7 +401,7 @@ function onLoad() {
 					if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
 				}
 				if (event.error === 'not-allowed') {
-					if (Date.now() - start_timestamp < 100) {
+					if (Date.now() - speech_start_time < 100) {
 						var icon_text_blocked = 'BLOCKED';
 						chrome.runtime.sendMessage({ cmd: 'icon_text_blocked', data: { value: icon_text_blocked } })
 						alert('Permission to use microphone is blocked, go to chrome://settings/contentExceptions#media-stream to change it');
@@ -519,7 +551,7 @@ function onLoad() {
 				} else {
 					console.log('recognition.onend: keep recognizing because recognizing =', recognizing);
 					recognition.start();
-					start_timestamp = Date.now();
+					speech_start_time = Date.now();
 					translate_time =  Date.now();
 				}
 
@@ -571,9 +603,12 @@ function onLoad() {
 
 					timestamped_final_and_interim_transcript = final_transcript + '\n' + interim_transcript;
 
-					if (containsColon(timestamped_final_and_interim_transcript)) {
+					if (containsTimestamp(timestamped_final_and_interim_transcript)) {
 						timestamped_final_and_interim_transcript = formatTranscript(timestamped_final_and_interim_transcript);
 						timestamped_final_and_interim_transcript = removeEmptyLines(timestamped_final_and_interim_transcript);
+						if (!show_timestamp_src) {
+							timestamped_final_and_interim_transcript = removePeriodOnlyLines(timestamped_final_and_interim_transcript);
+						}
 						//console.log('formatTranscript(timestamped_final_and_interim_transcript) =', timestamped_final_and_interim_transcript);
 					}
 
@@ -604,7 +639,13 @@ function onLoad() {
 					}
 
 					if (unique_text && getFirstWord(unique_text).includes('undefined')) unique_text = unique_text.replace('undefined', '');
-					if (unique_text) unique_text = removeEmptyLines(unique_text);
+
+					if (unique_text) {
+						unique_text = removeEmptyLines(unique_text);
+						if (!show_timestamp_src) {
+							unique_text = removePeriodOnlyLines(unique_text);
+						}
+					}
 
 					if (show_src) {
 						if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'block';
@@ -718,22 +759,50 @@ function onLoad() {
 			if (recognizing) {
 				console.log('starting recognition: recognizing =', recognizing);
 				recognition.start();
-				start_timestamp = Date.now();
+				speech_start_time = Date.now();
 				translate_time =  Date.now();
 			}
+/*
+			else {
+				console.log('stoping recognition: recognizing =', recognizing);
+				recognition.stop();
 
+				final_transcript = '';
+				interim_transcript = '';
+				if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
+				if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
+				console.log('recognition.onresult: stopping because recognizing =', recognizing);
+				return;
+			}
+*/
 
 			chrome.runtime.onMessage.addListener(function (response, sendResponse) {
 				console.log('on initializing: response =', response);
-				if (response = 'start') {
-					recognizing=true;
+
+				if (typeof response === 'object' && response !== null && response.hasOwnProperty('variable_name') && response.hasOwnProperty('variable_value')) {
+					const {variable_name, variable_value} = response
+					if (variable_name === 'changed_src') {
+						console.log('changed_src =', variable_value);
+					}
+
+					if (response === 'changed_dst') {
+						console.log('changed_dst =', variable_value);
+						//dst = variable_value;
+						//saveData('dst', dst);
+					}
 				}
-				if (response = 'stop') {
+
+
+
+				if (response === 'start') {
+					recognizing = true;
+				}
+				if (response === 'stop') {
 					console.log('removing src_textarea_container from html body');
 					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").parentElement.removeChild(document.querySelector("#src_textarea_container"));
 					console.log('removing dst_textarea_container from html body');
 					if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").parentElement.removeChild(document.querySelector("#dst_textarea_container"));
-					recognizing=false;
+					recognizing = false;
 					final_transcript = '';
 					interim_transcript = '';
 					try{
@@ -830,10 +899,10 @@ function onLoad() {
 		};
 
 
-		function containsColon(sentence) {
-			const colon = sentence.match(/\s*: /);
-			// Check if the sentence includes the colon character
-			return sentence.includes(colon);
+		function containsTimestamp(sentence) {
+			const timestamp = sentence.match(/(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: /);
+			// Check if the sentence includes the timestamp pattern
+			return sentence.includes(timestamp);
 		}
 
 
@@ -1234,7 +1303,7 @@ function onLoad() {
 			document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
 			document.querySelector("#src_textarea").style.color = src_font_color;
 			document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(src_container_color, src_container_opacity);
-			document.querySelector("#src_textarea").style.fontSize=String(src_font_size)+'px';
+			document.querySelector("#src_textarea").style.fontSize = String(src_font_size)+'px';
 
 			document.querySelector("#src_textarea").offsetParent.onresize = (function(){
 
@@ -1300,30 +1369,30 @@ function onLoad() {
 				video_info = getVideoPlayerInfo();
 				if (video_info) {
 					src_container_top_factor = (getRect(document.querySelector("#src_textarea_container")).top - video_info.top)/video_info.height;
-					if (src_container_top_factor < 0) {
-						src_container_top_factor = 0;
-					}
+					//if (src_container_top_factor < 0) {
+					//	src_container_top_factor = 0;
+					//}
 					//console.log('src_container_top_factor =', src_container_top_factor);
 					saveData("src_container_top_factor", src_container_top_factor);
 
 					src_container_left_factor = (getRect(document.querySelector("#src_textarea_container")).left - video_info.left)/video_info.width;
-					if (src_container_left_factor < 0) {
-						src_container_left_factor = 0;
-					}
+					//if (src_container_left_factor < 0) {
+					//	src_container_left_factor = 0;
+					//}
 					//console.log('src_container_left_factor =', src_container_left_factor);
 					saveData("src_container_left_factor", src_container_left_factor);
 				} else {
 					src_container_top_factor = getRect(document.querySelector("#src_textarea_container")).top/window.innerHeight;
-					if (src_container_top_factor < 0) {
-						src_container_top_factor = 0;
-					}
+					//if (src_container_top_factor < 0) {
+					//	src_container_top_factor = 0;
+					//}
 					//console.log('src_container_top_factor =', src_container_top_factor);
 					saveData("src_container_top_factor", src_container_top_factor);
 
 					src_container_left_factor = (getRect(document.querySelector("#src_textarea_container")).left - video_info.left)/window.innerWidth;
-					if (src_container_left_factor < 0) {
-						src_container_left_factor = 0;
-					}
+					//if (src_container_left_factor < 0) {
+					//	src_container_left_factor = 0;
+					//}
 					//console.log('src_container_left_factor =', src_container_left_factor);
 					saveData("src_container_left_factor", src_container_left_factor);
 				}
@@ -1360,7 +1429,7 @@ function onLoad() {
 				dst_textarea_container$.appendTo('body');
 				//dst_textarea_container$.appendTo(vContainer);
 			} else {
-				console.log('src_textarea_container has already exist');
+				console.log('dst_textarea_container has already exist');
 			};
 
 			document.querySelector("#dst_textarea").style.width = '100%';
@@ -1372,7 +1441,7 @@ function onLoad() {
 			document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif"
 			document.querySelector("#dst_textarea").style.color = dst_font_color;
 			document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(dst_container_color, dst_container_opacity);
-			document.querySelector("#dst_textarea").style.fontSize=String(dst_font_size)+'px';
+			document.querySelector("#dst_textarea").style.fontSize = String(dst_font_size)+'px';
 
 			document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
 
@@ -1437,30 +1506,30 @@ function onLoad() {
 
 				if (video_info) {
 					dst_container_top_factor = (getRect(document.querySelector("#dst_textarea_container")).top - video_info.top)/video_info.height;
-					if (dst_container_top_factor < 0) {
-						dst_container_top_factor = 0;
-					}
+					//if (dst_container_top_factor < 0) {
+					//	dst_container_top_factor = 0;
+					//}
 					//console.log('dst_container_top_factor =', dst_container_top_factor);
 					saveData("dst_container_top_factor", dst_container_top_factor);
 
 					dst_container_left_factor = (getRect(document.querySelector("#dst_textarea_container")).left - video_info.left)/video_info.width;
-					if (dst_container_left_factor < 0) {
-						dst_container_left_factor = 0;
-					}
+					//if (dst_container_left_factor < 0) {
+					//	dst_container_left_factor = 0;
+					//}
 					//console.log('dst_container_left_factor =', dst_container_left_factor);
 					saveData("dst_container_left_factor", dst_container_left_factor);
 				} else {
 					dst_container_top_factor = getRect(document.querySelector("#dst_textarea_container")).top/window.innerHeight;
-					if (dst_container_top_factor < 0) {
-						dst_container_top_factor = 0;
-					}
+					//if (dst_container_top_factor < 0) {
+					//	dst_container_top_factor = 0;
+					//}
 					//console.log('dst_container_top_factor =', dst_container_top_factor);
 					saveData("dst_container_top_factor", dst_container_top_factor);
 
 					dst_container_left_factor = getRect(document.querySelector("#dst_textarea_container")).left/window.innerWidth;
-					if (dst_container_left_factor < 0) {
-						dst_container_left_factor = 0;
-					}
+					//if (dst_container_left_factor < 0) {
+					//	dst_container_left_factor = 0;
+					//}
 					//console.log('dst_container_left_factor =', dst_container_left_factor);
 					saveData("dst_container_left_factor", dst_container_left_factor);
 				}
@@ -1512,7 +1581,7 @@ function onLoad() {
 				document.querySelector("#src_textarea").style.overflow = 'hidden';
 
 				document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
-				document.querySelector("#src_textarea").style.fontSize=String(src_font_size)+'px';
+				document.querySelector("#src_textarea").style.fontSize = String(src_font_size)+'px';
 				document.querySelector("#src_textarea").style.color = src_font_color;
 				document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(src_container_color, src_container_opacity);
 
@@ -1562,7 +1631,7 @@ function onLoad() {
 				document.querySelector("#dst_textarea").style.overflow = 'hidden';
 
 				document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif";
-				document.querySelector("#dst_textarea").style.fontSize=String(dst_font_size)+'px';
+				document.querySelector("#dst_textarea").style.fontSize = String(dst_font_size)+'px';
 				document.querySelector("#dst_textarea").style.color = dst_font_color.value;
 				document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(dst_container_color, dst_container_opacity);
 
@@ -1890,15 +1959,34 @@ function onLoad() {
 		function saveData(key, data) {
 			clearTimeout(debounceTimeout);
 			debounceTimeout = setTimeout(() => {
-				chrome.storage.sync.set({ key: data }, () => {
-					console.log('Data saved.');
+				// Retrieve current settings
+				chrome.storage.sync.get(['settings'], (result) => {
+					let settings = result.settings || {};
+					settings[key] = data;
+					chrome.storage.sync.set({ 'settings': settings }, () => {
+						console.log(key + ' data saved within settings.');
+						setTimeout(() => {
+							verifyData(key, data, 'settings');
+						}, 100);
+					});
 				});
-			}, 1000); // Adjust the timeout as needed
+			}, 1000);
+		}
+
+
+		function verifyData(key, data, parentKey = null) {
+			chrome.storage.sync.get([parentKey || key], (result) => {
+				if (parentKey) {
+					console.log(result[parentKey][key] === data ? 'Data verified.' : 'Data verification failed.');
+				} else {
+					console.log(result[key] === data ? 'Data verified.' : 'Data verification failed.');
+				}
+			});
 		}
 
 
 		function saveChangedSettings() {
-			chrome.storage.sync.set({
+			const settings = {
 				'src_selected_font': src_selected_font,
 				'src_font_size': src_font_size,
 				'src_container_width_factor': src_container_width_factor,
@@ -1914,23 +2002,15 @@ function onLoad() {
 				'dst_container_top_factor': dst_container_top_factor,
 				'dst_container_left_factor': dst_container_left_factor,
 				'centerize_dst': centerize_dst,
-
-			}, function() {
-				console.log('save src_container_width_factor =', src_container_width_factor);
-				console.log('save src_container_height_factor =', src_container_height_factor);
-				console.log('save src_container_top_factor =', src_container_top_factor);
-				console.log('save src_container_left_factor =', src_container_left_factor);
-				console.log('save centerize_src =', centerize_src);
-
-				console.log('save dst_container_width_factor =', dst_container_width_factor);
-				console.log('save dst_container_height_factor =', dst_container_height_factor);
-				console.log('save dst_container_top_factor =', dst_container_top_factor);
-				console.log('save dst_container_left_factor =', dst_container_left_factor);
-				console.log('save centerize_dst =', centerize_dst);
-
+			}
+			chrome.storage.sync.set(settings, function() {
 				if (chrome.runtime.lastError) {
 					console.error("Error setting data: ", chrome.runtime.lastError);
 				} else {
+					// Log saved values for debugging
+					for (const [key, value] of Object.entries(settings)) {
+						console.log(`save ${key} = `, value);
+					}
 					console.log("Data saved successfully.");
 				}
 			});
