@@ -1,7 +1,5 @@
 var recognizing = false;
 
-//var changed_src, changed_dst;
-
 
 chrome.action.onClicked.addListener((tab) => {
 	recognizing=!recognizing;
@@ -106,9 +104,6 @@ function onLoad() {
 
 	var video_info;
 	var timestamp_separator = "-->";
-
-	var changed_src, changed_dst;
-
 
 
 	function formatTimestampToISOLocalString(timestamp) {
