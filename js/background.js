@@ -40,33 +40,6 @@ chrome.action.onClicked.addListener((tab) => {
 			};
 		});
 
-
-/*
-		var changed_src = '';
-		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
-			if (request.cmd === 'changed_src') {
-				changed_src = request.data.value;
-
-				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_src', variable_value: changed_src});
-				});
-			};
-		});
-
-		var changed_dst = '';
-		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
-			if (request.cmd === 'changed_dst') {
-				changed_dst = request.data.value;
-
-				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_dst', variable_value: changed_dst});
-				});
-			};
-		});
-*/
-
-
-
 		console.log('Start button clicked to start: recognizing =', recognizing);
 		chrome.storage.sync.set({'recognizing' : recognizing},(()=>{}));
 		chrome.action.setIcon({path: 'mic-listening.png'});
