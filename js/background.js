@@ -1,85 +1,9 @@
 var recognizing = false;
-
-
-chrome.action.onClicked.addListener((tab) => {
-	recognizing=!recognizing;
-
-	if (recognizing) {
-		var icon_text_listening = '';
-		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
-			if (request.cmd === 'icon_text_listening') {
-				icon_text_listening = request.data.value;
-				chrome.action.setIcon({path: 'mic-listening.png'});
-				chrome.action.setBadgeText({text: icon_text_listening});
-			};
-		});
-
-		var icon_text_no_mic = '';
-		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
-			if (request.cmd === 'icon_text_no_mic') {
-				icon_text_no_mic = request.data.value;
-				chrome.action.setIcon({path: 'mic-slashed.png'});
-			};
-		});
-
-		var icon_text_blocked = '';
-		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
-			if (request.cmd === 'icon_text_blocked') {
-				icon_text_blocked = request.data.value;
-				chrome.action.setIcon({path: 'mic-slashed.png'});
-			};
-		});
-
-		var icon_text_denied = '';
-		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
-			if (request.cmd === 'icon_text_denied') {
-				icon_text_denied = request.data.value;
-				chrome.action.setIcon({path: 'mic-slashed.png'});
-			};
-		});
-
-		console.log('Start button clicked to start: recognizing =', recognizing);
-		chrome.storage.sync.set({'recognizing' : recognizing},(()=>{}));
-		chrome.action.setIcon({path: 'mic-listening.png'});
-
-		chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-			chrome.tabs.sendMessage(tab.id, 'start');
-		});
-
-		chrome.scripting.insertCSS({
-			target:{tabId:tab.id},
-			files:['js/jquery-ui.css']}),
-		chrome.scripting.executeScript({
-			target:{tabId:tab.id},
-			files:['js/jquery.min.js']}),
-		chrome.scripting.executeScript({
-			target:{tabId:tab.id},
-			files:['js/jquery-ui.min.js']}),
-		chrome.scripting.executeScript({
-			target:{tabId:tab.id},
-			files:['js/moment.min.js']}),
-		chrome.scripting.executeScript({
-			target: {tabId: tab.id},
-			func: onLoad
-		});
-
-	} else {
-		chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-			chrome.tabs.sendMessage(tab.id,'stop');
-		});
-		chrome.storage.sync.set({'recognizing' : recognizing},(()=>{}));
-		chrome.action.setBadgeText({text: ''});
-		chrome.action.setIcon({path: 'mic.png'});
-		console.log('Start button clicked to end: recognizing =', recognizing);
-		return;
-	};
-});
-
-
 function onLoad() {
-
-	var action, recognition, recognizing, src, dst, src_dialect, dst_dialect;
+	var recognition, recognizing;
+	var src, dst, src_dialect, dst_dialect;
 	var show_src, show_dst, show_timestamp_src, show_timestamp_dst;
+	var icon_text_listening, icon_text_no_mic, icon_text_blocked, icon_text_blocked, icon_text_denied;
 
 	var src_selected_font, src_font_size, src_font_color;
 	var src_container_width_factor, src_container_height_factor;
@@ -93,17 +17,36 @@ function onLoad() {
 	var dst_width, dst_height, dst_top, dst_left;
 	var dst_container_color, dst_container_opacity;
 
+	var timestamp_separator = "-->";
 	var session_start_time, session_end_time;
 	var startTimestamp, endTimestamp, timestamped_final_and_interim_transcript, timestamped_translated_final_and_interim_transcript;
 	var interim_started = false;
-	var pause_timeout, pause_threshold = 5000, input_pause_threshold; // 5 seconds artificial pause threshold;
-	var all_final_transcripts = [], formatted_all_final_transcripts;
-	var all_translated_transcripts = [], formatted_all_translated_transcripts;
 	var transcript_is_final = false;
-	var displayed_transcript, displayed_translation;
+	var pause_timeout, pause_threshold = 5000, input_pause_threshold; // 5 seconds artificial pause threshold;
+	var array_all_final_transcripts = [], array_all_translated_final_transcripts = [];
+	var displayed_translation;
 
 	var video_info;
-	var timestamp_separator = "-->";
+
+	var settings_has_changed = false;
+
+	var changed_src_dialect, changed_dst_dialect;
+	var changed_show_src, changed_show_dst;
+	var changed_show_timestamp_src, changed_show_timestamp_dst;
+	var changed_pause_threshold;
+
+	var changed_src_selected_font, changed_src_font_size, changed_src_font_color;
+	var changed_src_container_width_factor, changed_src_container_height_factor;
+	var changed_src_container_top_factor, changed_src_container_left_factor, changed_centerize_src;
+	var changed_src_container_color, changed_src_container_opacity;
+
+	var changed_dst_selected_font, changed_dst_font_size, changed_dst_font_color;
+	var changed_dst_container_width_factor, changed_dst_container_height_factor;
+	var changed_dst_container_top_factor, changed_dst_container_left_factor, changed_centerize_dst;
+	var changed_dst_container_color, changed_dst_container_opacity;
+
+	var final_transcript = '';
+	var interim_transcript = '';
 
 
 	function formatTimestampToISOLocalString(timestamp) {
@@ -122,640 +65,929 @@ function onLoad() {
 	session_start_time = formatTimestampToISOLocalString(new Date());
 	console.log('session_start_time =', session_start_time);
 
-	chrome.runtime.onMessage.addListener(function (response, sendResponse) {
-		console.log('onload: response =', response);
+	// LISTENONG MESSAGES FROM chrome.action.onClicked.addListener((tab)
+	// WITHOUT THIS LISTENER WE WILL GET THE ERROR : Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.
+	chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+		console.log('onload: message =', message);
+		sendResponse('OK');
+		if (message === 'start') {
+			recognizing = true;
+			chrome.storage.local.set({'recognizing' : recognizing}, (() => {}));
+			return true; //return true MEANS that sendResponse() CAN BE CALLED LATER ASYNCRONOUSLY, AND  return false OR JUST return MEANS sendResponse() SHOULD BE CALLED IMMEDIATELLY
+		}
+		else if (message === 'stop') {
+			recognizing = false;
+			chrome.storage.local.set({'recognizing' : recognizing}, (() => {}));
+			return true;
+		}
 	});
 
-	chrome.storage.sync.get(['recognizing', 'src_dialect', 'dst_dialect', 'show_src', 'show_dst', 
+
+	console.log('Reading all saved settings');
+	chrome.storage.local.get(['src_dialect', 'dst_dialect', 'show_src', 'show_dst', 
 			'show_timestamp_src', 'show_timestamp_dst', 'pause_threshold', 
 			'src_selected_font', 'src_font_size', 'src_font_color', 'src_container_width_factor', 'src_container_height_factor', 
 			'src_container_top_factor', 'src_container_left_factor', 'centerize_src', 'src_container_color', 'src_container_opacity', 
 			'dst_selected_font', 'dst_font_size', 'dst_font_color', 'dst_container_width_factor', 'dst_container_height_factor', 
 			'dst_container_top_factor', 'dst_container_left_factor', 'centerize_dst', 'dst_container_color', 'dst_container_opacity'], function(result) {
 
-		recognizing = result.recognizing;
+
 		console.log('onLoad: recognizing =', recognizing);
 
-		src_dialect = result.src_dialect;
-		if (!src_dialect) src_dialect = 'en-US';
-		//console.log('src_dialect =',src_dialect);
-		src = src_dialect.split('-')[0];
-		if (src_dialect === "yue-Hant-HK") {
-			src = "zh-TW";
-		};
-		if (src_dialect === "cmn-Hans-CN") {
-			src = "zh-CN";
-		};
-		if (src_dialect === "cmn-Hans-HK") {
-			src = "zh-CN";
-		};
-		if (src_dialect === "cmn-Hant-TW") {
-			src = "zh-TW";
-		};
-		console.log('src =', src);
-
-		dst_dialect = result.dst_dialect;
-		if (!dst_dialect) dst_dialect = 'en-US';
-		//console.log('dst_dialect', dst_dialect);
-		dst = dst_dialect.split('-')[0];
-		if (dst_dialect === "yue-Hant-HK") {
-			dst = "zh-TW";
-		};
-		if (dst_dialect === "cmn-Hans-CN") {
-			dst = "zh-CN";
-		};
-		if (dst_dialect === "cmn-Hans-HK") {
-			dst = "zh-CN";
-		};
-		if (dst_dialect === "cmn-Hant-TW") {
-			dst = "zh-TW";
-		};
-		console.log('dst =', dst);
-
-		show_src = result.show_src;
-		//console.log('show_src =', result.show_src);
-		show_dst = result.show_dst;
-		//console.log('show_dst', result.show_dst);
-
-		show_timestamp_src = result.show_timestamp_src;
-		//console.log('show_timestamp_dst =', result.show_timestamp_dst);
-		show_timestamp_dst = result.show_timestamp_dst;
-		//console.log('show_timestamp_dst', result.show_timestamp_dst);
-
-		pause_threshold = result.pause_threshold;
-		//console.log('pause_threshold =', result.pause_threshold);
-
-
-		src_selected_font = result.src_selected_font;
-		//console.log('src_selected_font =', result.src_selected_font);
-
-		src_font_size = result.src_font_size;
-		//console.log('src_font_size =', result.src_font_size);
-
-		src_font_color = result.src_font_color;
-		//console.log('src_font_color =', result.src_font_color);
-
-		src_container_width_factor = result.src_container_width_factor;
-		//console.log('result.src_container_width_factor =', result.src_container_width_factor);
-
-		src_container_height_factor = result.src_container_height_factor;
-		//console.log('result.src_container_height_factor =', result.src_container_height_factor);
-
-		src_container_top_factor = result.src_container_top_factor;
-		//console.log('result.src_container_top_factor =', result.src_container_top_factor);
-
-		src_container_left_factor = result.src_container_left_factor;
-		//console.log('result.src_container_left_factor =', result.src_container_left_factor);
-
-		centerize_src = result.centerize_src;
-		//console.log('result.centerize_src =', result.centerize_src);
-
-		src_container_color = result.src_container_color;
-		//console.log('result.src_container_color =', result.src_container_color);
-
-		src_container_opacity = result.src_container_opacity;
-		//console.log('result.src_container_opacity =', result.src_container_opacity);
-
-
-		dst_selected_font = result.dst_selected_font;
-		//console.log('dst_selected_font =', result.dst_selected_font);
-
-		dst_font_size = result.dst_font_size;
-		//console.log('dst_font_size =', result.dst_font_size);
-
-		dst_font_color = result.dst_font_color;
-		//console.log('dst_font_color =', result.dst_font_color);
-
-		dst_container_width_factor = result.dst_container_width_factor;
-		//console.log('result.dst_container_width_factor =', result.dst_container_width_factor);
-
-		dst_container_height_factor = result.dst_container_height_factor;
-		//console.log('result.dst_container_height_factor =', result.dst_container_height_factor);
-
-		dst_container_top_factor = result.dst_container_top_factor;
-		//console.log('result.dst_container_top_factor =', result.dst_container_top_factor);
-
-		dst_container_left_factor = result.dst_container_left_factor;
-		//console.log('result.dst_container_left_factor =', result.dst_container_left_factor);
-
-		centerize_dst = result.centerize_dst;
-		//console.log('result.centerize_dst =', result.centerize_dst);
-
-		dst_container_color = result.dst_container_color;
-		//console.log('result.dst_container_color =', result.dst_container_color);
-
-		dst_container_opacity = result.dst_container_opacity;
-		//console.log('result.dst_container_opacity =', result.dst_container_opacity);
-
-		create_modal_textarea();
-
-		window.addEventListener('resize', function(event){
-			regenerate_textarea();
-		});
-
-
-		document.addEventListener('fullscreenchange', function(event) {
-			regenerate_textarea();
-		});
-
-		if (document.querySelector("#dst_textarea")) {
-			document.addEventListener('DOMContentLoaded', (event) => {
-				document.querySelector("#dst_textarea").addEventListener('input', () => {
-					const value = document.querySelector("#dst_textarea").value;
-					if (value.includes('%20')) {
-						console.log('dst_textarea contains %20');
-						value = value.replace('\\%20/g', ' ');
-						document.querySelector("#dst_textarea").value = formattedText(value);
-					}
-					if (value.includes('%3E')) {
-						console.log('dst_textarea contains %3E');
-						value = value.replace('\\%3E/g', '>');
-						document.querySelector("#dst_textarea").value = formattedText(value);
-					}
-					value = value.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
-				});
-			});
-		};
-
-
-
 		if (!recognizing) {
+
 			final_transcript = '';
 			interim_transcript = '';
 			if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
 			if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
 			console.log('onload: stopping because recognizing =', recognizing);
+			console.log('removing src_textarea_container from html body');
+			if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").parentElement.removeChild(document.querySelector("#src_textarea_container"));
+			console.log('removing dst_textarea_container from html body');
+			if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").parentElement.removeChild(document.querySelector("#dst_textarea_container"));
 			return;
-		};
 
-		console.log('initializing recognition: recognizing =', recognizing);
-
-		document.documentElement.scrollTop = video_info.top; // For modern browsers
-		document.body.scrollTop = video_info.top; // For older browsers
-
-		var final_transcript = '';
-		var interim_transcript = '';
-		document.querySelector("#src_textarea_container").style.display = 'none';
-		document.querySelector("#dst_textarea_container").style.display = 'none';
-		var speech_start_time = Date.now();
-		var translate_time = Date.now();
-
-		if (!(('webkitSpeechRecognition'||'SpeechRecognition') in window)) {
-			alert('Web Speech API is not supported by this browser. upgrade_info to Chrome version 25 or later');
 		} else {
-			var recognition = new webkitSpeechRecognition() || new SpeechRecognition();
-			recognition.continuous = true;
-			recognition.interimResults = true;
-			recognition.lang = src_dialect;
+
+			src_dialect = result.src_dialect;
+			//console.log('result.src_dialect =', result.src_dialect);
+			if (!src_dialect) src_dialect = 'id-ID';
+			//console.log('src_dialect =', src_dialect);
+			src = src_dialect.split('-')[0];
+			if (src_dialect === "yue-Hant-HK") src = "zh-TW";
+			if (src_dialect === "cmn-Hans-CN") src = "zh-CN";
+			if (src_dialect === "cmn-Hans-HK") src = "zh-CN";
+			if (src_dialect === "cmn-Hant-TW") src = "zh-TW";
+			console.log('src =', src);
+
+			dst_dialect = result.dst_dialect;
+			//console.log('result.dst_dialect =', result.dst_dialect);
+
+			if (!dst_dialect) dst_dialect = 'en-US';
+			//console.log('dst_dialect', dst_dialect);
+			dst = dst_dialect.split('-')[0];
+			if (dst_dialect === "yue-Hant-HK") dst = "zh-TW";
+			if (dst_dialect === "cmn-Hans-CN") dst = "zh-CN";
+			if (dst_dialect === "cmn-Hans-HK") dst = "zh-CN";
+			if (dst_dialect === "cmn-Hant-TW") dst = "zh-TW";
+			console.log('dst =', dst);
+
+			var icon_text_listening = src.toUpperCase() + ':' + dst.toUpperCase();
+			chrome.runtime.sendMessage({
+				cmd: 'icon_text_listening',
+				data: {
+					value: icon_text_listening
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+
+			show_src = result.show_src;
+			//console.log('result.show_src =', result.show_src);
+			if (typeof result.show_src === "undefined") show_src = true;
+			//console.log('show_src =', show_src);
+
+			show_dst = result.show_dst;
+			//console.log('result.show_dst =', result.show_dst);
+			if (typeof result.show_dst === 'undefined') show_dst = true;
+			//console.log('show_dst =', show_dst);
+
+			show_timestamp_src = result.show_timestamp_src;
+			//console.log('result.show_timestamp_src =', result.show_timestamp_dst);
+			if (typeof result.show_timestamp_src === 'undefined') show_timestamp_src = true;
+			//console.log('show_timestamp_dst =', show_timestamp_dst);
+
+			show_timestamp_dst = result.show_timestamp_dst;
+			//console.log('result.show_timestamp_dst', result.show_timestamp_dst);
+			if (typeof result.show_timestamp_dst === 'undefined') show_timestamp_dst = true;
+			//console.log('show_timestamp_dst', show_timestamp_dst);
+
+			pause_threshold = result.pause_threshold;
+			//console.log('result.pause_threshold =', result.pause_threshold);
+			if (!result.pause_threshold) pause_threshold = 5000;
+			//console.log('pause_threshold =', pause_threshold);
+
+			src_selected_font = result.src_selected_font;
+			//console.log('result.src_selected_font =', result.src_selected_font);
+			if (!result.src_selected_font) src_selected_font = 'Arial';
+			//console.log('src_selected_font =', src_selected_font);
+
+			src_font_size = result.src_font_size;
+			//console.log('result.src_font_size =', result.src_font_size);
+			if (!result.src_font_size) src_font_size = 18;
+			//console.log('src_font_size =', src_font_size);
+
+			src_font_color = result.src_font_color;
+			//console.log('result.src_font_color =', result.src_font_color);
+			if (!result.src_font_color) src_font_color = '#AAFF00';
+			//console.log('src_font_color =', src_font_color);
+
+			src_container_width_factor = result.src_container_width_factor;
+			//console.log('result.src_container_width_factor =', result.src_container_width_factor);
+			if (!result.src_container_width_factor) src_container_width_factor = 0.795;
+			//console.log('src_container_width_factor =', src_container_width_factor);
+
+			src_container_height_factor = result.src_container_height_factor;
+			//console.log('result.src_container_height_factor =', result.src_container_height_factor);
+			if (!result.src_container_height_factor) src_container_height_factor = 0.18;
+			//console.log('src_container_height_factor =', src_container_height_factor);
+
+			src_container_top_factor = result.src_container_top_factor;
+			//console.log('result.src_container_top_factor =', result.src_container_top_factor);
+			if (!result.src_container_top_factor) src_container_top_factor = 0.01;
+			//console.log('src_container_top_factor =', src_container_top_factor);
+
+			centerize_src = result.centerize_src;
+			//console.log('result.centerize_src =', result.centerize_src);
+			if (typeof result.centerize_src === 'undefined') centerize_src = true;
+			//console.log('centerize_src =', centerize_src);
+
+			src_container_left_factor = result.src_container_left_factor;
+			//console.log('result.src_container_left_factor =', result.src_container_left_factor);
+			if (!result.src_container_left_factor) src_container_left_factor = 0.1;
+			//console.log('src_container_left_factor =', src_container_left_factor);
+
+			src_container_color = result.src_container_color;
+			//console.log('result.src_container_color =', result.src_container_color);
+			if (!result.src_container_color) src_container_color = '#000000';
+			//console.log('src_container_color =', src_container_color);
+
+			src_container_opacity = result.src_container_opacity;
+			//console.log('result.src_container_opacity =', result.src_container_opacity);
+			if (!result.src_container_opacity) src_container_opacity = 0.3;
+			//console.log('src_container_opacity =', src_container_opacity);
+
+
+			dst_selected_font = result.dst_selected_font;
+			//console.log('result.dst_selected_font =', result.dst_selected_font);
+			if (!result.dst_selected_font) dst_selected_font = 'Arial';
+			//console.log('dst_selected_font =', dst_selected_font);
+
+			dst_font_size = result.dst_font_size;
+			//console.log('result.dst_font_size =', result.dst_font_size);
+			if (!result.dst_font_size) dst_font_size = 18;
+			//console.log('dst_font_size =', dst_font_size);
+
+			dst_font_color = result.dst_font_color;
+			//console.log('result.dst_font_color =', result.dst_font_color);
+			if (!result.dst_font_color) dst_font_color = '#FFFF00';
+			//console.log('dst_font_color =', dst_font_color);
+
+			dst_container_width_factor = result.dst_container_width_factor;
+			//console.log('result.dst_container_width_factor =', result.dst_container_width_factor);
+			if (!result.dst_container_width_factor) dst_container_width_factor = 0.795;
+			//console.log('dst_container_width_factor =', dst_container_width_factor);
+
+			dst_container_height_factor = result.dst_container_height_factor;
+			//console.log('result.dst_container_height_factor =', result.dst_container_height_factor);
+			if (!result.dst_container_height_factor) dst_container_height_factor = 0.225;
+			//console.log('dst_container_height_factor =', dst_container_height_factor);
+
+			dst_container_top_factor = result.dst_container_top_factor;
+			//console.log('result.dst_container_top_factor =', result.dst_container_top_factor);
+			if (!result.dst_container_top_factor) dst_container_top_factor = 0.65;
+			//console.log('dst_container_top_factor =', dst_container_top_factor);
+
+			centerize_dst = result.centerize_dst;
+			//console.log('result.centerize_dst =', result.centerize_dst);
+			if (typeof result.centerize_dst === 'undefined') centerize_dst = true;
+			//console.log('centerize_dst =', centerize_dst);
+
+			dst_container_left_factor = result.dst_container_left_factor;
+			//console.log('result.dst_container_left_factor =', result.dst_container_left_factor);
+			if (!result.dst_container_left_factor) dst_container_left_factor = 0.1;
+			//console.log('dst_container_left_factor =', dst_container_left_factor);
+
+			dst_container_color = result.dst_container_color;
+			//console.log('result.dst_container_color =', result.dst_container_color);
+			if (!result.dst_container_color) dst_container_color = '#000000';
+			//console.log('dst_container_color =', dst_container_color);
+
+			dst_container_opacity = result.dst_container_opacity;
+			//console.log('result.dst_container_opacity =', result.dst_container_opacity);
+			if (!result.dst_container_opacity) dst_container_opacity = 0.3;
+			//console.log('dst_container_opacity =', dst_container_opacity);
+
+			//saveAllChangedSettings();
+
+			console.log('removing src_textarea_container from html body if exist to create a fresh new one');
+			if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").parentElement.removeChild(document.querySelector("#src_textarea_container"));
+			console.log('removing dst_textarea_container from html body if exist to create a fresh new one');
+			if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").parentElement.removeChild(document.querySelector("#dst_textarea_container"));
+
+			create_modal_textarea();
+
+			window.addEventListener('resize', function(event){
+				regenerate_textarea();
+			});
+
+			document.addEventListener('fullscreenchange', function(event) {
+				regenerate_textarea();
+			});
+
+			// INTERCEPT ANY UNWANTED CHARACTERS FROM GOOGLE TRANSLATE
+			if (document.querySelector("#dst_textarea")) {
+				document.addEventListener('DOMContentLoaded', (event) => {
+					document.querySelector("#dst_textarea").addEventListener('input', () => {
+						const value = document.querySelector("#dst_textarea").value;
+						if (value.includes('%20')) {
+							console.log('dst_textarea contains %20');
+							value = value.replace('\\%20/g', ' ');
+							document.querySelector("#dst_textarea").value = formattedText(value);
+						}
+						if (value.includes('%3E')) {
+							console.log('dst_textarea contains %3E');
+							value = value.replace('\\%3E/g', '>');
+							document.querySelector("#dst_textarea").value = formattedText(value);
+						}
+						value = value.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
+					});
+				});
+			}
+
+			console.log('initializing recognition: recognizing =', recognizing);
+
+			document.documentElement.scrollTop = video_info.top; // For modern browsers
+			document.body.scrollTop = video_info.top; // For older browsers
+
+			document.querySelector("#src_textarea_container").style.display = 'none';
+			document.querySelector("#dst_textarea_container").style.display = 'none';
+			var speech_start_time = Date.now();
+			var translate_time = Date.now();
+
+			if (!(('webkitSpeechRecognition'||'SpeechRecognition') in window)) {
+
+				alert('Web Speech API is not supported by this browser. upgrade_info to Chrome version 25 or later');
+
+			} else {
+
+				console.log('starting recognition: recognizing =', recognizing);
+				var recognition = new webkitSpeechRecognition() || new SpeechRecognition();
+				recognition.continuous = true;
+				recognition.interimResults = true;
+				recognition.lang = src_dialect;
+				recognition.start();
+				speech_start_time = Date.now();
+				translate_time =  Date.now();
+
 
 
 //---------------------------------------------------------------ONSTART--------------------------------------------------------------//
 
 
-			recognition.onstart = function() {
-				final_transcript = '';
-				interim_transcript = '';
-				startTimestamp = formatTimestampToISOLocalString(new Date());
-				resetPauseTimeout();
+				recognition.onstart = function() {
 
-				if (!recognizing) {
-					//recognizing = false;
-					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
-					if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
-					console.log('recognition.onstart: stopping because recognizing =', recognizing);
-					return;
-				} else {
-					console.log('recognition.onstart: recognizing =', recognizing);
-					recognition.lang = src_dialect;
-				}
-			};
+					startTimestamp = formatTimestampToISOLocalString(new Date());
+					resetPauseTimeout();
 
+					if (!recognizing) {
+						if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
+						if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
+						console.log('recognition.onstart: stopping because recognizing =', recognizing);
+						return;
+					} else {
+						console.log('recognition.onstart: recognizing =', recognizing);
+						recognition.lang = src_dialect;
+						console.log('settings_has_changed =', settings_has_changed);
+						if (settings_has_changed) {
+							regenerate_textarea();
+							settings_has_changed = false;
+						}
+					}
 
-			recognition.onspeechstart = function(event) {
-				console.log('recognition.onspeechstart: recognizing =', recognizing);
-				final_transcript = '';
-				interim_transcript = '';
-				speech_start_time = Date.now();
-				translate_time = Date.now();
-			};
-
-			recognition.onspeechend = function(event) {
-				console.log('recognition.onspeechend: recognizing =', recognizing);
-				final_transcript = '';
-				interim_transcript = '';
-				if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
-				speech_start_time = Date.now();
-				translate_time = Date.now();
-			};
+				};
 
 
 //---------------------------------------------------------------ONERROR--------------------------------------------------------------//
 
-			recognition.onerror = function(event) {
-				resetPauseTimeout(); // Reset timeout on error as well
-				if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
-				if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
 
-				if (event.error === 'no-speech') {
-					console.log('recognition.no-speech: recognizing =', recognizing);
-					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
-				}
-				if (event.error === 'audio-capture') {
-					alert('No microphone was found, ensure that a microphone is installed and that microphone settings are configured correctly');
-					var icon_text_no_mic = 'NOMIC';
-					chrome.runtime.sendMessage({ cmd: 'icon_text_no_mic', data: { value: icon_text_no_mic } })
-					console.log('recognition.audio-capture: recognizing =', recognizing);
+				recognition.onerror = function(event) {
+					resetPauseTimeout(); // Reset timeout on error as well
 					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
 					if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
-				}
-				if (event.error === 'not-allowed') {
-					if (Date.now() - speech_start_time < 100) {
-						var icon_text_blocked = 'BLOCKED';
-						chrome.runtime.sendMessage({ cmd: 'icon_text_blocked', data: { value: icon_text_blocked } })
-						alert('Permission to use microphone is blocked, go to chrome://settings/contentExceptions#media-stream to change it');
-					} else {
-						var icon_text_denied = 'DENIED';
-						chrome.runtime.sendMessage({ cmd: 'icon_text_denied', data: { value: icon_text_denied } })
-						alert('Permission to use microphone was denied');
+
+					console.log('event.error =', event.error);
+					if (event.error === 'no-speech') {
+						console.log('recognition.no-speech: recognizing =', recognizing);
+						if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
 					}
-					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
-					if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
-					console.log('recognition.not-allowed: recognizing =', recognizing);
-				}
-			};
+					if (event.error === 'audio-capture') {
+						alert('No microphone was found, ensure that a microphone is installed and that microphone settings are configured correctly');
+						var icon_text_no_mic = 'NO-MIC';
+						chrome.runtime.sendMessage({
+							cmd: 'icon_text_no_mic',
+							data: {
+								value: icon_text_no_mic
+							}, function(response) {
+								console.log('response.status =', response.status);
+							}
+						});
+						console.log('recognition.audio-capture: recognizing =', recognizing);
+						if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
+						if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
+					}
+					if (event.error === 'not-allowed') {
+						if (Date.now() - speech_start_time < 100) {
+							var icon_text_blocked = 'BLOCKED';
+							chrome.runtime.sendMessage({
+								cmd: 'icon_text_blocked',
+								data: {
+									value: icon_text_blocked
+								}, function(response) {
+									console.log('response.status =', response.status);
+								}
+							});
+							alert('Permission to use microphone is blocked, go to chrome://settings/contentExceptions#media-stream to change it');
+						} else {
+							var icon_text_denied = 'DENIED';
+							chrome.runtime.sendMessage({
+								cmd: 'icon_text_denied',
+								data: {
+									value: icon_text_denied
+								}, function(response) {
+									console.log('response.status =', response.status);
+								}
+							});
+							alert('Permission to use microphone was denied');
+						}
+						if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
+						if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
+						console.log('recognition.not-allowed: recognizing =', recognizing);
+					}
+				};
+
 
 //---------------------------------------------------------------ONEND---------------------------------------------------------------//
 
-			recognition.onend = function() {
-				//final_transcript = '';
-				//interim_transcript = '';
-				session_end_time = formatTimestampToISOLocalString(new Date());
-				//console.log('session_end_time =', session_end_time);
 
-				if (!recognizing) {
-					final_transcript = '';
-					interim_transcript = '';
+				recognition.onend = function() {
 
-					console.log('recognition.onend: stopping because recognizing =', recognizing);
+					session_end_time = formatTimestampToISOLocalString(new Date());
+					//console.log('session_end_time =', session_end_time);
 
-					var t = formatted_all_final_transcripts + timestamped_final_and_interim_transcript;
-					if (t) {
-						t = formatTranscript(t);
-						//console.log('t =', t);
-						// Split text into an array of lines
-						var lines = t.trim().split('\n');
-						// Use a Set to filter out duplicate lines
-						var unique_lines = [...new Set(lines)];
-						unique_lines = removeDuplicates(unique_lines);
-						//console.log('unique_lines =', unique_lines);
+					if (!recognizing) {
+						final_transcript = '';
+						interim_transcript = '';
 
-						// Join the unique lines back into a single string
-						var unique_text;
-						var newunique_lines = [];
-						var timestamps = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/;
+						if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
+						if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
 
-						if (unique_lines.length === 1 && unique_lines[0] != '' && unique_lines[0] != 'undefined') {
-							const timestamps = unique_lines[0].match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/g);
-							if (!timestamps) {
-								var lastunique_lines = `${session_start_time} ${timestamp_separator} ${session_end_time} : ${unique_lines[0]}`;
-								//console.log('lastunique_lines =', lastunique_lines);
-								unique_lines[0] = lastunique_lines;
-								unique_text = newunique_lines.join('\n');
-								unique_text = unique_text + '\n';
-							}
-						}
-						else if (unique_lines.length>1 && unique_lines[unique_lines.length-1] != '' && !timestamps.test(unique_lines[unique_lines.length-1])) {
-							var lastunique_lines = `${startTimestamp} ${timestamp_separator} ${session_end_time} : ${unique_lines[unique_lines.length-1]}`;
-							//console.log('lastunique_lines =', lastunique_lines);
-							unique_lines[unique_lines.length-1] = lastunique_lines;
-							for (var i = 0; i < unique_lines.length; i++) {
-								newunique_lines.push(unique_lines[i]);
-							}
-							//console.log('newunique_lines =', newunique_lines);
-							unique_text = newunique_lines.join('\n');
-							unique_text = unique_text + '\n';
-						}
-						else if (unique_lines.length>1 && unique_lines[unique_lines.length-1] != '' && timestamps.test(unique_lines[unique_lines.length-1])) {
-							unique_text = unique_lines.join('\n');
-							unique_text = unique_text + '\n';
-						}
+						console.log('recognition.onend: stopping because recognizing =', recognizing);
 
-						// SAVING TRANSCRIPTIONS
-						if (unique_text) {
-							unique_text = unique_text.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-							unique_text = removeEmptySentences(unique_text);
-							unique_text = removePeriodOnlySentences(unique_text);
-							//console.log('unique_text =', unique_text);
+						if (timestamped_final_and_interim_transcript) {
+							timestamped_final_and_interim_transcript = formatTranscript(timestamped_final_and_interim_transcript);
+							//console.log('t =', t);
+							// Split text into an array of lines
+							var lines = timestamped_final_and_interim_transcript.trim().split('\n');
+							var new_unique_lines = [];
+							var last_line;
+							var translated_last_line;
+							var translated_unique_text;
 
-							if (show_timestamp_src) {
-								saveTranscript(unique_text);
-							} else {
-								saveTranscript(removeTimestamps(unique_text));
-							}
-						}
-
-
-						// SAVING TRANSLATIONS
-						if (unique_text) var tt = gtranslate(unique_text, src, dst).then((result => {
-							result = result.replace(/(\d+),(\d+)/g, '$1.$2');
-
-							result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
-							result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
-
-							result = result.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
-							result = result.replace(/(\d{2})-\s?(\d{2})-\s?(\d{4})/g, '$1-$2-$3');
-
-							result = result.replace(/(\d{4})\s*-\s*(\d{2})\s*-\s*(\d{2})/g, '$1-$2-$3');
-							result = result.replace(/(\d{2})\s*-\s*(\d{2})\s*-\s*(\d{5})/g, '$1-$2-$3');
-
-							result = result.replace(/(\d{2})\s*:\s*(\d{2})\s*:\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
-
-							result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
-							result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{2}-\d{2}-\d{5} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
-
-							result = result.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-							result = result.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-
-							result = result.replace('.,', '.');
-							result = result.replace(',.', ',');
-							result = result.replace('. .', '.');
-
-							result = convertDatesToISOFormat(result);
-							result = formatTranscript(result);
-
-							result = result.replace(/\n\s*$/, '');
-
-							timestamped_translated_final_and_interim_transcript = result + "\n";
-							//console.log('timestamped_translated_final_and_interim_transcript =', timestamped_translated_final_and_interim_transcript);
-
-							if (timestamped_translated_final_and_interim_transcript) {
-								timestamped_translated_final_and_interim_transcript = timestamped_translated_final_and_interim_transcript.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-								timestamped_translated_final_and_interim_transcript = timestamped_translated_final_and_interim_transcript.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-								timestamped_translated_final_and_interim_transcript = removeEmptySentences(timestamped_translated_final_and_interim_transcript);
-								timestamped_translated_final_and_interim_transcript = removePeriodOnlySentences(timestamped_translated_final_and_interim_transcript);
-
-								if (show_timestamp_dst) {
-									saveTranslatedTranscript(timestamped_translated_final_and_interim_transcript);
+							lines.forEach(line => {
+								const timestamped_line = line.match(/(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*\.$/);
+								if (timestamped_line) {
+									new_unique_lines.push(line);
 								} else {
-									saveTranslatedTranscript(removeTimestamps(timestamped_translated_final_and_interim_transcript));
+									if (line !== '' && line !== '.') {
+										line = line + '.';
+										last_line = `${startTimestamp} ${timestamp_separator} ${session_end_time} : ${line}`;
+										new_unique_lines.push(last_line);
+									}
 								}
+								unique_text = new_unique_lines.join('\n');
+								unique_text = unique_text + '\n';
+							});
+
+							//console.log('unique_text =', unique_text);
+							if (unique_text) {
+								unique_text = unique_text.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+								unique_text = removeEmptySentences(unique_text);
+								unique_text = removePeriodOnlySentences(unique_text);
+								unique_text = formatTranscript(unique_text);
+								unique_text = unique_text + '\n';
+								//console.log('unique_text =', unique_text);
+
+								// SAVING TRANSCRIPTIONS
+/*
+								//saveTemporaryTranscript(unique_text) for debug;
+								saveTranscriptAsFile(unique_text, 'tmp_transcript.txt')
+								if (show_timestamp_src) {
+									saveTranscript(unique_text);
+								} else {
+									saveTranscript(removeTimestamps(unique_text));
+								}
+*/
+								// SAVING TRANSLATION
+								var tt = translateText(unique_text, src, dst).then(result => {
+									timestamped_translated_final_and_interim_transcript = result + '\n';
+
+									if (timestamped_translated_final_and_interim_transcript) {
+										timestamped_translated_final_and_interim_transcript = timestamped_translated_final_and_interim_transcript.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+										timestamped_translated_final_and_interim_transcript = timestamped_translated_final_and_interim_transcript.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+										timestamped_translated_final_and_interim_transcript = removeEmptySentences(timestamped_translated_final_and_interim_transcript);
+										timestamped_translated_final_and_interim_transcript = removePeriodOnlySentences(timestamped_translated_final_and_interim_transcript);
+
+										if (show_timestamp_dst) {
+											saveTranslatedTranscript(timestamped_translated_final_and_interim_transcript);
+										} else {
+											saveTranslatedTranscript(removeTimestamps(timestamped_translated_final_and_interim_transcript));
+										}
+										array_all_translated_final_transcripts = [];
+										timestamped_translated_final_and_interim_transcript = '';
+									}
+
+								}).catch(error => {
+									console.error('Error:', error);
+								});
 							}
+						}
 
-							formatted_all_translated_transcripts = '';
-							all_translated_transcripts = [];
-							timestamped_translated_final_and_interim_transcript = '';
-							lines = '';
-							unique_lines = [];
-							unique_text = '';
-							t = '';
+						lines = '';
+						unique_lines = [];
+						new_unique_lines = [];
+						unique_text = '';
+						timestamped_final_and_interim_transcript = '';
 
-						}));
+						console.log('Saving all changed settings');
+						saveAllChangedSettings();
+						return;
+
+					} else {
+						console.log('recognition.onend: keep recognizing because recognizing =', recognizing);
+						recognition.start();
+						speech_start_time = Date.now();
+						translate_time =  Date.now();
 					}
+					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
+					if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
+				};
 
-					saveChangedSettings();
-
-					return;
-
-				} else {
-					console.log('recognition.onend: keep recognizing because recognizing =', recognizing);
-					recognition.start();
-					speech_start_time = Date.now();
-					translate_time =  Date.now();
-				}
-
-				if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
-				if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
-			};
 
 //---------------------------------------------------------------ONRESULT--------------------------------------------------------------//
 
-			recognition.onresult = function(event) {
-				console.log('recognition.onresult: recognizing =', recognizing);
-				resetPauseTimeout();
 
-				if (!recognizing) {
+				recognition.onresult = function(event) {
+					console.log('recognition.onresult: recognizing =', recognizing);
+					resetPauseTimeout();
 
-					final_transcript = '';
-					interim_transcript = '';
-					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
-					if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
-					console.log('recognition.onresult: stopping because recognizing =', recognizing);
-					return;
-
-				} else {
-
-					recognition.lang = src_dialect;
-					interim_transcript = '';
-
-					for (var i = event.resultIndex; i < event.results.length; ++i) {
-						if (event.results[i].isFinal) {
-							transcript_is_final = true;
-							interim_transcript = '';
-							interim_started = false;
-							endTimestamp = formatTimestampToISOLocalString(new Date());
-							final_transcript += `${startTimestamp} ${timestamp_separator} ${endTimestamp} : ${capitalize(event.results[i][0].transcript)}`;
-							final_transcript = final_transcript + '.\n'
-							all_final_transcripts.push(`${final_transcript}`);
-						} else {
-							transcript_is_final = false;
-							if (!interim_started) {
-								// Capture the timestamp only when the interim result starts
-								startTimestamp = formatTimestampToISOLocalString(new Date());
-								interim_started = true; // Set the flag to true
-							}
-							interim_transcript += event.results[i][0].transcript;
-							interim_transcript = remove_linebreak(interim_transcript);
-							interim_transcript = capitalize(interim_transcript);
-						}
+					if (typeof(event.results) === 'undefined') {
+						recognition.onend = null;
+						recognition.stop();
+						return;
 					}
 
-					timestamped_final_and_interim_transcript = final_transcript + '\n' + interim_transcript;
+					if (!recognizing) {
 
-					if (containsTimestamp(timestamped_final_and_interim_transcript)) {
-						timestamped_final_and_interim_transcript = formatTranscript(timestamped_final_and_interim_transcript);
-						timestamped_final_and_interim_transcript = removeEmptyLines(timestamped_final_and_interim_transcript);
-						if (!show_timestamp_src) {
-							timestamped_final_and_interim_transcript = removePeriodOnlyLines(timestamped_final_and_interim_transcript);
-						}
-						//console.log('formatTranscript(timestamped_final_and_interim_transcript) =', timestamped_final_and_interim_transcript);
-					}
-
-					if (all_final_transcripts.length > 0) {
-						all_final_transcripts = removeDuplicates(all_final_transcripts);
-						formatted_all_final_transcripts = all_final_transcripts.join("\n");
-						//console.log('formatted_all_final_transcripts =', formatted_all_final_transcripts);
-					}
-
-					if (formatted_all_final_transcripts) {
-						displayed_transcript = formatted_all_final_transcripts + '\n' + interim_transcript;
-						//console.log('formatted_all_final_transcripts: displayed_transcript =', displayed_transcript);
-					} else {
-						displayed_transcript = timestamped_final_and_interim_transcript;
-						//console.log('!formatted_all_final_transcripts: displayed_transcript =', displayed_transcript);
-					}
-					displayed_transcript = formatTranscript(displayed_transcript);
-
-					//console.log('displayed_transcript =', displayed_transcript);
-					if (displayed_transcript) {
-						// Split text into an array of lines
-						var lines = displayed_transcript.trim().split('\n');
-						// Use a Set to filter out duplicate lines
-						var unique_lines = [...new Set(lines)];
-						// Join the unique lines back into a single string
-						var unique_text = unique_lines.join('\n');
-						//console.log('unique_text =', unique_text);
-					}
-
-					if (unique_text && getFirstWord(unique_text).includes('undefined')) unique_text = unique_text.replace('undefined', '');
-
-					if (unique_text) {
-						unique_text = removeEmptyLines(unique_text);
-						if (!show_timestamp_src) {
-							unique_text = removePeriodOnlyLines(unique_text);
-						}
-					}
-
-					if (show_src) {
-						if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'block';
-						if (show_timestamp_src) {
-							if (unique_text && document.querySelector("#src_textarea")) document.querySelector("#src_textarea").value = unique_text;
-						} else {
-							if (unique_text && document.querySelector("#src_textarea")) document.querySelector("#src_textarea").value = removeTimestamps(unique_text);
-						}
-						if (document.querySelector("#src_textarea")) document.querySelector("#src_textarea").scrollTop = document.querySelector("#src_textarea").scrollHeight;
-					} else {
+						final_transcript = '';
+						interim_transcript = '';
 						if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
-					}
-
-
-					if (show_dst) {
-						//var  t = unique_text; // CAN'T BE USED BECAUSE GOOGLE TRANSLATE SERVER WILL RESPOND WITH 403 AFTER SOME REQUESTS
-						var t = timestamped_final_and_interim_transcript;
-						if ((Date.now() - translate_time > 1000) && recognizing) {
-							if (t) var tt = gtranslate(t, src, dst).then((result => {
-								if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'block';
-								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").style.display = 'inline-block';
-
-								result = result.replace(/(\d+),(\d+)/g, '$1.$2');
-
-								result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
-								result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
-
-								result = result.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
-								result = result.replace(/(\d{2})-\s?(\d{2})-\s?(\d{4})/g, '$1-$2-$3');
-
-								result = result.replace(/(\d{4})\s*-\s*(\d{2})\s*-\s*(\d{2})/g, '$1-$2-$3');
-								result = result.replace(/(\d{2})\s*-\s*(\d{2})\s*-\s*(\d{4})/g, '$1-$2-$3');
-
-								result = result.replace(/(\d{2})\s*:\s*(\d{2})\s*:\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
-
-								result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
-								result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
-
-								result = result.replace(/(\d{2}:\d{2}:\d{2}\.\d{3}): /g, '$1 : ');
-
-								result = result.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-								result = result.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-
-								result = result.replace(/ (\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/g, /(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/);
-								result = result.replace(/ (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/g, /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/);
-
-								result = result.replace('.,', '.');
-								result = result.replace(',.', ',');
-								result = result.replace('. .', '.');
-
-								result = convertDatesToISOFormat(result);
-								result = formatTranscript(result);
-
-								result = result.replace(/\n\s*$/, '');
-
-								result = removeEmptyLines(result);
-
-								var timestamps = result.match(/(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: /);
-
-								//console.log('transcript_is_final =', transcript_is_final);
-								if (transcript_is_final) {
-									//console.log('transcript_is_final');
-									all_translated_transcripts.push(`${result}`);
-									all_translated_transcripts = removeDuplicates(all_translated_transcripts);
-									//console.log('all_translated_transcripts =', all_translated_transcripts);
-									formatted_all_translated_transcripts = all_translated_transcripts.join("");
-									//console.log('formatted_all_translated_transcripts =', formatted_all_translated_transcripts);
-								}
-
-								//console.log('formatted_all_translated_transcripts =', formatted_all_translated_transcripts);
-								var translated_unique_text;
-								if (all_translated_transcripts.length > 0) {
-									all_translated_transcripts = removeDuplicates(all_translated_transcripts);
-									translated_unique_text = all_translated_transcripts.join('\n');
-									//console.log('translated_unique_text =', translated_unique_text);
-								}
-
-								displayed_translation = translated_unique_text + '\n' + result;
-								displayed_translation = formatTranscript(displayed_translation);
-
-								if (getFirstWord(displayed_translation).includes('undefined')) displayed_translation = displayed_translation.replace('undefined', '');
-
-								var displayed_translation_lines = displayed_translation.trim().split('\n');
-								var displayed_translation_unique_lines = [...new Set(displayed_translation_lines)];
-								displayed_translation_unique_lines = removeDuplicates(displayed_translation_unique_lines);
-								displayed_translation= displayed_translation_unique_lines.join('\n');
-
-								if (show_timestamp_dst) {
-									//console.log('displayed_translation =', displayed_translation);
-									if (displayed_translation && document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = displayed_translation;
-								} else {
-									//console.log('removeTimestamps(displayed_translation) =', removeTimestamps(displayed_translation));
-									if (displayed_translation && document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = removeTimestamps(displayed_translation);
-								}
-
-								if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
-
-							}));
-							translate_time = Date.now();
-						};
+						if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
+						console.log('recognition.onresult: stopping because recognizing =', recognizing);
+						return;
 
 					} else {
-						if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
+
+						recognition.lang = src_dialect;
+						interim_transcript = '';
+
+						for (var i = event.resultIndex; i < event.results.length; ++i) {
+							if (event.results[i].isFinal) {
+								transcript_is_final = true;
+								interim_transcript = '';
+								interim_started = false;
+								endTimestamp = formatTimestampToISOLocalString(new Date());
+								final_transcript += `${startTimestamp} ${timestamp_separator} ${endTimestamp} : ${capitalize(event.results[i][0].transcript)}`;
+								final_transcript = final_transcript + '.\n';
+								array_all_final_transcripts.push(`${final_transcript}`);
+								array_all_final_transcripts = arrayRemoveDuplicates(array_all_final_transcripts);
+							} else {
+								transcript_is_final = false;
+								if (!interim_started) {
+									// Capture the timestamp only when the interim result starts
+									startTimestamp = formatTimestampToISOLocalString(new Date());
+									interim_started = true; // Set the flag to true
+								}
+								interim_transcript += event.results[i][0].transcript;
+								interim_transcript = remove_linebreak(interim_transcript);
+								interim_transcript = capitalize(interim_transcript);
+							}
+						}
+
+						timestamped_final_and_interim_transcript = final_transcript + interim_transcript;
+
+						if (show_src) {
+							if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'block';
+							if (document.querySelector("#src_textarea")) document.querySelector("#src_textarea").style.display = 'inline-block';
+
+							if (show_timestamp_src) {
+								if (timestamped_final_and_interim_transcript && document.querySelector("#src_textarea")) document.querySelector("#src_textarea").value = timestamped_final_and_interim_transcript;
+							} else {
+								if (timestamped_final_and_interim_transcript && document.querySelector("#src_textarea")) document.querySelector("#src_textarea").value = removeTimestamps(timestamped_final_and_interim_transcript);
+							}
+							if (document.querySelector("#src_textarea")) document.querySelector("#src_textarea").scrollTop = document.querySelector("#src_textarea").scrollHeight;
+						} else {
+							if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").style.display = 'none';
+						}
+
+
+						if (show_dst) {
+							var transcript_to_translate = '';
+							if (array_all_final_transcripts.length > 0) {
+								array_all_final_transcripts = arrayRemoveDuplicates(array_all_final_transcripts);
+								//console.log('array_all_final_transcripts =', array_all_final_transcripts);
+								last_final_transcript = array_all_final_transcripts[array_all_final_transcripts.length - 1] + '\n';
+								//console.log('last_final_transcript =', last_final_transcript);
+								transcript_to_translate = last_final_transcript + interim_transcript;
+							} else {
+								transcript_to_translate = interim_transcript;
+							}
+
+							if (transcript_to_translate) transcript_to_translate = transcript_to_translate.replace('undefined', '');
+
+							//var  t = unique_text; // CAN'T BE USED BECAUSE GOOGLE TRANSLATE SERVER WILL RESPOND WITH 403 AFTER SOME REQUESTS
+							var t = transcript_to_translate;
+							if ((Date.now() - translate_time > 1000) && recognizing) {
+								if (t) {
+									var tt = gtranslate(t, src, dst).then(result => {
+										if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'block';
+										if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").style.display = 'inline-block';
+										// Replace commas with periods in timestamps
+										result = result.replace(/(\d+),(\d+)/g, '$1.$2');
+										// Remove spaces within timestamps for ISO Date format
+										result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
+										// Remove spaces within timestamps for Local Date format
+										result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
+										// Remove any spaces between the date components for ISO Date format
+										result = result.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
+										// Remove any spaces between the date components for Local Date format
+										result = result.replace(/(\d{2})-\s?(\d{2})-\s?(\d{4})/g, '$1-$2-$3');
+										// Ensure the timestamp format follows "yyyy-mm-dd hh:mm.ddd" format and remove spaces around the hyphens
+										result = result.replace(/(\d{4})\s*-\s*(\d{2})\s*-\s*(\d{2})/g, '$1-$2-$3');
+										// Ensure the timestamp format follows "dd-mm-yyyy hh:mm.ddd" format and remove spaces around the hyphens
+										result = result.replace(/(\d{2})\s*-\s*(\d{2})\s*-\s*(\d{5})/g, '$1-$2-$3');
+										// Remove any spaces around the colons in the time component.
+										result = result.replace(/(\d{2})\s*:\s*(\d{2})\s*:\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
+										// Replace the time_separator with correct strings "-->" for ISO Date format
+										result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
+										// Replace the time_separator with correct strings "-->" for Local Date format
+										result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{2}-\d{2}-\d{5} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
+										// Move every timestamps to a new line for Local Date format
+										result = result.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+										// Move every timestamps to a new line for ISO Date format
+										result = result.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+
+										result = result.replace('.,', '.');
+										result = result.replace(',.', ',');
+										result = result.replace('. .', '.');
+
+										result = convertDatesToISOFormat(result);
+										result = formatTranscript(result);
+										// Remove last blank line
+										result = result.replace(/\n\s*$/, '');
+										result = removeEmptyLines(result);
+
+
+										if (result.match(/(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*\.\n/gm)) {
+											var buffer = getTimestampedLines(result);
+											buffer = arrayRemoveDuplicates(buffer);
+											array_all_translated_final_transcripts.push(buffer[0]);
+											array_all_translated_final_transcripts = arrayRemoveDuplicates(array_all_translated_final_transcripts);
+										}
+
+										if (array_all_translated_final_transcripts.length > 0) {
+											array_all_translated_final_transcripts = arrayRemoveDuplicates(array_all_translated_final_transcripts);
+											//console.log('array_all_translated_final_transcripts =', array_all_translated_final_transcripts);
+											displayed_translation = array_all_translated_final_transcripts.join('\n') + result;
+											displayed_translation = formatTranscript(displayed_translation);
+											displayed_translation = removeDuplicateTimestamps(displayed_translation);
+											var lines = displayed_translation.trim().split('\n');
+											var unique_lines = [...new Set(lines)];
+											var unique_text = unique_lines.join('\n');
+											var interim_translation = result.replace(/^\d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*\.\n/gm, '');
+
+											if (!transcript_is_final) {
+												displayed_translation = unique_text + '\n' + interim_translation;
+											} else {
+												displayed_translation = unique_text;
+											}
+										} else {
+											displayed_translation = result;
+										}
+
+										if (show_timestamp_dst) {
+											//console.log('displayed_translation =', displayed_translation);
+											if (displayed_translation && document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = displayed_translation;
+										} else {
+											//console.log('removeTimestamps(displayed_translation) =', removeTimestamps(displayed_translation));
+											if (displayed_translation && document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = removeTimestamps(displayed_translation);
+										}
+										if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
+
+									}).catch(error => {
+										console.log('error =', error);
+									});
+									translate_time = Date.now();
+								}
+							};
+						} else {
+							if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
+						}
+					}
+				};
+
+
+				// WE NEED TO DO THIS chrome.runtime.onMessage.addListener() 'start' 'stop' AGAIN HERE TO SPEED UP THAT recognition.stop() PROCESS
+				chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+					console.log('onresult: message =', message);
+					sendResponse('OK from onresult');
+					if (message === 'stop') {
+						recognizing = false;
+						try{
+							if (recognition) recognition.stop()
+						}
+						catch(t){
+							console.log("recognition.stop() failed",t)
+						}
+						return;
 					}
 
-					timestamped_translated_final_and_interim_transcript = document.querySelector("#dst_textarea").value;
-				}
-			};
+					if (typeof message === 'object' && message !== null && message.hasOwnProperty('variable_name') && message.hasOwnProperty('variable_value')) {
+						const {variable_name, variable_value} = message;
+
+						if (variable_name === 'changed_src_dialect') {
+							sendResponse({status: 'changed_src_dialect processed'});
+							console.log('changed_src_dialect =', variable_value);
+							src_dialect = variable_value;
+							saveData('src_dialect', src_dialect);
+							src = src_dialect.split('-')[0];
+							saveData('src', src);
+							//regenerate_textarea();
+							recognition.lang = src_dialect;
+							recognition.stop();
+							if (recognizing) {
+								icon_text_listening = src.toUpperCase() + ':' + dst.toUpperCase();
+								chrome.runtime.sendMessage({
+									cmd: 'icon_text_listening',
+									data: {
+										value: icon_text_listening
+									}, function(response) {
+										console.log('response.status =', response.status);
+									}
+								});
+							}
+						}
+
+						if (variable_name === 'changed_show_src') {
+							sendResponse({status: 'changed_show_src processed'});
+							console.log('changed_show_src =', variable_value);
+							show_src = variable_value;
+							saveData('show_src', show_src);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_show_timestamp_src') {
+							sendResponse({status: 'changed_show_timestamp_src processed'});
+							console.log('changed_show_timestamp_src =', variable_value);
+							show_timestamp_src = variable_value;
+							saveData('show_timestamp_src', show_timestamp_src);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_dst_dialect') {
+							sendResponse({status: 'changed_dst_dialect processed'});
+							console.log('changed_dst_dialect =', variable_value);
+							dst_dialect = variable_value;
+							saveData('dst_dialect', dst_dialect);
+							dst = dst_dialect.split('-')[0];
+							saveData('dst', dst);
+							//regenerate_textarea();
+							recognition.lang = dst_dialect;
+							recognition.stop();
+							if (recognizing) {
+								icon_text_listening = src.toUpperCase() + ':' + dst.toUpperCase();
+								chrome.runtime.sendMessage({
+									cmd: 'icon_text_listening',
+									data: {
+										value: icon_text_listening
+									}, function(response) {
+										console.log('response.status =', response.status);
+									}
+								});
+							}
+						}
+
+						if (variable_name === 'changed_show_dst') {
+							sendResponse({status: 'changed_show_dst processed'});
+							console.log('changed_show_dst =', variable_value);
+							show_dst = variable_value;
+							saveData('show_dst', show_dst);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_show_timestamp_dst') {
+							sendResponse({status: 'changed_show_timestamp_dst processed'});
+							console.log('changed_show_timestamp_dst =', variable_value);
+							show_timestamp_dst = variable_value;
+							saveData('show_timestamp_dst', show_timestamp_dst);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_pause_threshold') {
+							sendResponse({status: 'changed_pause_threshold processed'});
+							console.log('changed_pause_threshold =', variable_value);
+							pause_threshold = variable_value;
+							saveData('pause_threshold', pause_threshold);
+							regenerate_textarea();
+						}
 
 
-			if (recognizing) {
-				console.log('starting recognition: recognizing =', recognizing);
-				recognition.start();
-				speech_start_time = Date.now();
-				translate_time =  Date.now();
+
+						if (variable_name === 'changed_src_selected_font') {
+							sendResponse({status: 'changed_src_selected_font processed'});
+							settings_has_changed = true;
+							console.log('changed_src_selected_font =', variable_value);
+							src_selected_font = variable_value;
+							saveData('src_selected_font', src_selected_font);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_src_font_size') {
+							sendResponse({status: 'changed_src_font_size processed'});
+							settings_has_changed = true;
+							console.log('changed_src_font_size =', variable_value);
+							src_font_size = variable_value;
+							saveData('src_font_size', src_font_size);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_src_font_color') {
+							sendResponse({status: 'changed_src_font_color processed'});
+							settings_has_changed = true;
+							console.log('changed_src_font_color =', variable_value);
+							src_font_color = variable_value;
+							saveData('src_font_color', src_font_color);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_src_container_width_factor') {
+							sendResponse({status: 'changed_src_container_width_factor processed'});
+							settings_has_changed = true;
+							console.log('changed_src_container_width_factor =', variable_value);
+							src_container_width_factor = variable_value;
+							saveData('src_container_width_factor', src_container_width_factor);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_src_container_height_factor') {
+							sendResponse({status: 'changed_src_container_height_factor processed'});
+							settings_has_changed = true;
+							console.log('changed_src_container_height_factor =', variable_value);
+							src_container_height_factor = variable_value;
+							saveData('src_container_height_factor', src_container_height_factor);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_src_container_top_factor') {
+							sendResponse({status: 'changed_src_container_top_factor processed'});
+							settings_has_changed = true;
+							console.log('changed_src_container_top_factor =', variable_value);
+							src_container_top_factor = variable_value;
+							saveData('src_container_top_factor', src_container_top_factor);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_src_container_left_factor') {
+							sendResponse({status: 'changed_src_container_left_factor processed'});
+							settings_has_changed = true;
+							console.log('changed_src_container_left_factor =', variable_value);
+							src_container_left_factor = variable_value;
+							saveData('src_container_left_factor', src_container_left_factor);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_centerize_src') {
+							sendResponse({status: 'changed_centerize_src processed'});
+							settings_has_changed = true;
+							console.log('changed_centerize_src =', variable_value);
+							centerize_src = variable_value;
+							saveData('centerize_src', centerize_src);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_src_container_color') {
+							sendResponse({status: 'changed_src_container_color processed'});
+							settings_has_changed = true;
+							console.log('changed_src_container_color =', variable_value);
+							src_container_color = variable_value;
+							saveData('src_container_color', src_container_color);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_src_container_opacity') {
+							sendResponse({status: 'changed_src_container_opacity processed'});
+							settings_has_changed = true;
+							console.log('changed_src_container_opacity =', variable_value);
+							src_container_opacity = variable_value;
+							saveData('src_container_opacity', src_container_opacity);
+							regenerate_textarea();
+						}
+
+
+						if (variable_name === 'changed_dst_selected_font') {
+							sendResponse({status: 'changed_dst_selected_font processed'});
+							settings_has_changed = true;
+							console.log('changed_dst_selected_font =', variable_value);
+							dst_selected_font = variable_value;
+							saveData('dst_selected_font', dst_selected_font);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_dst_font_size') {
+							sendResponse({status: 'changed_dst_font_size processed'});
+							settings_has_changed = true;
+							console.log('changed_dst_font_size =', variable_value);
+							dst_font_size = variable_value;
+							saveData('dst_font_size', dst_font_size);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_dst_font_color') {
+							sendResponse({status: 'changed_dst_font_color processed'});
+							settings_has_changed = true;
+							console.log('changed_dst_font_color =', variable_value);
+							dst_font_color = variable_value;
+							saveData('dst_font_color', dst_font_color);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_dst_container_width_factor') {
+							sendResponse({status: 'changed_dst_container_width_factor processed'});
+							settings_has_changed = true;
+							console.log('changed_dst_container_width_factor =', variable_value);
+							dst_container_width_factor = variable_value;
+							saveData('dst_container_width_factor', dst_container_width_factor);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_dst_container_height_factor') {
+							sendResponse({status: 'changed_dst_container_height_factor processed'});
+							settings_has_changed = true;
+							console.log('changed_dst_container_height_factor =', variable_value);
+							dst_container_height_factor = variable_value;
+							saveData('dst_container_height_factor', dst_container_height_factor);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_dst_container_top_factor') {
+							sendResponse({status: 'changed_dst_container_top_factor processed'});
+							settings_has_changed = true;
+							console.log('changed_dst_container_top_factor =', variable_value);
+							dst_container_top_factor = variable_value;
+							saveData('dst_container_top_factor', dst_container_top_factor);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_dst_container_left_factor') {
+							sendResponse({status: 'changed_dst_container_left_factor processed'});
+							settings_has_changed = true;
+							console.log('changed_dst_container_left_factor =', variable_value);
+							dst_container_left_factor = variable_value;
+							saveData('dst_container_left_factor', dst_container_left_factor);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_centerize_dst') {
+							sendResponse({status: 'changed_centerize_dst processed'});
+							settings_has_changed = true;
+							console.log('changed_centerize_dst =', variable_value);
+							centerize_dst = variable_value;
+							saveData('centerize_dst', centerize_dst);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_dst_container_color') {
+							sendResponse({status: 'changed_dst_container_color processed'});
+							settings_has_changed = true;
+							console.log('changed_dst_container_color =', variable_value);
+							dst_container_color = variable_value;
+							saveData('dst_container_color', dst_container_color);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_dst_container_opacity') {
+							sendResponse({status: 'changed_dst_container_opacity processed'});
+							settings_has_changed = true;
+							console.log('changed_dst_container_opacity =', variable_value);
+							dst_container_opacity = variable_value;
+							saveData('dst_container_opacity', dst_container_opacity);
+							regenerate_textarea();
+						}
+					}
+				});
 			}
+		}
 
-
-			chrome.runtime.onMessage.addListener(function (response, sendResponse) {
-				console.log('on initializing: response =', response);
-
-				if (response === 'start') {
-					recognizing = true;
-				}
-				if (response === 'stop') {
-					console.log('removing src_textarea_container from html body');
-					if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").parentElement.removeChild(document.querySelector("#src_textarea_container"));
-					console.log('removing dst_textarea_container from html body');
-					if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").parentElement.removeChild(document.querySelector("#dst_textarea_container"));
-					recognizing = false;
-					final_transcript = '';
-					interim_transcript = '';
-					try{
-						if (recognition) recognition.stop()
-					}
-					catch(t){
-						console.log("recognition.stop() failed",t)
-					}
-					return;
-				}
-			});
-		};
 
 
 		// FUNCTIONS
@@ -911,6 +1143,43 @@ function onLoad() {
 		}
 
 
+		function getTimestampedLines(transcript) {
+			// Split the transcript into individual lines
+			const lines = transcript.split('\n');
+			// Regular expression to match lines with timestamps and periods
+			const regex = /(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*\.$/;
+			// Filter lines that match the regular expression
+			const filteredLines = lines.filter(line => regex.test(line));
+			// Return the filtered lines
+			return filteredLines;
+		}
+
+
+		function removeDuplicateTimestamps(transcript) {
+			// Split the transcript into lines
+			const lines = transcript.split('\n');
+			// Create a Set to keep track of unique timestamps
+			const seenTimestamps = new Set();
+			// Array to store the unique lines
+			const uniqueLines = [];
+
+			lines.forEach(line => {
+				// Extract the timestamp part of the line (assumes format is consistent)
+				const timestamp = line.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/);
+				if (timestamp) {
+					const timestampStr = timestamp[0];
+					if (!seenTimestamps.has(timestampStr)) {
+						seenTimestamps.add(timestampStr);
+						uniqueLines.push(line);
+					}
+				}
+			});
+
+			// Join the unique lines back into a single string
+			return uniqueLines.join('\n');
+		}
+
+
 		function removeDuplicateLines(transcript) {
 			const lines = transcript.split('\n'); // Split the input into individual lines
 			const seen = {}; // Object to track unique lines
@@ -987,9 +1256,12 @@ function onLoad() {
 		}
 
 
-		function removeDuplicates(transcript_array) {
-			// Create a Set to store unique entries
-			let unique_transcript_array = new Set();
+		function arrayRemoveDuplicates(transcript_array) {
+			// Create a Set to keep track of unique timestamps
+			const seenTimestamps = new Set();
+
+			// Array to store the unique lines
+			const uniqueLines = [];
 
 			// Iterate through each transcript
 			transcript_array.forEach(transcript => {
@@ -999,13 +1271,19 @@ function onLoad() {
 				// Add each line to the Set (Sets automatically handle duplicates)
 				lines.forEach(line => {
 					if (line !== '') {
-						unique_transcript_array.add(line.trim());
+						//unique_transcript_array.add(line.trim());
+						const timestamp = line.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/);
+						if (timestamp) {
+							const timestampStr = timestamp[0];
+							if (!seenTimestamps.has(timestampStr)) {
+								seenTimestamps.add(timestampStr);
+								uniqueLines.push(line);
+							}
+						}
 					}
 				});
 			});
-
-			// Convert the Set back to an array and return it
-			return Array.from(unique_transcript_array);
+			return uniqueLines;
 		}
 
 
@@ -1055,6 +1333,131 @@ function onLoad() {
 			const modifiedTranscript = transcript.replace(dateRegex, match => convertDate(match));
 
 			return modifiedTranscript;
+		}
+
+
+		const splitText = (text, maxLength) => {
+			const chunks = [];
+			let start = 0;
+
+			while (start < text.length) {
+				let end = start + maxLength;
+				if (end > text.length) end = text.length;
+
+				// Find the last occurrence of ".\n" before the end of the chunk
+				let chunkEnd = text.lastIndexOf('.\n', end);
+				if (chunkEnd === -1 || chunkEnd <= start) {
+					chunkEnd = end;
+				} else {
+					chunkEnd += 2; // Include the ".\n"
+				}
+
+				chunks.push(text.substring(start, chunkEnd));
+				start = chunkEnd;
+			}
+
+			return chunks;
+		};
+
+
+		const translateText = async (text, src, dst, maxLength = 10000) => {
+			var chunks = splitText(text, maxLength);
+			var translatedChunks = [];
+
+			for (var chunk of chunks) {
+				try {
+					var translatedChunk = await gtranslate(chunk, src, dst);
+					// Replace commas with periods in timestamps
+					translatedChunk = translatedChunk.replace(/(\d+),(\d+)/g, '$1.$2');
+					// Remove spaces within timestamps for ISO Date format
+					translatedChunk = translatedChunk.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
+					// Remove spaces within timestamps for Local Date format
+					translatedChunk = translatedChunk.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
+					// Remove any spaces between the date components for ISO Date format
+					translatedChunk = translatedChunk.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
+					// Remove any spaces between the date components for Local Date format
+					translatedChunk = translatedChunk.replace(/(\d{2})-\s?(\d{2})-\s?(\d{4})/g, '$1-$2-$3');
+					// Ensure the timestamp format follows "yyyy-mm-dd hh:mm.ddd" format and remove spaces around the hyphens
+					translatedChunk = translatedChunk.replace(/(\d{4})\s*-\s*(\d{2})\s*-\s*(\d{2})/g, '$1-$2-$3');
+					// Ensure the timestamp format follows "dd-mm-yyyy hh:mm.ddd" format and remove spaces around the hyphens
+					translatedChunk = translatedChunk.replace(/(\d{2})\s*-\s*(\d{2})\s*-\s*(\d{5})/g, '$1-$2-$3');
+					// Remove any spaces around the colons in the time component.
+					translatedChunk = translatedChunk.replace(/(\d{2})\s*:\s*(\d{2})\s*:\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
+					// Replace the time_separator with correct strings "-->" for ISO Date format
+					translatedChunk = translatedChunk.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
+					// Replace the time_separator with correct strings "-->" for Local Date format
+					translatedChunk = translatedChunk.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{2}-\d{2}-\d{5} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
+					// Move every timestamps to a new line for Local Date format
+					translatedChunk = translatedChunk.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+					// Move every timestamps to a new line for ISO Date format
+					translatedChunk = translatedChunk.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+
+					translatedChunk = translatedChunk.replace('.,', '.');
+					translatedChunk = translatedChunk.replace(',.', ',');
+					translatedChunk = translatedChunk.replace('. .', '.');
+
+					// Replace the extra space between the timestamps
+					translatedChunk = translatedChunk.replace(/\.\s+/g, '.');
+					// Replace the period followed by a space (". ") with a period followed by a newline (".\n")
+					translatedChunk = translatedChunk.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : [^\.]*\.) /g, "$1\n");
+					// Remove last blank line
+					translatedChunk = translatedChunk.replace(/\n\s*$/, '');
+					translatedChunk = convertDatesToISOFormat(translatedChunk);
+					translatedChunk = formatTranscript(translatedChunk);
+
+					translatedChunks.push(translatedChunk);
+
+				} catch (error) {
+					console.error('Error translating chunk:', error);
+					translatedChunks.push(''); // Handle error gracefully by pushing an empty string or handle it as needed
+				}
+			}
+			//return translatedChunks.join(' ');
+			return translatedChunks.join('\n');
+		};
+
+
+		function saveTranscriptAsFile(timestamped_final_and_interim_transcript, filename) {
+			console.log('Saving transcript as ' + filename);
+			
+			// Create a Blob with the transcript content
+			const blob = new Blob([timestamped_final_and_interim_transcript], { type: 'text/plain' });
+
+			// Create a URL for the Blob
+			const url = URL.createObjectURL(blob);
+
+			// Create an anchor element
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `${filename}`;
+
+			// Programmatically click the anchor element to trigger download
+			a.click();
+
+			// Cleanup
+			URL.revokeObjectURL(url);
+		}
+
+
+		function saveTemporaryTranscript(timestamped_final_and_interim_transcript) {
+			console.log('Saving temporary transcriptions');
+			
+			// Create a Blob with the transcript content
+			const blob = new Blob([timestamped_final_and_interim_transcript], { type: 'text/plain' });
+
+			// Create a URL for the Blob
+			const url = URL.createObjectURL(blob);
+
+			// Create an anchor element
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = 'tmp_transcript.txt';
+
+			// Programmatically click the anchor element to trigger download
+			a.click();
+
+			// Cleanup
+			URL.revokeObjectURL(url);
 		}
 
 
@@ -1115,8 +1518,8 @@ function onLoad() {
 			video_info = getVideoPlayerInfo();
 			//console.log("video_info = ", video_info);
 			if (video_info) {
-				console.log('Extension is starting');
-				console.log("Video player found!");
+				//console.log('Extension is starting');
+				console.log("video player found");
 				console.log("video_info.id = ", video_info.id);
 				//console.log("Top:", video_info.top);
 				//console.log("Left:", video_info.left);
@@ -1194,14 +1597,7 @@ function onLoad() {
 			}
 
 
-			var icon_text_listening = src.toUpperCase()+':'+dst.toUpperCase();
-
-			chrome.runtime.sendMessage({ cmd: 'icon_text_listening', data: { value: icon_text_listening } });
-
-			//var vContainer = document.querySelector('#' + video_info.id).parentElement;
-			var vContainer = video_info.element.parentElement;
-			//console.log('vContainer =', vContainer);
-
+			
 			var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
 				.width(src_width)
 				.height(src_height)
@@ -1248,11 +1644,6 @@ function onLoad() {
 
 			document.querySelector("#src_textarea").offsetParent.onresize = (function(){
 
-				if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
-					centerize_src = false;
-					saveData('centerize_src', centerize_src);
-				}
-
 				document.querySelector("#src_textarea").style.position='absolute';
 				document.querySelector("#src_textarea").style.width = '100%';
 				document.querySelector("#src_textarea").style.height = '100%';
@@ -1295,16 +1686,43 @@ function onLoad() {
 					//console.log('src_container_height_factor =', src_container_height_factor);
 					saveData('src_container_height_factor', src_container_height_factor);
 				}
-			});
-
-
-			document.querySelector("#src_textarea").offsetParent.ondrag = (function(){
 
 				if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
 					centerize_src = false;
 					saveData('centerize_src', centerize_src);
+					// SENDING MESSAGES TO settings.js
+					chrome.runtime.sendMessage({
+						cmd: 'background_centerize_src',
+						data: {
+							value: centerize_src
+						}, function(response) {
+							console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
+						}
+					});
 				}
 
+				// SENDING MESSAGES TO settings.js
+				chrome.runtime.sendMessage({
+					cmd: 'background_src_container_width_factor',
+					data: {
+						value: src_container_width_factor
+					}, function(response) {
+						console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
+					}
+				});
+				chrome.runtime.sendMessage({
+					cmd: 'background_src_container_height_factor',
+					data: {
+						value: src_container_height_factor
+					}, function(response) {
+						console.log('response.status =', response.status);
+					}
+				});
+
+			});
+
+
+			document.querySelector("#src_textarea").offsetParent.ondrag = (function(){
 				document.querySelector("#dst_textarea").style.position='absolute';
 
 				video_info = getVideoPlayerInfo();
@@ -1337,6 +1755,39 @@ function onLoad() {
 					//console.log('src_container_left_factor =', src_container_left_factor);
 					saveData("src_container_left_factor", src_container_left_factor);
 				}
+
+				if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
+					centerize_src = false;
+					saveData('centerize_src', centerize_src);
+					// SENDING MESSAGES TO settings.js
+					chrome.runtime.sendMessage({
+						cmd: 'background_centerize_src',
+						data: {
+							value: centerize_src
+						}, function(response) {
+							console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
+						}
+					});
+				}
+
+				// SENDING MESSAGES TO settings.js
+				chrome.runtime.sendMessage({
+					cmd: 'background_src_container_top_factor',
+					data: {
+						value: src_container_top_factor
+					}, function(response) {
+						console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
+					}
+				});
+				chrome.runtime.sendMessage({
+					cmd: 'background_src_container_left_factor',
+					data: {
+						value: src_container_left_factor
+					}, function(response) {
+						console.log('response.status =', response.status);
+					}
+				});
+
 			});
 
 
@@ -1386,11 +1837,6 @@ function onLoad() {
 
 			document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
 
-				if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
-					centerize_dst = false;
-					saveData('centerize_dst', centerize_dst);
-				}
-
 				document.querySelector("#dst_textarea").style.position='absolute';
 				document.querySelector("#dst_textarea").style.width = '100%';
 				document.querySelector("#dst_textarea").style.height = '100%';
@@ -1433,18 +1879,46 @@ function onLoad() {
 					//console.log('dst_container_height_factor =', dst_container_height_factor);
 					saveData('dst_container_height_factor', dst_container_height_factor);
 				}
-			});
-
-
-			document.querySelector("#dst_textarea").offsetParent.ondrag = (function(){
 
 				if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
 					centerize_dst = false;
 					saveData('centerize_dst', centerize_dst);
+					// SENDING MESSAGES TO settings.js
+					chrome.runtime.sendMessage({
+						cmd: 'background_centerize_dst',
+						data: {
+							value: centerize_dst
+						}, function(response) {
+							console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
+						}
+					});
 				}
 
+				// SENDING MESSAGES TO settings.js
+				chrome.runtime.sendMessage({
+					cmd: 'background_dst_container_width_factor',
+					data: {
+						value: dst_container_width_factor
+					}, function(response) {
+						console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
+					}
+				});
+				chrome.runtime.sendMessage({
+					cmd: 'background_dst_container_height_factor',
+					data: {
+						value: dst_container_height_factor
+					}, function(response) {
+						console.log('response.status =', response.status);
+					}
+				});
+
+			});
+
+
+			document.querySelector("#dst_textarea").offsetParent.ondrag = (function(){
 				document.querySelector("#dst_textarea").style.position='absolute';
 
+				video_info = getVideoPlayerInfo();
 				if (video_info) {
 					dst_container_top_factor = (getRect(document.querySelector("#dst_textarea_container")).top - video_info.top)/video_info.height;
 					//if (dst_container_top_factor < 0) {
@@ -1474,6 +1948,39 @@ function onLoad() {
 					//console.log('dst_container_left_factor =', dst_container_left_factor);
 					saveData("dst_container_left_factor", dst_container_left_factor);
 				}
+
+				if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+					centerize_dst = false;
+					saveData('centerize_dst', centerize_dst);
+					// SENDING MESSAGES TO settings.js
+					chrome.runtime.sendMessage({
+						cmd: 'background_centerize_dst',
+						data: {
+							value: centerize_dst
+						}, function(response) {
+							console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
+						}
+					});
+				}
+
+				// SENDING MESSAGES TO settings.js
+				chrome.runtime.sendMessage({
+					cmd: 'background_dst_container_top_factor',
+					data: {
+						value: dst_container_top_factor
+					}, function(response) {
+						console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
+					}
+				});
+				chrome.runtime.sendMessage({
+					cmd: 'background_dst_container_left_factor',
+					data: {
+						value: dst_container_left_factor
+					}, function(response) {
+						console.log('response.status =', response.status);
+					}
+				});
+
 			});
 		}
 
@@ -1901,22 +2408,22 @@ function onLoad() {
 			clearTimeout(debounceTimeout);
 			debounceTimeout = setTimeout(() => {
 				// Retrieve current settings
-				chrome.storage.sync.get(['settings'], (result) => {
+				chrome.storage.local.get(['settings'], (result) => {
 					let settings = result.settings || {};
 					settings[key] = data;
-					chrome.storage.sync.set({ 'settings': settings }, () => {
+					chrome.storage.local.set({ 'settings': settings }, () => {
 						console.log(key + ' data saved within settings.');
 						setTimeout(() => {
 							verifyData(key, data, 'settings');
-						}, 100);
+						}, 200);
 					});
 				});
-			}, 1000);
+			}, 100);
 		}
 
 
 		function verifyData(key, data, parentKey = null) {
-			chrome.storage.sync.get([parentKey || key], (result) => {
+			chrome.storage.local.get([parentKey || key], (result) => {
 				if (parentKey) {
 					console.log(result[parentKey][key] === data ? 'Data verified.' : 'Data verification failed.');
 				} else {
@@ -1926,7 +2433,23 @@ function onLoad() {
 		}
 
 
-		function saveChangedSettings() {
+		function saveChangedSetting(key, value, callback) {
+			let setting = {};
+			setting[key] = value;
+			chrome.storage.local.set(setting, function() {
+				if (chrome.runtime.lastError) {
+					console.error("Error setting data for key", key, ":", chrome.runtime.lastError);
+				} else {
+					console.log(`save ${key} = `, value);
+				}
+				if (callback) {
+					callback();
+				}
+			});
+		}
+
+
+		function saveAllChangedSettings() {
 			const settings = {
 				'src_selected_font': src_selected_font,
 				'src_font_size': src_font_size,
@@ -1944,17 +2467,23 @@ function onLoad() {
 				'dst_container_left_factor': dst_container_left_factor,
 				'centerize_dst': centerize_dst,
 			}
-			chrome.storage.sync.set(settings, function() {
-				if (chrome.runtime.lastError) {
-					console.error("Error setting data: ", chrome.runtime.lastError);
+
+			const keys = Object.keys(settings);
+			let index = 0;
+
+			function saveNext() {
+				if (index < keys.length) {
+					const key = keys[index];
+					const value = settings[key];
+					saveChangedSetting(key, value, function() {
+						index++;
+						setTimeout(saveNext, 100); // Adjust the delay as necessary
+					});
 				} else {
-					// Log saved values for debugging
-					for (const [key, value] of Object.entries(settings)) {
-						console.log(`save ${key} = `, value);
-					}
-					console.log("Data saved successfully.");
+					console.log("All data saved successfully.");
 				}
-			});
+			}
+			saveNext();
 		}
 
 
@@ -2032,3 +2561,449 @@ function onLoad() {
 	});
 
 }
+
+
+chrome.action.onClicked.addListener((tab) => {
+/*
+	chrome.scripting.insertCSS({
+		target: {tabId:tab.id},
+		files: ['js/jquery-ui.css']
+	});
+
+	chrome.scripting.executeScript({
+		target: {tabId:tab.id},
+		files: ['js/jquery.min.js']
+	});
+
+	chrome.scripting.executeScript({
+		target: {tabId:tab.id},
+		files: ['js/jquery-ui.min.js']
+	});
+
+	chrome.scripting.executeScript({
+		target: {tabId:tab.id},
+		files: ['js/moment.min.js']
+	});
+
+	chrome.scripting.executeScript({
+		target: {tabId: tab.id},
+		func: onLoad
+	});
+*/
+
+	recognizing = !recognizing; //CLICKING ON EXTENSION ICON WILL TOGGLE RECOGNIZING STATUS
+
+	if (recognizing) {
+
+		console.log('Start button clicked to start: recognizing =', recognizing);
+		chrome.storage.local.set({'recognizing' : recognizing}, (() => {}));
+
+		chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+			chrome.tabs.sendMessage(tabs[0].id, 'start', function(response) {
+				console.log('response =', response);
+			});
+		});
+
+
+		// LISTENING MESSAGE FROM ONSTART
+		var icon_text_listening = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			sendResponse({status: 'icon_text_listening processed'});
+			if (request.cmd === 'icon_text_listening') {
+				icon_text_listening = request.data.value;
+				chrome.action.setIcon({path: 'mic-listening.png'});
+				chrome.action.setBadgeText({text: icon_text_listening});
+				return true;
+			}
+		});
+
+		// LISTENING MESSAGE FROM ONERROR
+		var icon_text_no_mic = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			sendResponse({status: 'icon_text_no_mic processed'});
+			if (request.cmd === 'icon_text_no_mic') {
+				icon_text_no_mic = request.data.value;
+				chrome.action.setIcon({path: 'mic-slashed.png'});
+				return true;
+			}
+		});
+		var icon_text_blocked = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			sendResponse({status: 'icon_text_blocked processed'});
+			if (request.cmd === 'icon_text_blocked') {
+				icon_text_blocked = request.data.value;
+				chrome.action.setIcon({path: 'mic-slashed.png'});
+				return true;
+			}
+		});
+		var icon_text_denied = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			sendResponse({status: 'icon_text_denied processed'});
+			if (request.cmd === 'icon_text_denied') {
+				icon_text_denied = request.data.value;
+				chrome.action.setIcon({path: 'mic-slashed.png'});
+				return true;
+			}
+		});
+
+
+
+		// LISTENING MESSAGES FROM settings.js
+		var changed_src_dialect = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_src_dialect') {
+				sendResponse({status: 'changed_src_dialect processed'});
+				changed_src_dialect = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_src_dialect', variable_value: changed_src_dialect});
+				});
+				//return true;
+			}
+		});
+
+		var changed_dst_dialect = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			sendResponse({status: 'changed_dst_dialect processed'});
+			if (request.cmd === 'changed_dst_dialect') {
+				changed_dst_dialect = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_dst_dialect', variable_value: changed_dst_dialect});
+				});
+				//return true;
+			}
+		});
+
+		var changed_show_src = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_show_src') {
+				sendResponse({status: 'changed_show_src processed'});
+				changed_show_src = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_show_src', variable_value: changed_show_src});
+				});
+				//return true;
+			}
+		});
+
+		var changed_show_dst = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_show_dst') {
+				sendResponse({status: 'changed_show_dst processed'});
+				changed_show_dst = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_show_dst', variable_value: changed_show_dst});
+				});
+				//return true;
+			}
+		});
+
+		var changed_show_timestamp_src = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_show_timestamp_src') {
+				sendResponse({status: 'changed_show_timestamp_src processed'});
+				changed_show_timestamp_src = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_show_timestamp_src', variable_value: changed_show_timestamp_src});
+				});
+				//return true;
+			}
+		});
+
+		var changed_show_timestamp_dst = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_show_timestamp_dst') {
+				sendResponse({status: 'changed_show_timestamp_dst processed'});
+				changed_show_timestamp_dst = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_show_timestamp_dst', variable_value: changed_show_timestamp_dst});
+				});
+				//return true;
+			}
+		});
+
+		var changed_pause_threshold = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_pause_threshold') {
+				sendResponse({status: 'changed_pause_threshold processed'});
+				changed_pause_threshold = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_pause_threshold', variable_value: changed_pause_threshold});
+				});
+				//return true;
+			}
+		});
+
+		var changed_src_selected_font = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_src_selected_font') {
+				sendResponse({status: 'changed_src_selected_font processed'});
+				changed_src_selected_font = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_src_selected_font', variable_value: changed_src_selected_font});
+				});
+				//return true;
+			}
+		});
+
+		var changed_src_font_size = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_src_font_size') {
+				sendResponse({status: 'changed_src_font_size processed'});
+				changed_src_font_size = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_src_font_size', variable_value: changed_src_font_size});
+				});
+				//return true;
+			}
+		});
+
+		var changed_src_font_color = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_src_font_color') {
+				sendResponse({status: 'changed_src_font_color processed'});
+				changed_src_font_color = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_src_font_color', variable_value: changed_src_font_color});
+				});
+				//return true;
+			}
+		});
+
+		var changed_src_container_width_factor = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_src_container_width_factor') {
+				sendResponse({status: 'changed_src_container_width_factor processed'});
+				changed_src_container_width_factor = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_src_container_width_factor', variable_value: changed_src_container_width_factor});
+				});
+				//return true;
+			}
+		});
+
+		var changed_src_container_height_factor = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_src_container_height_factor') {
+				sendResponse({status: 'changed_src_container_height_factor processed'});
+				changed_src_container_height_factor = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_src_container_height_factor', variable_value: changed_src_container_height_factor});
+				});
+				//return true;
+			}
+		});
+
+		var changed_src_container_top_factor = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_src_container_top_factor') {
+				sendResponse({status: 'changed_src_container_top_factor processed'});
+				changed_src_container_top_factor = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_src_container_top_factor', variable_value: changed_src_container_top_factor});
+				});
+				//return true;
+			}
+		});
+
+		var changed_src_container_left_factor = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_src_container_left_factor') {
+				sendResponse({status: 'changed_src_container_left_factor processed'});
+				changed_src_container_left_factor = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_src_container_left_factor', variable_value: changed_src_container_left_factor});
+				});
+				//return true;
+			}
+		});
+
+		var changed_centerize_src = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_centerize_src') {
+				sendResponse({status: 'changed_centerize_src processed'});
+				changed_centerize_src = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_centerize_src', variable_value: changed_centerize_src});
+				});
+				//return true;
+			}
+		});
+
+		var changed_src_container_color = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_src_container_color') {
+				sendResponse({status: 'changed_src_container_color processed'});
+				changed_src_container_color = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_src_container_color', variable_value: changed_src_container_color});
+				});
+				//return true;
+			}
+		});
+
+		var changed_src_container_opacity = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_src_container_opacity') {
+				sendResponse({status: 'changed_src_container_opacity processed'});
+				changed_src_container_opacity = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_src_container_opacity', variable_value: changed_src_container_opacity});
+				});
+				//return true;
+			}
+		});
+
+		var changed_dst_selected_font = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_dst_selected_font') {
+				sendResponse({status: 'changed_dst_selected_font processed'});
+				changed_dst_selected_font = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_dst_selected_font', variable_value: changed_dst_selected_font});
+				});
+				//return true;
+			}
+		});
+
+		var changed_dst_font_size = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_dst_font_size') {
+				sendResponse({status: 'changed_dst_font_size processed'});
+				changed_dst_font_size = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_dst_font_size', variable_value: changed_dst_font_size});
+				});
+				//return true;
+			}
+		});
+
+		var changed_dst_font_color = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_dst_font_color') {
+				sendResponse({status: 'changed_dst_font_color processed'});
+				changed_dst_font_color = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_dst_font_color', variable_value: changed_dst_font_color});
+				});
+				//return true;
+			}
+		});
+
+		var changed_dst_container_width_factor = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_dst_container_width_factor') {
+				sendResponse({status: 'changed_dst_container_width_factor processed'});
+				changed_dst_container_width_factor = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_dst_container_width_factor', variable_value: changed_dst_container_width_factor});
+				});
+				//return true;
+			}
+		});
+
+		var changed_dst_container_height_factor = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_dst_container_height_factor') {
+				sendResponse({status: 'changed_dst_container_height_factor processed'});
+				changed_dst_container_height_factor = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_dst_container_height_factor', variable_value: changed_dst_container_height_factor});
+				});
+				//return true;
+			}
+		});
+
+		var changed_dst_container_top_factor = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_dst_container_top_factor') {
+				sendResponse({status: 'changed_dst_container_top_factor processed'});
+				changed_dst_container_top_factor = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_dst_container_top_factor', variable_value: changed_dst_container_top_factor});
+				});
+				//return true;
+			}
+		});
+
+		var changed_dst_container_left_factor = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_dst_container_left_factor') {
+				sendResponse({status: 'changed_dst_container_left_factor processed'});
+				changed_dst_container_left_factor = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_dst_container_left_factor', variable_value: changed_dst_container_left_factor});
+				});
+				//return true;
+			}
+		});
+
+		var changed_centerize_dst = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_centerize_dst') {
+				sendResponse({status: 'changed_centerize_dst processed'});
+				changed_centerize_dst = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_centerize_dst', variable_value: changed_centerize_dst});
+				});
+				//return true;
+			}
+		});
+
+		var changed_dst_container_color = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_dst_container_color') {
+				sendResponse({status: 'changed_dst_container_color processed'});
+				changed_dst_container_color = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_dst_container_color', variable_value: changed_dst_container_color});
+				});
+				//return true;
+			}
+		});
+
+		var changed_dst_container_opacity = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_dst_container_opacity') {
+				sendResponse({status: 'changed_dst_container_opacity processed'});
+				changed_dst_container_opacity = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_dst_container_opacity', variable_value: changed_dst_container_opacity});
+				});
+				//return true;
+			}
+		});
+
+
+		chrome.scripting.insertCSS({
+			target: {tabId:tab.id},
+			files: ['js/jquery-ui.css']}),
+		chrome.scripting.executeScript({
+			target: {tabId:tab.id},
+			files: ['js/jquery.min.js']}),
+		chrome.scripting.executeScript({
+			target: {tabId:tab.id},
+			files: ['js/jquery-ui.min.js']}),
+		chrome.scripting.executeScript({
+			target: {tabId:tab.id},
+			files: ['js/moment.min.js']}),
+		chrome.scripting.executeScript({
+			target: {tabId: tab.id},
+			func: onLoad
+		});
+
+
+	} else {
+		chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+			chrome.tabs.sendMessage(tabs[0].id, 'stop', function(response) {
+				console.log('response =', response);
+			});
+		});
+		chrome.storage.local.set({'recognizing' : recognizing},(()=>{}));
+		chrome.action.setBadgeText({text: ''});
+		chrome.action.setIcon({path: 'mic.png'});
+		console.log('Start button clicked to end: recognizing =', recognizing);
+		//chrome.runtime.sendMessage({ cmd: 'recognizing', data: { value: recognizing } });
+		return;
+	}
+});
+

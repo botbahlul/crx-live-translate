@@ -1,30 +1,31 @@
 console.log('INITIALIZING VARIABLES');
-var select_src_language, select_src_dialect;
-var src, src_language_index, src_dialect, src_dialect_index, show_src, checkbox_show_src, show_timestamp_src, checkbox_show_timestamp_src;
-var select_dst_language, select_dst_dialect;
-var dst, dst_language_index, dst_dialect, dst_dialect_index, show_dst, checkbox_show_dst, show_timestamp_dst, checkbox_show_timestamp_dst;
-var src_fonts, dst_fonts;
+var src, src_language_index, src_dialect, src_dialect_index, show_src, show_timestamp_src;
+var dst, dst_language_index, dst_dialect, dst_dialect_index, show_dst, show_timestamp_dst;
+var changed_src, changed_src_dialect;
+var changed_dst, changed_dst_dialect;
 
-var select_src_font, input_src_font_size, input_src_font_color;
+var src_fonts;
 var src_selected_font_index, src_selected_font, src_font_size, src_font_color;
-var input_src_container_width_factor, input_src_container_height_factor;
 var src_container_width_factor, src_container_height_factor;
-var input_src_container_top_factor, input_src_container_left_factor, checkbox_centerize_src;
 var src_container_top_factor, src_container_left_factor, centerize_src;
 var src_container_color, src_container_opacity;
 
-var select_dst_font, input_dst_font_size, input_dst_font_color;
+var dst_fonts;
 var dst_selected_font_index, dst_selected_font, dst_font_size, dst_font_color;
-var input_dst_container_width_factor, input_dst_container_height_factor;
 var dst_container_width_factor, dst_container_height_factor;
-var input_dst_container_top_factor, input_dst_container_left_factor, checkbox_centerize_dst;
 var dst_container_top_factor, dst_container_left_factor, centerize_dst;
 var dst_container_color, dst_container_opacity;
 
-var src_textarea_container, src_textarea;
-var dst_textarea_container, dst_textarea;
+var changed_src_selected_font, changed_src_font_size, changed_src_font_color;
+var changed_src_container_width_factor, changed_src_container_height_factor;
+var changed_src_container_top_factor, changed_src_container_left_factor, changed_centerize_src;
+var changed_src_container_color, changed_src_container_opacity;
 
-var input_pause_threshold;
+var changed_dst_selected_font, changed_dst_font_size, changed_dst_font_color;
+var changed_dst_container_width_factor, changed_dst_container_height_factor;
+var changed_dst_container_top_factor, changed_dst_container_left_factor, changed_centerize_dst;
+var changed_dst_container_color, changed_dst_container_opacity;
+
 var pause_threshold;
 
 var sample_text_1 = "This is the text sample of how the subtitles will be shown.";
@@ -34,6 +35,27 @@ var start_time_2, end_time_2, startTimestamp2, endTimestamp2, timestamped_sample
 var timestamped_sample_text, sample_text;
 var timestamp_separator = "-->";
 var src_timestamped_sample_text, dst_timestamped_sample_text;
+
+var recognizing = false;
+
+start_time_1 = new Date();
+
+timestamped_sample_text = createTimeStampedSampleText();
+
+src_fonts = getAvailableFonts();
+src_fonts.forEach(function(font) {
+	var option = document.createElement("option");
+    option.textContent = font;
+    document.querySelector("#select_src_font").appendChild(option);
+});
+
+dst_fonts = getAvailableFonts();
+dst_fonts.forEach(function(font) {
+	var option = document.createElement("option");
+    option.textContent = font;
+    document.querySelector("#select_dst_font").appendChild(option);
+});
+
 
 var src_language =
 	[['Afrikaans',       ['af-ZA']],
@@ -286,74 +308,101 @@ for (var j = 0; j < dst_language.length; j++) {
     document.querySelector("#select_dst_language").options[j] = new Option(dst_language[j][0], j);
 }
 
-start_time_1 = new Date();
-
-timestamped_sample_text = createTimeStampedSampleText();
-
-select_src_language = document.querySelector("#select_src_language");
-select_src_dialect = document.querySelector("#select_src_dialect");
-
-checkbox_show_src = document.querySelector("#checkbox_show_src");
-checkbox_show_dst = document.querySelector("#checkbox_show_dst");
-
-checkbox_show_timestamp_src = document.querySelector("#checkbox_show_timestamp_src");
-checkbox_show_timestamp_dst = document.querySelector("#checkbox_show_timestamp_dst");
-
-select_src_font = document.querySelector("#select_src_font");
-input_src_font_size = document.querySelector("#input_src_font_size");
-input_src_font_color = document.querySelector("#input_src_font_color");
-
-src_fonts = getAvailableFonts();
-src_fonts.forEach(function(font) {
-	var option = document.createElement("option");
-    option.textContent = font;
-    select_src_font.appendChild(option);
-});
-
-input_src_container_width_factor = document.querySelector("#input_src_container_width_factor");
-input_src_container_height_factor = document.querySelector("#input_src_container_height_factor");
-
-input_src_container_top_factor = document.querySelector("#input_src_container_top_factor");
-input_src_container_left_factor = document.querySelector("#input_src_container_left_factor");
-checkbox_centerize_src = document.querySelector("#checkbox_centerize_src");
-
-input_src_container_color = document.querySelector("#input_src_container_color");
-input_src_container_opacity = document.querySelector("#input_src_container_opacity");
-
-select_dst_language = document.querySelector("#select_dst_language");
-select_dst_dialect = document.querySelector("#select_dst_dialect");
-
-select_dst_font = document.querySelector("#select_dst_font");
-input_dst_font_size = document.querySelector("#input_dst_font_size");
-input_dst_font_color = document.querySelector("#input_dst_font_color");
-
-dst_fonts = getAvailableFonts();
-dst_fonts.forEach(function(font) {
-	var option = document.createElement("option");
-    option.textContent = font;
-    select_dst_font.appendChild(option);
-});
-
-input_dst_container_width_factor = document.querySelector("#input_dst_container_width_factor");
-input_dst_container_height_factor = document.querySelector("#input_dst_container_height_factor");
-
-input_dst_container_top_factor = document.querySelector("#input_dst_container_top_factor");
-input_dst_container_left_factor = document.querySelector("#input_dst_container_left_factor");
-checkbox_centerize_dst = document.querySelector("#checkbox_centerize_dst");
-
-input_dst_container_color = document.querySelector("#input_dst_container_color");
-input_dst_container_opacity = document.querySelector("#input_dst_container_opacity");
-
-input_pause_threshold = document.querySelector("#input_pause_threshold");
-
-src_textarea_container = document.querySelector("#src_textarea_container");
-src_textarea = document.querySelector("#src_textarea");
-dst_textarea_container = document.querySelector("#dst_textarea_container");
-dst_textarea = document.querySelector("#dst_textarea");
-
-
 window.addEventListener('beforeunload', () => {
-  saveAll();
+  saveAllSettings();
+});
+
+var first_check = true;
+
+
+// LISTENING MESSAGES FROM background.js (recognition.onresult)
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+	console.log('sender =', sender);
+	console.log('message =', message);
+	
+	sendResponse({status: 'OK'});
+
+	if (typeof message === 'object' && message !== null && message.hasOwnProperty('cmd') && message.hasOwnProperty('data')) {
+
+		const {cmd, data} = message;
+		if (cmd === 'recognizing') {
+			console.log('recognizing =', data.value);
+			recognizing = data.value;
+			//return true;
+		}
+
+		if (cmd === 'background_src_container_width_factor') {
+			console.log('background_src_container_width_factor =', data.value);
+			src_container_width_factor = data.value;
+			document.querySelector("#input_src_container_width_factor").value = src_container_width_factor;
+			//return true;
+		}
+
+		if (cmd === 'background_src_container_height_factor') {
+			console.log('background_src_container_height_factor =', data.value);
+			src_container_height_factor = data.value;
+			document.querySelector("#input_src_container_height_factor").value = src_container_height_factor;
+			//return true;
+		}
+
+		if (cmd === 'background_src_container_top_factor') {
+			console.log('background_src_container_top_factor =', data.value);
+			src_container_top_factor = data.value;
+			document.querySelector("#input_src_container_top_factor").value = src_container_top_factor;
+			//return true;
+		}
+
+		if (cmd === 'background_src_container_left_factor') {
+			console.log('background_src_container_left_factor =', data.value);
+			src_container_left_factor = data.value;
+			document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
+			//return true;
+		}
+
+		if (cmd === 'background_centerize_src') {
+			console.log('background_centerize_src =', data.value);
+			centerize_src = data.value;
+			document.querySelector("#checkbox_centerize_src").checked = centerize_src;
+			//return true;
+		}
+
+		if (cmd === 'background_dst_container_width_factor') {
+			console.log('background_dst_container_width_factor =', data.value);
+			dst_container_width_factor = data.value;
+			document.querySelector("#input_dst_container_width_factor").value = dst_container_width_factor;
+			//return true;
+		}
+
+		if (cmd === 'background_dst_container_height_factor') {
+			console.log('background_dst_container_height_factor =', data.value);
+			dst_container_height_factor = data.value;
+			document.querySelector("#input_dst_container_height_factor").value = dst_container_height_factor;
+			//return true;
+		}
+
+		if (cmd === 'background_dst_container_top_factor') {
+			console.log('background_dst_container_top_factor =', data.value);
+			dst_container_top_factor = data.value;
+			document.querySelector("#input_dst_container_top_factor").value = dst_container_top_factor;
+			//return true;
+		}
+
+		if (cmd === 'background_dst_container_left_factor') {
+			console.log('background_dst_container_left_factor =', data.value);
+			dst_container_left_factor = data.value;
+			document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
+			//return true;
+		}
+
+		if (cmd === 'background_centerize_dst') {
+			console.log('background_centerize_dst =', data.value);
+			centerize_dst = data.value;
+			document.querySelector("#checkbox_centerize_dst").checked = centerize_dst;
+			//return true;
+		}
+
+		update_sample_text();
+	}
 });
 
 
@@ -361,612 +410,2154 @@ CheckStoredValues();
 document.addEventListener('DOMContentLoaded', (event) => {
 	console.log('DOMContentLoaded');
 	update_sample_text();
+	saveAllSettings();
 });
 
 
 function CheckStoredValues() {
 	console.log('CheckStoredValues');
 
-	chrome.storage.sync.get(['src_language_index'], function(result) {
+    chrome.storage.local.get(['recognizing'], (result) => {
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+    });
+
+	chrome.storage.local.get(['src_language_index'], function(result) {
 		src_language_index = result.src_language_index;
-		console.log('CheckStoredValues before if: src_language_index = ', src_language_index);
+		console.log('CheckStoredValues before if: src_language_index =', src_language_index);
 		if (result.src_language_index) {
 			src_language_index = result.src_language_index;
 		} else {
 			src_language_index = 26;			
 		}
-		console.log('CheckStoredValues after if: src_language_index = ', src_language_index);
-		select_src_language.selectedIndex = src_language_index;
+		console.log('CheckStoredValues after if: src_language_index =', src_language_index);
+		document.querySelector("#select_src_language").selectedIndex = src_language_index;
 		saveData('src_language_index', src_language_index);
-		update_src_country();
+		[src, src_language_index, src_dialect, src_dialect_index] = update_src_country();
 	});
 
-	chrome.storage.sync.get(['src_dialect'], function(result) {
+	chrome.storage.local.get(['src_dialect'], function(result) {
 		src_dialect = result.src_dialect;
-		console.log('CheckStoredValues before if: src_dialect = ', src_dialect);
+		console.log('CheckStoredValues before if: src_dialect =', src_dialect);
 		if (result.src_dialect) {
 			src_dialect = result.src_dialect;
-			console.log('CheckStoredValues: result.src_dialect = ', result.src_dialect);
+			console.log('CheckStoredValues: result.src_dialect =', result.src_dialect);
 		} else {
 			if (src_language[src_language_index].length > 2) {
 				if (src === 'en') {
 					src_dialect = 'en-US';
-					console.log('CheckStoredValues: src_dialect = ', src_dialect);
+					console.log('CheckStoredValues: src_dialect =', src_dialect);
 				} else {
-					src_dialect = select_src_dialect.value;
-					console.log('CheckStoredValues: src_dialect = ', src_dialect);
+					src_dialect = document.querySelector("#select_src_dialect").value;
+					console.log('CheckStoredValues: src_dialect =', src_dialect);
 				}
 			} else {
-				src_dialect = src_language[select_src_language.selectedIndex][1][0];
-				console.log('CheckStoredValues: src_dialect = ', src_dialect);
+				src_dialect = src_language[document.querySelector("#select_src_language").selectedIndex][1][0];
+				console.log('CheckStoredValues: src_dialect =', src_dialect);
 			}
 		}
-		for (let i = 0; i < select_src_dialect.length; i++) {
+		for (let i = 0; i < document.querySelector("#select_src_dialect").length; i++) {
 			if (select_src_dialect[i].value === src_dialect) {
 				src_dialect_index = i;
-				select_src_dialect.selectedIndex = src_dialect_index;
+				document.querySelector("#select_src_dialect").selectedIndex = src_dialect_index;
 				saveData('src_dialect_index', src_dialect_index);
 				break;
 			}
 		}
-		console.log('CheckStoredValues after if: src_dialect = ', src_dialect);
-		src = select_src_dialect.value.split('-')[0];
-		console.log('CheckStoredValues after if: src = ', src);
+		console.log('CheckStoredValues after if: src_dialect =', src_dialect);
+		src = document.querySelector("#select_src_dialect").value.split('-')[0];
+		console.log('CheckStoredValues after if: src =', src);
 		saveData('src', src);
 		saveData('src_dialect', src_dialect);
-		console.log('CheckStoredValues after if: src_dialect_index = ', src_dialect_index);
+		console.log('CheckStoredValues after if: src_dialect_index =', src_dialect_index);
 	});
 
-	chrome.storage.sync.get(['dst_language_index'], function(result) {
+	chrome.storage.local.get(['dst_language_index'], function(result) {
 		dst_language_index = result.dst_language_index;
-		console.log('CheckStoredValues before if: dst_language_index = ', dst_language_index);
+		console.log('CheckStoredValues before if: dst_language_index =', dst_language_index);
 		if (typeof dst_language_index === 'undefined') {
 			dst_language_index = 15;
 		} else {
 			dst_language_index = result.dst_language_index;
 		}
-		console.log('CheckStoredValues after if: dst_language_index = ', dst_language_index);
-		select_dst_language.selectedIndex = dst_language_index;
+		console.log('CheckStoredValues after if: dst_language_index =', dst_language_index);
+		document.querySelector("#select_dst_language").selectedIndex = dst_language_index;
 		saveData('dst_language_index', dst_language_index);
-		update_dst_country();
+		[dst, dst_language_index, dst_dialect, dst_dialect_index] = update_dst_country();
 	});
 
-	chrome.storage.sync.get(['dst_dialect'], function(result) {
+	chrome.storage.local.get(['dst_dialect'], function(result) {
 		dst_dialect = result.dst_dialect;
-		console.log('CheckStoredValues before if: dst_dialect = ', dst_dialect);
+		console.log('CheckStoredValues before if: dst_dialect =', dst_dialect);
 		if (result.dst_dialect) {
 			dst_dialect = result.dst_dialect;
-			console.log('CheckStoredValues: result.dst_dialect = ', result.dst_dialect);
+			console.log('CheckStoredValues: result.dst_dialect =', result.dst_dialect);
 		} else {
 			if (dst_language[dst_language_index].length > 2) {
 				if (dst === 'en') {
 					dst_dialect = 'en-US';
-					console.log('CheckStoredValues: dst_dialect = ', dst_dialect);
+					console.log('CheckStoredValues: dst_dialect =', dst_dialect);
 				} else {
-					dst_dialect = select_dst_dialect.value;
-					console.log('CheckStoredValues: dst_dialect = ', dst_dialect);
+					dst_dialect = document.querySelector("#select_dst_dialect").value;
+					console.log('CheckStoredValues: dst_dialect =', dst_dialect);
 				}
 			} else {
-				dst_dialect = dst_language[select_dst_language.selectedIndex][1][0];
-				console.log('CheckStoredValues: dst_dialect = ', dst_dialect);
+				dst_dialect = dst_language[document.querySelector("#select_dst_language").selectedIndex][1][0];
+				console.log('CheckStoredValues: dst_dialect =', dst_dialect);
 			}
 		}
-		for (let i = 0; i < select_dst_dialect.length; i++) {
+		for (let i = 0; i < document.querySelector("#select_dst_dialect").length; i++) {
 			if (select_dst_dialect[i].value === dst_dialect) {
 				dst_dialect_index = i;
-				select_dst_dialect.selectedIndex = dst_dialect_index;
+				document.querySelector("#select_dst_dialect").selectedIndex = dst_dialect_index;
 				saveData('dst_dialect_index', dst_dialect_index);
 				break;
 			}
 		}
-		console.log('CheckStoredValues after if: dst_dialect = ', dst_dialect);
-		dst = select_dst_dialect.value.split('-')[0];
-		console.log('CheckStoredValues after if: dst = ', dst);
+		console.log('CheckStoredValues after if: dst_dialect =', dst_dialect);
+		dst = document.querySelector("#select_dst_dialect").value.split('-')[0];
+		console.log('CheckStoredValues after if: dst =', dst);
 		saveData('dst', dst);
 		saveData('dst_dialect', dst_dialect);
-		console.log('CheckStoredValues after if: dst_dialect_index = ', dst_dialect_index);
+		console.log('CheckStoredValues after if: dst_dialect_index =', dst_dialect_index);
 	});
 
-	chrome.storage.sync.get(['show_src'], function(result) {
+	chrome.storage.local.get(['show_src'], function(result) {
 		show_src = result.show_src;
-		console.log('CheckStoredValues before if: show_src = ', show_src);
+		console.log('CheckStoredValues before if: show_src =', show_src);
 		if (typeof show_src === 'undefined') {
-			checkbox_show_src.checked = true;
+			document.querySelector("#checkbox_show_src").checked = true;
 		} else {
 			if (result.show_src === true) {
-				checkbox_show_src.checked = true;
+				document.querySelector("#checkbox_show_src").checked = true;
 			} else {
-				checkbox_show_src.checked = false;
+				document.querySelector("#checkbox_show_src").checked = false;
 			}
 		}
-		show_src = checkbox_show_src.checked;
-		console.log('CheckStoredValues aftere if: show_src = ', show_src);
+		show_src = document.querySelector("#checkbox_show_src").checked;
+		console.log('CheckStoredValues aftere if: show_src =', show_src);
 		saveData('show_src', show_src);
 	});
 
-	chrome.storage.sync.get(['show_dst'], function(result) {
+	chrome.storage.local.get(['show_dst'], function(result) {
 		show_dst = result.show_dst;
-		console.log('CheckStoredValues before if: show_dst = ', show_dst);
+		console.log('CheckStoredValues before if: show_dst =', show_dst);
 		if (typeof show_dst === 'undefined') {
-			checkbox_show_dst.checked = true;
+			document.querySelector("#checkbox_show_dst").checked = true;
 		} else {
 			if (result.show_dst === true) {
-				checkbox_show_dst.checked = true;
+				document.querySelector("#checkbox_show_dst").checked = true;
 			} else {
-				checkbox_show_dst.checked = false;
+				document.querySelector("#checkbox_show_dst").checked = false;
 			}
 		}
-		show_dst = checkbox_show_dst.checked;
-		console.log('CheckStoredValues after if: show_dst = ', show_dst);
+		show_dst = document.querySelector("#checkbox_show_dst").checked;
+		console.log('CheckStoredValues after if: show_dst =', show_dst);
 		saveData('show_dst', show_dst);
 	});
 
-	chrome.storage.sync.get(['show_timestamp_src'], function(result) {
+	chrome.storage.local.get(['show_timestamp_src'], function(result) {
 		show_timestamp_src = result.show_timestamp_src;
-		console.log('CheckStoredValues before if: show_timestamp_src = ', show_timestamp_src);
+		console.log('CheckStoredValues before if: show_timestamp_src =', show_timestamp_src);
 		if (typeof show_timestamp_src === 'undefined') {
-			checkbox_show_timestamp_src.checked = true;
+			document.querySelector("#checkbox_show_timestamp_src").checked = true;
 		} else {
 			if (result.show_timestamp_src === true) {
-				checkbox_show_timestamp_src.checked = true;
+				document.querySelector("#checkbox_show_timestamp_src").checked = true;
 			} else {
-				checkbox_show_timestamp_src.checked = false;
+				document.querySelector("#checkbox_show_timestamp_src").checked = false;
 			}
 		}
-		show_timestamp_src = checkbox_show_timestamp_src.checked;
-		console.log('CheckStoredValues after if: show_timestamp_src = ', show_timestamp_src);
+		show_timestamp_src = document.querySelector("#checkbox_show_timestamp_src").checked;
+		console.log('CheckStoredValues after if: show_timestamp_src =', show_timestamp_src);
 		saveData('show_timestamp_src', show_timestamp_src);
 	});
 
-	chrome.storage.sync.get(['show_timestamp_dst'], function(result) {
+	chrome.storage.local.get(['show_timestamp_dst'], function(result) {
 		show_timestamp_dst = result.show_timestamp_dst;
-		console.log('CheckStoredValues before if: show_timestamp_dst = ', show_timestamp_dst);
+		console.log('CheckStoredValues before if: show_timestamp_dst =', show_timestamp_dst);
 		if (typeof show_timestamp_dst === 'undefined') {
-			checkbox_show_timestamp_dst.checked = true;
+			document.querySelector("#checkbox_show_timestamp_dst").checked = true;
 		} else {
 			if (result.show_timestamp_dst === true) {
-				checkbox_show_timestamp_dst.checked = true;
+				document.querySelector("#checkbox_show_timestamp_dst").checked = true;
 			} else {
-				checkbox_show_timestamp_dst.checked = false;
+				document.querySelector("#checkbox_show_timestamp_dst").checked = false;
 			}
 		}
-		show_timestamp_dst = checkbox_show_timestamp_dst.checked;
-		console.log('CheckStoredValues after if: show_timestamp_dst = ', show_timestamp_dst);
+		show_timestamp_dst = document.querySelector("#checkbox_show_timestamp_dst").checked;
+		console.log('CheckStoredValues after if: show_timestamp_dst =', show_timestamp_dst);
 		saveData('show_timestamp_dst', show_timestamp_dst);
 	});
 
-	chrome.storage.sync.get(['pause_threshold'], function(result) {
+	chrome.storage.local.get(['pause_threshold'], function(result) {
 		pause_threshold = result.pause_threshold;
-		console.log('CheckStoredValues before if: result.pause_threshold = ', result.pause_threshold);
+		console.log('CheckStoredValues before if: result.pause_threshold =', result.pause_threshold);
 		if (typeof pause_threshold === 'undefined') {
-			input_pause_threshold.value = 5000;
+			document.querySelector("#input_pause_threshold").value = 5000;
 		} else {
-			input_pause_threshold.value = result.pause_threshold;
+			document.querySelector("#input_pause_threshold").value = result.pause_threshold;
 		}
-		pause_threshold = input_pause_threshold.value;
-		console.log('CheckStoredValues after if: pause_threshold = ', pause_threshold);
+		pause_threshold = document.querySelector("#input_pause_threshold").value;
+		console.log('CheckStoredValues after if: pause_threshold =', pause_threshold);
 		saveData('pause_threshold', pause_threshold);
 	});
 
-	chrome.storage.sync.get(['src_selected_font_index'], function(result) {
+	chrome.storage.local.get(['src_selected_font_index'], function(result) {
 		src_selected_font_index = result.src_selected_font_index;
-		console.log('CheckStoredValues before if: result.src_selected_font_index = ', result.src_selected_font_index);
+		console.log('CheckStoredValues before if: result.src_selected_font_index =', result.src_selected_font_index);
 		if (!src_selected_font_index) src_selected_font_index = 0;
-		console.log('CheckStoredValues after if: src_selected_font_index = ', src_selected_font_index);
-		select_src_font.selectedIndex = src_selected_font_index;
+		console.log('CheckStoredValues after if: src_selected_font_index =', src_selected_font_index);
+		document.querySelector("#select_src_font").selectedIndex = src_selected_font_index;
 		saveData('src_selected_font_index', src_selected_font_index);
-		//update_sample_text();
 	});
 
-	chrome.storage.sync.get(['src_selected_font'], function(result) {
+	chrome.storage.local.get(['src_selected_font'], function(result) {
 		src_selected_font = result.src_selected_font;
-		console.log('CheckStoredValues before if: result.src_selected_font = ', result.src_selected_font);
+		console.log('CheckStoredValues before if: result.src_selected_font =', result.src_selected_font);
 		if (result.src_selected_font) {
-			select_src_font.value = src_selected_font;
+			document.querySelector("#select_src_font").value = src_selected_font;
+		} else {
+			src_selected_font = "Arial";
+			document.querySelector("#select_src_font").value = src_selected_font;
 		}
-		console.log('CheckStoredValues after if: src_selected_font = ', src_selected_font);
+		console.log('CheckStoredValues after if: src_selected_font =', src_selected_font);
 		saveData('src_selected_font', src_selected_font);
-		//update_sample_text();
 	});
 
-	chrome.storage.sync.get(['src_font_size'], function(result) {
+	chrome.storage.local.get(['src_font_size'], function(result) {
 		src_font_size = result.src_font_size;
-		console.log('CheckStoredValues before if: result.src_font_size = ', result.src_font_size);
+		console.log('CheckStoredValues before if: result.src_font_size =', result.src_font_size);
 		if (result.src_font_size) {
-			input_src_font_size.value = src_font_size;
+			document.querySelector("#input_src_font_size").value = src_font_size;
+		} else {
+			src_font_size = 18;
+			document.querySelector("#input_src_font_size").value = src_font_size;
 		}
-		console.log('CheckStoredValues after if: src_font_size = ', src_font_size);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: src_font_size =', src_font_size);
 	});
 
-	chrome.storage.sync.get(['src_font_color'], function(result) {
+	chrome.storage.local.get(['src_font_color'], function(result) {
 		src_font_color = result.src_font_color;
-		console.log('CheckStoredValues before if: result.src_font_color = ', result.src_font_color);
+		console.log('CheckStoredValues before if: result.src_font_color =', result.src_font_color);
 		if (result.src_font_color) {
-			input_src_font_color.value = src_font_color;
+			document.querySelector("#input_src_font_color").value = src_font_color;
+		} else {
+			src_font_color = '#AAFF00';
+			document.querySelector("#input_src_font_color").value = src_font_color;
 		}
-		console.log('CheckStoredValues after if: src_font_color = ', src_font_color);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: src_font_color =', src_font_color);
 	});
 
-	chrome.storage.sync.get(['src_container_width_factor'], function(result) {
+	chrome.storage.local.get(['src_container_width_factor'], function(result) {
 		src_container_width_factor = result.src_container_width_factor;
-		console.log('CheckStoredValues before if: result.src_container_width_factor = ', result.src_container_width_factor);
+		console.log('CheckStoredValues before if: result.src_container_width_factor =', result.src_container_width_factor);
 		if (result.src_container_width_factor) {
-			input_src_container_width_factor.value = src_container_width_factor;
+			document.querySelector("#input_src_container_width_factor").value = src_container_width_factor;
 		} else {
-			input_src_container_width_factor.value = 0.795;
+			document.querySelector("#input_src_container_width_factor").value = 0.795;
+			src_container_width_factor = 0.795;
 		}
-		console.log('CheckStoredValues after if: src_container_width_factor = ', src_container_width_factor);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: src_container_width_factor =', src_container_width_factor);
 	});
 
-	chrome.storage.sync.get(['src_container_height_factor'], function(result) {
+	chrome.storage.local.get(['src_container_height_factor'], function(result) {
 		src_container_height_factor = result.src_container_height_factor;
-		console.log('CheckStoredValues before if: result.src_container_height_factor = ', result.src_container_height_factor);
+		console.log('CheckStoredValues before if: result.src_container_height_factor =', result.src_container_height_factor);
 		if (result.src_container_height_factor) {
-			input_src_container_height_factor.value = src_container_height_factor;
+			document.querySelector("#input_src_container_height_factor").value = src_container_height_factor;
 		} else {
-			input_src_container_height_factor.value = 0.165;
+			document.querySelector("#input_src_container_height_factor").value = 0.18;
+			src_container_height_factor = 0.18;
 		}
-		console.log('CheckStoredValues after if: src_container_height_factor = ', src_container_height_factor);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: src_container_height_factor =', src_container_height_factor);
 	});
 
-	chrome.storage.sync.get(['src_container_top_factor'], function(result) {
+	chrome.storage.local.get(['src_container_top_factor'], function(result) {
 		src_container_top_factor = result.src_container_top_factor;
-		console.log('CheckStoredValues before if: result.src_container_top_factor = ', result.src_container_top_factor);
+		console.log('CheckStoredValues before if: result.src_container_top_factor =', result.src_container_top_factor);
 		if (result.src_container_top_factor) {
-			input_src_container_top_factor.value = src_container_top_factor;
+			document.querySelector("#input_src_container_top_factor").value = src_container_top_factor;
 		} else {
-			input_src_container_top_factor.value = 0.02;
+			document.querySelector("#input_src_container_top_factor").value = 0.01;
+			src_container_top_factor = 0.01;
 		}
-		console.log('CheckStoredValues after if: src_container_top_factor = ', src_container_top_factor);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: src_container_top_factor =', src_container_top_factor);
 	});
 
-	chrome.storage.sync.get(['centerize_src'], function(result) {
+	chrome.storage.local.get(['centerize_src'], function(result) {
 		centerize_src = result.centerize_src;
-		console.log('CheckStoredValues before if: result.centerize_src = ', result.centerize_src);
+		console.log('CheckStoredValues before if: result.centerize_src =', result.centerize_src);
 		if (centerize_src) {
-			checkbox_centerize_src.checked = centerize_src;
+			document.querySelector("#checkbox_centerize_src").checked = centerize_src;
 		} else {
-			checkbox_centerize_src.checked = true;
+			document.querySelector("#checkbox_centerize_src").checked = true;
 		}
-		console.log('CheckStoredValues after if: centerize_src = ', centerize_src);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: centerize_src =', centerize_src);
 	});
 
-	chrome.storage.sync.get(['src_container_left_factor'], function(result) {
+	chrome.storage.local.get(['src_container_left_factor'], function(result) {
 		src_container_left_factor = result.src_container_left_factor;
-		console.log('CheckStoredValues before if: result.src_container_left_factor = ', result.src_container_left_factor);
+		console.log('CheckStoredValues before if: result.src_container_left_factor =', result.src_container_left_factor);
 		if (result.src_container_left_factor) {
-			input_src_container_left_factor.value = src_container_left_factor;
+			document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
 		} else {
-			input_src_container_left_factor.value = 0.1;
+			document.querySelector("#input_src_container_left_factor").value = 0.1;
 		}
-		console.log('CheckStoredValues after if: src_container_left_factor = ', src_container_left_factor);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: src_container_left_factor =', src_container_left_factor);
 	});
 
-	chrome.storage.sync.get(['src_container_color'], function(result) {
+	chrome.storage.local.get(['src_container_color'], function(result) {
 		src_container_color = result.src_container_color;
-		console.log('CheckStoredValues before if: result.src_container_color = ', result.src_container_color);
+		console.log('CheckStoredValues before if: result.src_container_color =', result.src_container_color);
 		if (result.src_container_color) {
-			input_src_container_color.value = src_container_color;
+			document.querySelector("#input_src_container_color").value = src_container_color;
 		} else {
-			input_src_container_color.value = "#000000";
+			document.querySelector("#input_src_container_color").value = "#000000";
 		}
-		console.log('CheckStoredValues after if: src_container_color = ', src_container_color);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: src_container_color =', src_container_color);
 	});
 
-	chrome.storage.sync.get(['src_container_opacity'], function(result) {
+	chrome.storage.local.get(['src_container_opacity'], function(result) {
 		src_container_opacity = result.src_container_opacity;
-		console.log('CheckStoredValues before if: result.src_container_opacity = ', result.src_container_opacity);
+		console.log('CheckStoredValues before if: result.src_container_opacity =', result.src_container_opacity);
 		if (result.src_container_opacity) {
-			input_src_container_opacity.value = src_container_opacity;
+			document.querySelector("#input_src_container_opacity").value = src_container_opacity;
 		} else {
-			input_src_container_opacity.value = 0.3;
+			document.querySelector("#input_src_container_opacity").value = 0.3;
 		}
-		console.log('CheckStoredValues after if: src_container_opacity = ', src_container_opacity);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: src_container_opacity =', src_container_opacity);
 	});
 
 
 
-	chrome.storage.sync.get(['dst_selected_font_index'], function(result) {
+	chrome.storage.local.get(['dst_selected_font_index'], function(result) {
 		dst_selected_font_index = result.dst_selected_font_index;
-		console.log('CheckStoredValues before if: result.dst_selected_font_index = ', result.dst_selected_font_index);
+		console.log('CheckStoredValues before if: result.dst_selected_font_index =', result.dst_selected_font_index);
 		if (!dst_selected_font_index) dst_selected_font_index = 0;
-		console.log('CheckStoredValues after if: dst_selected_font_index = ', dst_selected_font_index);
-		select_dst_font.selectedIndex = dst_selected_font_index;
-		//update_sample_text();
+		console.log('CheckStoredValues after if: dst_selected_font_index =', dst_selected_font_index);
+		document.querySelector("#select_dst_font").selectedIndex = dst_selected_font_index;
 	});
 
-	chrome.storage.sync.get(['dst_selected_font'], function(result) {
+	chrome.storage.local.get(['dst_selected_font'], function(result) {
 		dst_selected_font = result.dst_selected_font;
-		console.log('CheckStoredValues before if: result.dst_selected_font = ', result.dst_selected_font);
+		console.log('CheckStoredValues before if: result.dst_selected_font =', result.dst_selected_font);
 		if (result.dst_selected_font) {
-			select_dst_font.value = dst_selected_font;
+			document.querySelector("#select_dst_font").value = dst_selected_font;
 		}
-		console.log('CheckStoredValues after if: dst_selected_font = ', dst_selected_font);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: dst_selected_font =', dst_selected_font);
 	});
 
-	chrome.storage.sync.get(['dst_font_size'], function(result) {
+	chrome.storage.local.get(['dst_font_size'], function(result) {
 		dst_font_size = result.dst_font_size;
-		console.log('CheckStoredValues before if: result.dst_font_size = ', result.dst_font_size);
+		console.log('CheckStoredValues before if: result.dst_font_size =', result.dst_font_size);
 		if (result.dst_font_size) {
-			input_dst_font_size.value = dst_font_size;
+			document.querySelector("#input_dst_font_size").value = dst_font_size;
 		}
-		console.log('CheckStoredValues after if: dst_font_size = ', dst_font_size);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: dst_font_size =', dst_font_size);
 	});
 
-	chrome.storage.sync.get(['dst_font_color'], function(result) {
+	chrome.storage.local.get(['dst_font_color'], function(result) {
 		dst_font_color = result.dst_font_color;
-		console.log('CheckStoredValues before if: result.dst_font_color = ', result.dst_font_color);
+		console.log('CheckStoredValues before if: result.dst_font_color =', result.dst_font_color);
 		if (result.dst_font_color) {
-			input_dst_font_color.value = dst_font_color;
+			document.querySelector("#input_dst_font_color").value = dst_font_color;
 		}
-		console.log('CheckStoredValues after if: dst_font_color = ', dst_font_color);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: dst_font_color =', dst_font_color);
 	});
 
-	chrome.storage.sync.get(['dst_container_width_factor'], function(result) {
+	chrome.storage.local.get(['dst_container_width_factor'], function(result) {
 		dst_container_width_factor = result.dst_container_width_factor;
-		console.log('CheckStoredValues before if: result.dst_container_width_factor = ', result.dst_container_width_factor);
+		console.log('CheckStoredValues before if: result.dst_container_width_factor =', result.dst_container_width_factor);
 		if (result.dst_container_width_factor) {
-			input_dst_container_width_factor.value = dst_container_width_factor;
+			document.querySelector("#input_dst_container_width_factor").value = dst_container_width_factor;
 		} else {
-			input_dst_container_width_factor.value = 0.795;
+			document.querySelector("#input_dst_container_width_factor").value = 0.795;
 		}
-		console.log('CheckStoredValues after if: dst_container_width_factor = ', dst_container_width_factor);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: dst_container_width_factor =', dst_container_width_factor);
 	});
 
-	chrome.storage.sync.get(['dst_container_height_factor'], function(result) {
+	chrome.storage.local.get(['dst_container_height_factor'], function(result) {
 		dst_container_height_factor = result.dst_container_height_factor;
-		console.log('CheckStoredValues before if: result.dst_container_height_factor = ', result.dst_container_height_factor);
+		console.log('CheckStoredValues before if: result.dst_container_height_factor =', result.dst_container_height_factor);
 		if (result.dst_container_height_factor) {
-			input_dst_container_height_factor.value = dst_container_height_factor;
+			document.querySelector("#input_dst_container_height_factor").value = dst_container_height_factor;
 		} else {
-			input_dst_container_height_factor.value = 0.225;
+			document.querySelector("#input_dst_container_height_factor").value = 0.225;
 		}
-		console.log('CheckStoredValues after if: dst_container_height_factor = ', dst_container_height_factor);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: dst_container_height_factor =', dst_container_height_factor);
 	});
 
-	chrome.storage.sync.get(['dst_container_top_factor'], function(result) {
+	chrome.storage.local.get(['dst_container_top_factor'], function(result) {
 		dst_container_top_factor = result.dst_container_top_factor;
-		console.log('CheckStoredValues before if: result.dst_container_top_factor = ', result.dst_container_top_factor);
+		console.log('CheckStoredValues before if: result.dst_container_top_factor =', result.dst_container_top_factor);
 		if (result.dst_container_top_factor) {
-			input_dst_container_top_factor.value = dst_container_top_factor;
+			document.querySelector("#input_dst_container_top_factor").value = dst_container_top_factor;
 		} else {
-			input_dst_container_top_factor.value = 0.65;
+			document.querySelector("#input_dst_container_top_factor").value = 0.65;
 		}
-		console.log('CheckStoredValues after if: dst_container_top_factor = ', dst_container_top_factor);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: dst_container_top_factor =', dst_container_top_factor);
 	});
 
-	chrome.storage.sync.get(['centerize_dst'], function(result) {
+	chrome.storage.local.get(['centerize_dst'], function(result) {
 		centerize_dst = result.centerize_dst;
-		console.log('centerize_dst = ', centerize_dst);
+		console.log('centerize_dst =', centerize_dst);
 		if (centerize_dst) {
-			checkbox_centerize_dst.checked = centerize_dst;
+			document.querySelector("#checkbox_centerize_dst").checked = centerize_dst;
 		} else {
-			checkbox_centerize_dst.checked = true;
+			document.querySelector("#checkbox_centerize_dst").checked = true;
 		}
-		console.log('CheckStoredValues after if: centerize_dst = ', centerize_dst);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: centerize_dst =', centerize_dst);
 	});
 
-	chrome.storage.sync.get(['dst_container_left_factor'], function(result) {
+	chrome.storage.local.get(['dst_container_left_factor'], function(result) {
 		dst_container_left_factor = result.dst_container_left_factor;
-		console.log('CheckStoredValues before if: result.dst_container_left_factor = ', result.dst_container_left_factor);
+		console.log('CheckStoredValues before if: result.dst_container_left_factor =', result.dst_container_left_factor);
 		if (result.dst_container_left_factor) {
-			input_dst_container_left_factor.value = dst_container_left_factor;
+			document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
 		} else {
-			input_dst_container_left_factor.value = 0.1;
+			document.querySelector("#input_dst_container_left_factor").value = 0.1;
 		}
-		console.log('CheckStoredValues after if: dst_container_top_factor = ', dst_container_top_factor);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: dst_container_top_factor =', dst_container_top_factor);
 	});
 
-	chrome.storage.sync.get(['dst_container_color'], function(result) {
+	chrome.storage.local.get(['dst_container_color'], function(result) {
 		dst_container_color = result.dst_container_color;
-		console.log('CheckStoredValues before if: result.dst_container_color = ', result.dst_container_color);
+		console.log('CheckStoredValues before if: result.dst_container_color =', result.dst_container_color);
 		if (result.dst_container_color) {
-			input_dst_container_color.value = dst_container_color;
+			document.querySelector("#input_dst_container_color").value = dst_container_color;
 		} else {
-			input_dst_container_color.value = "#000000";
+			document.querySelector("#input_dst_container_color").value = "#000000";
 		}
-		console.log('CheckStoredValues after if: dst_container_color = ', dst_container_color);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: dst_container_color =', dst_container_color);
 	});
 
-	chrome.storage.sync.get(['dst_container_opacity'], function(result) {
+	chrome.storage.local.get(['dst_container_opacity'], function(result) {
 		dst_container_opacity = result.dst_container_opacity;
-		console.log('CheckStoredValues before if: result.dst_container_opacity = ', result.dst_container_opacity);
+		console.log('CheckStoredValues before if: result.dst_container_opacity =', result.dst_container_opacity);
 		if (result.dst_container_opacity) {
-			input_dst_container_opacity.value = dst_container_opacity;
+			document.querySelector("#input_dst_container_opacity").value = dst_container_opacity;
 		} else {
-			input_dst_container_opacity.value = 0.3;
+			document.querySelector("#input_dst_container_opacity").value = 0.3;
 		}
-		console.log('CheckStoredValues after if: dst_container_opacity = ', dst_container_opacity);
-		//update_sample_text();
+		console.log('CheckStoredValues after if: dst_container_opacity =', dst_container_opacity);
 	});
 
-	update_sample_text();
-
-/*
-	setTimeout(() => {
-		getData('src', function(value) {
-			console.log('src value is:', value);
-		});
-	}, 2000);
-
-	setTimeout(() => {
-		getData('dst', function(value) {
-			console.log('dst value is:', value);
-		});
-	}, 2000);
-*/
+	if (first_check) {
+		update_sample_text();
+		first_check = false;
+	}
 };
 
 
-select_src_language.addEventListener('change', function(){
-	console.log('select_src_language.addEventListener("change")');
-	update_src_country(); // get src and src_language_index
-	console.log('changed_src = ', src);
-	console.log('src = ', src);
-	console.log('src_language_index = ', src_language_index);
+document.querySelector("#select_src_language").addEventListener('change', function(){
+	console.log('document.querySelector("#select_src_language").addEventListener("change")');
+	[src, src_language_index, src_dialect, src_dialect_index] = update_src_country();
+	console.log('src =', src);
+	console.log('src_language_index =', src_language_index);
+	console.log('src_dialect =', src_dialect);
+	console.log('src_dialect_index =', src_dialect_index);
 	saveData('src', src);
-	saveData('src_language_index', select_src_language.selectedIndex);
-	update_sample_text();
-	//chrome.runtime.sendMessage({ cmd: "changed_src", data: { value: src } })
-});
-
-select_src_dialect.addEventListener('change', function(){
-	console.log('select_src_dialect.addEventListener("change")');
-	src_dialect = select_src_dialect.value;
-	console.log('src_dialect = ', src_dialect);
+	saveData('src_language_index', document.querySelector("#select_src_language").selectedIndex);
 	saveData('src_dialect', src_dialect);
+	saveData('src_dialect_index', src_dialect_index);
 	update_sample_text();
-	//chrome.runtime.sendMessage({ cmd: "changed_src_dialect", data: { value: src_dialect } })
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_dialect", data: { value: src_dialect } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_dialect',
+				data: {
+					value: src_dialect
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
 });
 
-select_dst_language.addEventListener('change', function(){
-	console.log('select_dst_language.addEventListener("change")');
-	update_dst_country(); // get dst and dst_language_index
-	console.log('changed_dst = ', dst);
-	console.log('dst = ', dst);
-	console.log('dst_language_index = ', dst_language_index);
-	saveData('dst', dst);
-	saveData('dst_language_index', select_dst_language.selectedIndex);
+document.querySelector("#select_src_dialect").addEventListener('change', function(){
+	console.log('document.querySelector("#select_src_dialect").addEventListener("change")');
+	src_dialect = document.querySelector("#select_src_dialect").value;
+	console.log('src_dialect =', src_dialect);
+	src_dialect_index = document.querySelector("#select_src_dialect").selectedIndex;
+	console.log('src_dialect_index =', src_dialect_index);
+	saveData('src_dialect_index', src_dialect_index);
+	src = src_dialect.split('-')[0];
+	console.log('src =', src);
+	saveData('src', src);
+	src_language_index = document.querySelector("#select_src_language").selectedIndex;
+	console.log('src_language_index =', src_language_index);
+	saveData('src_language_index', src_language_index);
 	update_sample_text();
-	//chrome.runtime.sendMessage({ cmd: "changed_dst", data: { value: dst } })
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_dialect", data: { value: src_dialect } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_dialect',
+				data: {
+					value: src_dialect
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
 });
 
-select_dst_dialect.addEventListener('change', function(){
-	console.log('select_dst_dialect.addEventListener("change")');
-	dst_dialect = select_dst_dialect.value;
-	console.log('dst_dialect = ', dst_dialect);
-	saveData('dst_dialect', dst_dialect);
-	update_sample_text();
-	//chrome.runtime.sendMessage({ cmd: "change_dst_dialect", data: { value: dst_dialect } })
-});
-
-checkbox_show_src.addEventListener('change', function(){
-	console.log('checkbox_show_src.addEventListener("change")');
-	console.log('checkbox_show_src.checked = ', checkbox_show_src.checked);
-	show_src = checkbox_show_src.checked;
+document.querySelector("#checkbox_show_src").addEventListener('change', function(){
+	console.log('document.querySelector("#checkbox_show_src").addEventListener("change")');
+	console.log('document.querySelector("#checkbox_show_src").checked =', document.querySelector("#checkbox_show_src").checked);
+	show_src = document.querySelector("#checkbox_show_src").checked;
 	saveData('show_src', show_src);
 	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_show_src", data: { value: show_src } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_show_src',
+				data: {
+					value: show_src
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
 });
 
-checkbox_show_dst.addEventListener('change', function(){
-	console.log('checkbox_show_dst.addEventListener("change")');
-	console.log('checkbox_show_dst.checked = ', checkbox_show_dst.checked);
-	show_dst = checkbox_show_dst.checked;
-	saveData('show_dst', show_dst);
-	update_sample_text();
-});
-
-checkbox_show_timestamp_src.addEventListener('change', function(){
-	console.log('checkbox_show_timestamp_src.addEventListener("change")');
-	console.log('checkbox_show_timestamp_src.checked = ', checkbox_show_timestamp_src.checked);
-	show_timestamp_src = checkbox_show_timestamp_src.checked;
+document.querySelector("#checkbox_show_timestamp_src").addEventListener('change', function(){
+	console.log('document.querySelector("#checkbox_show_timestamp_src").addEventListener("change")');
+	console.log('document.querySelector("#checkbox_show_timestamp_src").checked =', document.querySelector("#checkbox_show_timestamp_src").checked);
+	show_timestamp_src = document.querySelector("#checkbox_show_timestamp_src").checked;
 	saveData('show_timestamp_src', show_timestamp_src);
 	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_show_timestamp_src", data: { value: show_timestamp_src } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_show_timestamp_src',
+				data: {
+					value: show_timestamp_src
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
 });
 
-checkbox_show_timestamp_dst.addEventListener('change', function(){
-	console.log('checkbox_show_timestamp_dst.addEventListener("change")');
-	console.log('checkbox_show_timestamp_dst.checked = ', checkbox_show_timestamp_dst.checked);
-	show_timestamp_dst = checkbox_show_timestamp_dst.checked;
+
+document.querySelector("#select_dst_language").addEventListener('change', function(){
+	console.log('document.querySelector("#select_dst_language").addEventListener("change")');
+	[dst, dst_language_index, dst_dialect, dst_dialect_index] = update_dst_country();
+	console.log('dst =', dst);
+	console.log('dst_language_index =', dst_language_index);
+	console.log('dst_dialect =', dst_dialect);
+	console.log('dst_dialect_index =', dst_dialect_index);
+	saveData('dst', dst);
+	saveData('dst_language_index', document.querySelector("#select_dst_language").selectedIndex);
+	saveData('dst_dialect', dst_dialect);
+	saveData('dst_dialect_index', dst_dialect_index);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_dialect", data: { value: dst_dialect } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_dialect',
+				data: {
+					value: dst_dialect
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#select_dst_dialect").addEventListener('change', function(){
+	console.log('document.querySelector("#select_dst_dialect").addEventListener("change")');
+	dst_dialect = document.querySelector("#select_dst_dialect").value;
+	console.log('dst_dialect =', dst_dialect);
+	dst_dialect_index = document.querySelector("#select_dst_dialect").selectedIndex;
+	console.log('dst_dialect_index =', dst_dialect_index);
+	saveData('dst_dialect_index', dst_dialect_index);
+	dst = dst_dialect.split('-')[0];
+	console.log('dst =', dst);
+	saveData('dst', dst);
+	dst_language_index = document.querySelector("#select_dst_language").selectedIndex;
+	console.log('dst_language_index =', dst_language_index);
+	saveData('dst_language_index', dst_language_index);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_dialect", data: { value: dst_dialect } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_dialect',
+				data: {
+					value: dst_dialect
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#checkbox_show_dst").addEventListener('change', function(){
+	console.log('document.querySelector("#checkbox_show_dst").addEventListener("change")');
+	console.log('document.querySelector("#checkbox_show_dst").checked =', document.querySelector("#checkbox_show_dst").checked);
+	show_dst = document.querySelector("#checkbox_show_dst").checked;
+	saveData('show_dst', show_dst);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_show_dst", data: { value: show_dst } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_show_dst',
+				data: {
+					value: show_dst
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#checkbox_show_timestamp_dst").addEventListener('change', function(){
+	console.log('document.querySelector("#checkbox_show_timestamp_dst").addEventListener("change")');
+	console.log('document.querySelector("#checkbox_show_timestamp_dst").checked =', document.querySelector("#checkbox_show_timestamp_dst").checked);
+	show_timestamp_dst = document.querySelector("#checkbox_show_timestamp_dst").checked;
 	saveData('show_timestamp_dst', show_timestamp_dst);
 	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_show_timestamp_dst", data: { value: show_timestamp_dst } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_show_timestamp_dst',
+				data: {
+					value: show_timestamp_dst
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
 });
 
-input_pause_threshold.addEventListener('change', function(){
-	console.log('input_pause_threshold.addEventListener.addEventListener("change")');
-	pause_threshold = input_pause_threshold.value;
-	console.log('pause_threshold = ', pause_threshold);
+document.querySelector("#input_pause_threshold").addEventListener('change', function(){
+	console.log('document.querySelector("#input_pause_threshold").addEventListener.addEventListener("change")');
+	pause_threshold = document.querySelector("#input_pause_threshold").value;
+	console.log('pause_threshold =', pause_threshold);
 	saveData('pause_threshold', pause_threshold);
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_pause_threshold", data: { value: pause_threshold } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_pause_threshold',
+				data: {
+					value: pause_threshold
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
 });
 
 
 // Add event listeners for changes in font select and font size input
-select_src_font.addEventListener("change", update_sample_text);
-input_src_font_size.addEventListener("input", update_sample_text);
-input_src_font_size.addEventListener("change", update_sample_text);
-input_src_font_color.addEventListener("input", update_sample_text);
-input_src_font_color.addEventListener("change", update_sample_text);
-input_src_container_width_factor.addEventListener("input", update_sample_text);
-input_src_container_width_factor.addEventListener("change", update_sample_text);
-input_src_container_height_factor.addEventListener("input", update_sample_text);
-input_src_container_height_factor.addEventListener("change", update_sample_text);
-input_src_container_top_factor.addEventListener("input", update_sample_text);
-input_src_container_top_factor.addEventListener("change", update_sample_text);
-checkbox_centerize_src.addEventListener("change", update_sample_text);
-input_src_container_left_factor.addEventListener('input', function(){
-	checkbox_centerize_src.checked = false;
+document.querySelector("#select_src_font").addEventListener("change", function(){
+	console.log('document.querySelector("#select_src_font").addEventListener("change")');
+	src_selected_font = document.querySelector("#select_src_font").value;
+	console.log('src_selected_font =', src_selected_font);
+	saveData('src_selected_font', src_selected_font);
 	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_selected_font", data: { value: src_selected_font } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_selected_font',
+				data: {
+					value: src_selected_font
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
 });
-input_src_container_left_factor.addEventListener('change', function(){
-	checkbox_centerize_src.checked = false;
-	update_sample_text();
-});
-input_src_container_color.addEventListener("input", update_sample_text);
-input_src_container_color.addEventListener("change", update_sample_text);
-input_src_container_opacity.addEventListener("input", update_sample_text);
-input_src_container_opacity.addEventListener("change", update_sample_text);
 
-select_dst_font.addEventListener("change", update_sample_text);
-input_dst_font_size.addEventListener("input", update_sample_text);
-input_dst_font_size.addEventListener("change", update_sample_text);
-input_dst_font_color.addEventListener("input", update_sample_text);
-input_dst_font_color.addEventListener("change", update_sample_text);
-input_dst_container_width_factor.addEventListener("input", update_sample_text);
-input_dst_container_width_factor.addEventListener("change", update_sample_text);
-input_dst_container_height_factor.addEventListener("input", update_sample_text);
-input_dst_container_height_factor.addEventListener("change", update_sample_text);
-input_dst_container_top_factor.addEventListener("input", update_sample_text);
-input_dst_container_top_factor.addEventListener("change", update_sample_text);
-checkbox_centerize_dst.addEventListener("change", update_sample_text);
-input_dst_container_left_factor.addEventListener('input', function(){
-	checkbox_centerize_dst.checked = false;
+document.querySelector("#input_src_font_size").addEventListener("input", function(){
+	console.log('document.querySelector("#input_src_font_size").addEventListener("input")');
+	src_font_size = document.querySelector("#input_src_font_size").value;
+	console.log('src_font_size =', src_font_size);
+	saveData('src_font_size', src_font_size);
 	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_font_size", data: { value: src_font_size } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_font_size',
+				data: {
+					value: src_font_size
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
 });
-input_dst_container_left_factor.addEventListener('change', function(){
-	checkbox_centerize_dst.checked = false;
+
+document.querySelector("#input_src_font_size").addEventListener("change", function(){
+	console.log('document.querySelector("#input_src_font_size").addEventListener("input")');
+	src_font_size = document.querySelector("#input_src_font_size").value;
+	console.log('src_font_size =', src_font_size);
+	saveData('src_font_size', src_font_size);
 	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_font_size", data: { value: src_font_size } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_font_size',
+				data: {
+					value: src_font_size
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
 });
-input_dst_container_color.addEventListener("input", update_sample_text);
-input_dst_container_color.addEventListener("change", update_sample_text);
-input_dst_container_opacity.addEventListener("input", update_sample_text);
-input_dst_container_opacity.addEventListener("change", update_sample_text);
+
+document.querySelector("#input_src_font_color").addEventListener("input", function(){
+	console.log('document.querySelector("#input_src_font_color").addEventListener("input")');
+	src_font_color = document.querySelector("#input_src_font_color").value;
+	console.log('src_font_color =', src_font_color);
+	saveData('src_font_color', src_font_color);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_font_color", data: { value: src_font_color } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_font_color',
+				data: {
+					value: src_font_color
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_src_font_color").addEventListener("change", function(){
+	console.log('document.querySelector("#input_src_font_color").addEventListener("change")');
+	src_font_color = document.querySelector("#input_src_font_color").value;
+	console.log('src_font_color =', src_font_color);
+	saveData('src_font_color', src_font_color);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_font_color", data: { value: src_font_color } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_font_color',
+				data: {
+					value: src_font_color
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_src_container_width_factor").addEventListener("input", function(){
+	console.log('document.querySelector("#input_src_container_width_factor").addEventListener("input")');
+	src_container_width_factor = document.querySelector("#input_src_container_width_factor").value;
+	console.log('src_container_width_factor =', src_container_width_factor);
+	saveData('src_container_width_factor', src_container_width_factor);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_container_width_factor", data: { value: src_container_width_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_container_width_factor',
+				data: {
+					value: src_container_width_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_src_container_width_factor").addEventListener("change", function(){
+	console.log('document.querySelector("#input_src_container_width_factor").addEventListener("change")');
+	src_container_width_factor = document.querySelector("#input_src_container_width_factor").value;
+	console.log('src_container_width_factor =', src_container_width_factor);
+	saveData('src_container_width_factor', src_container_width_factor);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_container_width_factor", data: { value: src_container_width_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_container_width_factor',
+				data: {
+					value: src_container_width_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_src_container_height_factor").addEventListener("input", function(){
+	console.log('document.querySelector("#input_src_container_height_factor").addEventListener("input")');
+	src_container_height_factor = document.querySelector("#input_src_container_height_factor").value;
+	console.log('src_container_height_factor =', src_container_height_factor);
+	saveData('src_container_height_factor', src_container_height_factor);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_container_height_factor", data: { value: src_container_height_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_container_height_factor',
+				data: {
+					value: src_container_height_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_src_container_height_factor").addEventListener("change", function(){
+	console.log('document.querySelector("#input_src_container_height_factor").addEventListener("change")');
+	src_container_height_factor = document.querySelector("#input_src_container_height_factor").value;
+	console.log('src_container_height_factor =', src_container_height_factor);
+	saveData('src_container_height_factor', src_container_height_factor);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_container_height_factor", data: { value: src_container_height_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_container_height_factor',
+				data: {
+					value: src_container_height_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_src_container_top_factor").addEventListener("input", function(){
+	console.log('document.querySelector("#input_src_container_top_factor").addEventListener("input")');
+	src_container_top_factor = document.querySelector("#input_src_container_top_factor").value;
+	console.log('src_container_top_factor =', src_container_top_factor);
+	saveData('src_container_top_factor', src_container_top_factor);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_container_top_factor", data: { value: src_container_top_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_container_top_factor',
+				data: {
+					value: src_container_top_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_src_container_top_factor").addEventListener("change", function(){
+	console.log('document.querySelector("#input_src_container_top_factor").addEventListener("change")');
+	src_container_top_factor = document.querySelector("#input_src_container_top_factor").value;
+	console.log('src_container_top_factor =', src_container_top_factor);
+	saveData('src_container_top_factor', src_container_top_factor);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_container_top_factor", data: { value: src_container_top_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_container_top_factor',
+				data: {
+					value: src_container_top_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#checkbox_centerize_src").addEventListener("change", function(){
+	console.log('document.querySelector("#checkbox_centerize_src").addEventListener("change")');
+	centerize_src = document.querySelector("#checkbox_centerize_src").checked;
+	console.log('centerize_src =', centerize_src);
+	saveData('centerize_src', centerize_src);
+	var textarea_rect = get_textarea_rect();
+	if (document.querySelector("#checkbox_centerize_src").checked) {
+		src_left = textarea_rect.src_left;
+		//console.log('textarea_rect.src_left =', textarea_rect.src_left);
+		src_container_left_factor = (src_left - getRect(document.querySelector("#my_yt_iframe")).left)/getRect(document.querySelector("#my_yt_iframe")).width;
+		//console.log('src_container_left_factor =', src_container_left_factor);
+		document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
+	} else {
+		src_container_left_factor = document.querySelector("#input_src_container_left_factor").value;
+		//console.log('src_container_left_factor =', src_container_left_factor);
+	}
+	console.log('src_container_left_factor =', src_container_left_factor);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_centerize_src", data: { value: centerize_src } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_centerize_src',
+				data: {
+					value: centerize_src
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_container_left_factor", data: { value: src_container_left_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_container_left_factor',
+				data: {
+					value: src_container_left_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_src_container_left_factor").addEventListener('input', function(){
+	console.log('document.querySelector("#input_src_container_left_factor").addEventListener("input")');
+	src_container_left_factor = document.querySelector("#input_src_container_left_factor").value;
+	console.log('src_container_left_factor =', src_container_left_factor);
+	saveData('src_container_left_factor', src_container_left_factor);
+	video_info = getVideoPlayerInfo();
+	if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
+		centerize_src = false;
+		saveData('centerize_src', centerize_src);
+		document.querySelector("#checkbox_centerize_src").checked = centerize_src;
+	}
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_container_left_factor", data: { value: src_container_left_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_container_left_factor',
+				data: {
+					value: src_container_left_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_centerize_src", data: { value: centerize_src } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_centerize_src',
+				data: {
+					value: centerize_src
+				}, function(response) {
+					console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_src_container_left_factor").addEventListener('change', function(){
+	console.log('document.querySelector("#input_src_container_left_factor").addEventListener("change")');
+	var textarea_rect = get_textarea_rect();
+	if (document.querySelector("#checkbox_centerize_src").checked) {
+		src_left = textarea_rect.src_left;
+		//console.log('textarea_rect.src_left =', textarea_rect.src_left);
+		src_container_left_factor = (src_left - getRect(document.querySelector("#my_yt_iframe")).left)/getRect(document.querySelector("#my_yt_iframe")).width;
+		//console.log('src_container_left_factor =', src_container_left_factor);
+		document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
+	} else {
+		src_container_left_factor = document.querySelector("#input_src_container_left_factor").value;
+		//console.log('src_container_left_factor =', src_container_left_factor);
+	}
+	console.log('src_container_left_factor =', src_container_left_factor);
+	saveData('src_container_left_factor', src_container_left_factor);
+	video_info = getVideoPlayerInfo();
+	if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
+		centerize_src = false;
+		saveData('centerize_src', centerize_src);
+		document.querySelector("#checkbox_centerize_src").checked = centerize_src;
+	}
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_container_left_factor", data: { value: src_container_left_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_container_left_factor',
+				data: {
+					value: src_container_left_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_centerize_src", data: { value: centerize_src } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_centerize_src',
+				data: {
+					value: centerize_src
+				}, function(response) {
+					console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_src_container_color").addEventListener('input', function(){
+	console.log('document.querySelector("#input_src_container_color").addEventListener("input")');
+	src_container_color = document.querySelector("#input_src_container_color").value;
+	console.log('src_container_color =', src_container_color);
+	saveData('src_container_color', src_container_color);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_container_color", data: { value: src_container_color } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_container_color',
+				data: {
+					value: src_container_color
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_src_container_color").addEventListener('change', function(){
+	console.log('document.querySelector("#input_src_container_color").addEventListener("change")');
+	src_container_color = document.querySelector("#input_src_container_color").value;
+	console.log('src_container_color =', src_container_color);
+	saveData('src_container_color', src_container_color);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_container_color", data: { value: src_container_color } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_container_color',
+				data: {
+					value: src_container_color
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_src_container_opacity").addEventListener('input', function(){
+	console.log('document.querySelector("#input_src_container_opacity").addEventListener("input")');
+	src_container_opacity = document.querySelector("#input_src_container_opacity").value;
+	console.log('src_container_opacity =', src_container_opacity);
+	saveData('src_container_opacity', src_container_opacity);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_container_opacity", data: { value: src_container_opacity } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_container_opacity',
+				data: {
+					value: src_container_opacity
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_src_container_opacity").addEventListener('change', function(){
+	console.log('document.querySelector("#input_src_container_opacity").addEventListener("change")');
+	src_container_opacity = document.querySelector("#input_src_container_opacity").value;
+	console.log('src_container_opacity =', src_container_opacity);
+	saveData('src_container_opacity', src_container_opacity);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_src_container_opacity", data: { value: src_container_opacity } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_src_container_opacity',
+				data: {
+					value: src_container_opacity
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+
+
+document.querySelector("#select_dst_font").addEventListener("change", function(){
+	console.log('document.querySelector("#select_dst_font").addEventListener("change")');
+	dst_selected_font = document.querySelector("#select_dst_font").value;
+	console.log('dst_selected_font =', dst_selected_font);
+	saveData('dst_selected_font', dst_selected_font);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_selected_font", data: { value: dst_selected_font } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_selected_font',
+				data: {
+					value: dst_selected_font
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_dst_font_size").addEventListener("input", function(){
+	console.log('document.querySelector("#input_dst_font_size").addEventListener("input")');
+	dst_font_size = document.querySelector("#input_dst_font_size").value;
+	console.log('dst_font_size =', dst_font_size);
+	saveData('dst_font_size', dst_font_size);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_font_size", data: { value: dst_font_size } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_font_size',
+				data: {
+					value: dst_font_size
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_dst_font_size").addEventListener("change", function(){
+	console.log('document.querySelector("#input_dst_font_size").addEventListener("input")');
+	dst_font_size = document.querySelector("#input_dst_font_size").value;
+	console.log('dst_font_size =', dst_font_size);
+	saveData('dst_font_size', dst_font_size);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_font_size", data: { value: dst_font_size } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_font_size',
+				data: {
+					value: dst_font_size
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_dst_font_color").addEventListener("input", function(){
+	console.log('document.querySelector("#input_dst_font_color").addEventListener("input")');
+	dst_font_color = document.querySelector("#input_dst_font_color").value;
+	console.log('dst_font_color =', dst_font_color);
+	saveData('dst_font_color', dst_font_color);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_font_color", data: { value: dst_font_color } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_font_color',
+				data: {
+					value: dst_font_color
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_dst_font_color").addEventListener("change", function(){
+	console.log('document.querySelector("#input_dst_font_color").addEventListener("change")');
+	dst_font_color = document.querySelector("#input_dst_font_color").value;
+	console.log('dst_font_color =', dst_font_color);
+	saveData('dst_font_color', dst_font_color);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_font_color", data: { value: dst_font_color } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_font_color',
+				data: {
+					value: dst_font_color
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_dst_container_width_factor").addEventListener("input", function(){
+	console.log('document.querySelector("#input_dst_container_width_factor").addEventListener("input")');
+	dst_container_width_factor = document.querySelector("#input_dst_container_width_factor").value;
+	console.log('dst_container_width_factor =', dst_container_width_factor);
+	saveData('dst_container_width_factor', dst_container_width_factor);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_container_width_factor", data: { value: dst_container_width_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_container_width_factor',
+				data: {
+					value: dst_container_width_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_dst_container_width_factor").addEventListener("change", function(){
+	console.log('document.querySelector("#input_dst_container_width_factor").addEventListener("change")');
+	dst_container_width_factor = document.querySelector("#input_dst_container_width_factor").value;
+	console.log('dst_container_width_factor =', dst_container_width_factor);
+	saveData('dst_container_width_factor', dst_container_width_factor);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_container_width_factor", data: { value: dst_container_width_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_container_width_factor',
+				data: {
+					value: dst_container_width_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_dst_container_height_factor").addEventListener("input", function(){
+	console.log('document.querySelector("#input_dst_container_height_factor").addEventListener("input")');
+	dst_container_height_factor = document.querySelector("#input_dst_container_height_factor").value;
+	console.log('dst_container_height_factor =', dst_container_height_factor);
+	saveData('dst_container_height_factor', dst_container_height_factor);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_container_height_factor", data: { value: dst_container_height_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_container_height_factor',
+				data: {
+					value: dst_container_height_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_dst_container_height_factor").addEventListener("change", function(){
+	console.log('document.querySelector("#input_dst_container_height_factor").addEventListener("change")');
+	dst_container_height_factor = document.querySelector("#input_dst_container_height_factor").value;
+	console.log('dst_container_height_factor =', dst_container_height_factor);
+	saveData('dst_container_height_factor', dst_container_height_factor);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_container_height_factor", data: { value: dst_container_height_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_container_height_factor',
+				data: {
+					value: dst_container_height_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_dst_container_top_factor").addEventListener("input", function(){
+	console.log('document.querySelector("#input_dst_container_top_factor").addEventListener("input")');
+	dst_container_top_factor = document.querySelector("#input_dst_container_top_factor").value;
+	console.log('dst_container_top_factor =', dst_container_top_factor);
+	saveData('dst_container_top_factor', dst_container_top_factor);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_container_top_factor", data: { value: dst_container_top_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_container_top_factor',
+				data: {
+					value: dst_container_top_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_dst_container_top_factor").addEventListener("change", function(){
+	console.log('document.querySelector("#input_dst_container_top_factor").addEventListener("change")');
+	dst_container_top_factor = document.querySelector("#input_dst_container_top_factor").value;
+	console.log('dst_container_top_factor =', dst_container_top_factor);
+	saveData('dst_container_top_factor', dst_container_top_factor);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_container_top_factor", data: { value: dst_container_top_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_container_top_factor',
+				data: {
+					value: dst_container_top_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#checkbox_centerize_dst").addEventListener("change", function(){
+	console.log('document.querySelector("#checkbox_centerize_dst").addEventListener("change")');
+	centerize_dst = document.querySelector("#checkbox_centerize_dst").checked;
+	console.log('centerize_dst =', centerize_dst);
+	saveData('centerize_dst', centerize_dst);
+	var textarea_rect = get_textarea_rect();
+	if (document.querySelector("#checkbox_centerize_dst").checked) {
+		dst_left = textarea_rect.dst_left;
+		//console.log('textarea_rect.dst_left =', textarea_rect.dst_left);
+		dst_container_left_factor = (dst_left - getRect(document.querySelector("#my_yt_iframe")).left)/getRect(document.querySelector("#my_yt_iframe")).width;
+		//console.log('dst_container_left_factor =', dst_container_left_factor);
+		document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
+	} else {
+		dst_container_left_factor = document.querySelector("#input_dst_container_left_factor").value;
+		//console.log('dst_container_left_factor =', dst_container_left_factor);
+	}
+	console.log('dst_container_left_factor =', dst_container_left_factor);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_centerize_dst", data: { value: centerize_dst } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_centerize_dst',
+				data: {
+					value: centerize_dst
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_container_left_factor", data: { value: dst_container_left_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_container_left_factor',
+				data: {
+					value: dst_container_left_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_dst_container_left_factor").addEventListener('input', function(){
+	console.log('document.querySelector("#input_dst_container_left_factor").addEventListener("input")');
+	dst_container_left_factor = document.querySelector("#input_dst_container_left_factor").value;
+	console.log('dst_container_left_factor =', dst_container_left_factor);
+	saveData('dst_container_left_factor', dst_container_left_factor);
+	video_info = getVideoPlayerInfo();
+	if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+		centerize_dst = false;
+		saveData('centerize_dst', centerize_dst);
+		document.querySelector("#checkbox_centerize_dst").checked = centerize_dst;
+	}
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_container_left_factor", data: { value: dst_container_left_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_container_left_factor',
+				data: {
+					value: dst_container_left_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_centerize_dst", data: { value: centerize_dst } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_centerize_dst',
+				data: {
+					value: centerize_dst
+				}, function(response) {
+					console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_dst_container_left_factor").addEventListener('change', function(){
+	console.log('document.querySelector("#input_dst_container_left_factor").addEventListener("change")');
+	var textarea_rect = get_textarea_rect();
+	if (document.querySelector("#checkbox_centerize_dst").checked) {
+		dst_left = textarea_rect.dst_left;
+		//console.log('textarea_rect.dst_left =', textarea_rect.dst_left);
+		dst_container_left_factor = (dst_left - getRect(document.querySelector("#my_yt_iframe")).left)/getRect(document.querySelector("#my_yt_iframe")).width;
+		//console.log('dst_container_left_factor =', dst_container_left_factor);
+		document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
+	} else {
+		dst_container_left_factor = document.querySelector("#input_dst_container_left_factor").value;
+		//console.log('dst_container_left_factor =', dst_container_left_factor);
+	}
+	console.log('dst_container_left_factor =', dst_container_left_factor);
+	saveData('dst_container_left_factor', dst_container_left_factor);
+	video_info = getVideoPlayerInfo();
+	if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+		centerize_dst = false;
+		saveData('centerize_dst', centerize_dst);
+		document.querySelector("#checkbox_centerize_dst").checked = centerize_dst;
+	}
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_container_left_factor", data: { value: dst_container_left_factor } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_container_left_factor',
+				data: {
+					value: dst_container_left_factor
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_centerize_dst", data: { value: centerize_dst } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_centerize_dst',
+				data: {
+					value: centerize_dst
+				}, function(response) {
+					console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_dst_container_color").addEventListener('input', function(){
+	console.log('document.querySelector("#input_dst_container_color").addEventListener("input")');
+	dst_container_color = document.querySelector("#input_dst_container_color").value;
+	console.log('dst_container_color =', dst_container_color);
+	saveData('dst_container_color', dst_container_color);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_container_color", data: { value: dst_container_color } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_container_color',
+				data: {
+					value: dst_container_color
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_dst_container_color").addEventListener('change', function(){
+	console.log('document.querySelector("#input_dst_container_color").addEventListener("change")');
+	dst_container_color = document.querySelector("#input_dst_container_color").value;
+	console.log('dst_container_color =', dst_container_color);
+	saveData('dst_container_color', dst_container_color);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_container_color", data: { value: dst_container_color } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_container_color',
+				data: {
+					value: dst_container_color
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_dst_container_opacity").addEventListener('input', function(){
+	console.log('document.querySelector("#input_dst_container_opacity").addEventListener("input")');
+	dst_container_opacity = document.querySelector("#input_dst_container_opacity").value;
+	console.log('dst_container_opacity =', dst_container_opacity);
+	saveData('dst_container_opacity', dst_container_opacity);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_container_opacity", data: { value: dst_container_opacity } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_container_opacity',
+				data: {
+					value: dst_container_opacity
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_dst_container_opacity").addEventListener('change', function(){
+	console.log('document.querySelector("#input_dst_container_opacity").addEventListener("change")');
+	dst_container_opacity = document.querySelector("#input_dst_container_opacity").value;
+	console.log('dst_container_opacity =', dst_container_opacity);
+	saveData('dst_container_opacity', dst_container_opacity);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_dst_container_opacity", data: { value: dst_container_opacity } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_dst_container_opacity',
+				data: {
+					value: dst_container_opacity
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
 
 
 save_button.addEventListener('click', function(){
-	saveAll();
+	saveAllSettings();
 });
 
 
 function update_src_country() {
     console.log('update_src_country()');
-	for (var i = select_src_dialect.options.length - 1; i >= 0; i--) {
-        select_src_dialect.remove(i);
+	for (var i = document.querySelector("#select_src_dialect").options.length - 1; i >= 0; i--) {
+        document.querySelector("#select_src_dialect").remove(i);
     }
-    var list = src_language[select_src_language.selectedIndex];
+    var list = src_language[document.querySelector("#select_src_language").selectedIndex];
     for (var i = 1; i < list.length; i++) {
-        select_src_dialect.options.add(new Option(list[i][1], list[i][0]));
+        document.querySelector("#select_src_dialect").options.add(new Option(list[i][1], list[i][0]));
     }
-    select_src_dialect.style.visibility = list[1].length === 1 ? 'hidden' : 'visible';
-    src = select_src_dialect.value.split('-')[0];
-	console.log('update_src_country(): src = ', src);
+    document.querySelector("#select_src_dialect").style.visibility = list[1].length === 1 ? 'hidden' : 'visible';
+    document.querySelector("#select_src_dialect").style.visibility = list[1].length === 1 ? 'hidden' : 'visible';
+    src = document.querySelector("#select_src_dialect").value.split('-')[0];
+	console.log('update_src_country(): src =', src);
 	if (src_dialect === "yue-Hant-HK") {
 		src = "zh-TW";
 	}
@@ -979,12 +2570,12 @@ function update_src_country() {
 	if (src_dialect === "cmn-Hant-TW") {
 		src = "zh-TW";
 	}
-	src_language_index = select_src_language.selectedIndex;
+	src_language_index = document.querySelector("#select_src_language").selectedIndex;
 	if (src_language[src_language_index].length > 2) {
 		for (var j = 0; j < document.querySelector("#select_src_dialect").length; j++) {
 			if (select_src_dialect[j].value === src_dialect) {
 				src_dialect_index = j;
-				select_src_dialect.selectedIndex = src_dialect_index;
+				document.querySelector("#select_src_dialect").selectedIndex = src_dialect_index;
 				break;
 			}
 		}
@@ -994,21 +2585,22 @@ function update_src_country() {
 	} else {
 		src_dialect = src_language[document.querySelector("#select_src_language").selectedIndex][1][0];
 	};
+	return [src, src_language_index, src_dialect, src_dialect_index];
 }
 
 
 function update_dst_country() {
     console.log('update_dst_country()');
-	for (var i = select_dst_dialect.options.length - 1; i >= 0; i--) {
-        select_dst_dialect.remove(i);
+	for (var i = document.querySelector("#select_dst_dialect").options.length - 1; i >= 0; i--) {
+        document.querySelector("#select_dst_dialect").remove(i);
     }
-    var list = dst_language[select_dst_language.selectedIndex];
+    var list = dst_language[document.querySelector("#select_dst_language").selectedIndex];
     for (var i = 1; i < list.length; i++) {
-        select_dst_dialect.options.add(new Option(list[i][1], list[i][0]));
+        document.querySelector("#select_dst_dialect").options.add(new Option(list[i][1], list[i][0]));
     }
-    select_dst_dialect.style.visibility = list[1].length === 1 ? 'hidden' : 'visible';
-    dst = select_dst_dialect.value.split('-')[0];
-	console.log('update_dst_country(): dst = ', dst);
+    document.querySelector("#select_dst_dialect").style.visibility = list[1].length === 1 ? 'hidden' : 'visible';
+    dst = document.querySelector("#select_dst_dialect").value.split('-')[0];
+	console.log('update_dst_country(): dst =', dst);
 	if (dst_dialect === "yue-Hant-HK") {
 		dst = "zh-TW";
 	}
@@ -1021,12 +2613,12 @@ function update_dst_country() {
 	if (dst_dialect === "cmn-Hant-TW") {
 		dst = "zh-TW";
 	}
-	dst_language_index = select_dst_language.selectedIndex;
+	dst_language_index = document.querySelector("#select_dst_language").selectedIndex;
 	if (dst_language[dst_language_index].length > 2) {
 		for (var j = 0; j < document.querySelector("#select_dst_dialect").length; j++) {
 			if (select_dst_dialect[j].value === dst_dialect) {
 				dst_dialect_index = j;
-				select_dst_dialect.selectedIndex = dst_dialect_index;
+				document.querySelector("#select_dst_dialect").selectedIndex = dst_dialect_index;
 				break;
 			}
 		}
@@ -1036,6 +2628,7 @@ function update_dst_country() {
 	} else {
 		dst_dialect = dst_language[document.querySelector("#select_dst_language").selectedIndex][1][0];
 	};
+	return [dst, dst_language_index, dst_dialect, dst_dialect_index];
 }
 
 
@@ -1074,112 +2667,112 @@ function getAvailableFonts() {
 function update_sample_text() {
     console.log('update_sample_text()');
 
-	src_selected_font = select_src_font.value;
-	//console.log('src_selected_font = ', src_selected_font);
-	saveData('src_selected_font', src_selected_font);
+	src_selected_font = document.querySelector("#select_src_font").value;
+	//console.log('src_selected_font =', src_selected_font);
+	//saveData('src_selected_font', src_selected_font);
 
-	src_selected_font_index = select_src_font.selectedIndex;
-	//console.log('src_selected_font_index = ', src_selected_font_index);
-	saveData('src_selected_font_index', src_selected_font_index);
+	src_selected_font_index = document.querySelector("#select_src_font").selectedIndex;
+	//console.log('src_selected_font_index =', src_selected_font_index);
+	//saveData('src_selected_font_index', src_selected_font_index);
 
-    src_font_size = input_src_font_size.value;
-	//console.log('src_font_size = ', src_font_size);
-	saveData('src_font_size', src_font_size);
+    src_font_size = document.querySelector("#input_src_font_size").value;
+	//console.log('src_font_size =', src_font_size);
+	//saveData('src_font_size', src_font_size);
 
-	src_font_color = input_src_font_color.value;
-	//console.log('src_font_color = ', src_font_color);
-	saveData('src_font_color', src_font_color);
+	src_font_color = document.querySelector("#input_src_font_color").value;
+	//console.log('src_font_color =', src_font_color);
+	//saveData('src_font_color', src_font_color);
 
-	src_container_width_factor = input_src_container_width_factor.value;
-	//console.log('src_container_width_factor = ', src_container_width_factor);
-	saveData('src_container_width_factor', src_container_width_factor);
+	src_container_width_factor = document.querySelector("#input_src_container_width_factor").value;
+	//console.log('src_container_width_factor =', src_container_width_factor);
+	//saveData('src_container_width_factor', src_container_width_factor);
 
-	src_container_height_factor = input_src_container_height_factor.value;
-	//console.log('src_container_height_factor = ', src_container_height_factor);
-	saveData('src_container_height_factor', src_container_height_factor);
+	src_container_height_factor = document.querySelector("#input_src_container_height_factor").value;
+	//console.log('src_container_height_factor =', src_container_height_factor);
+	//saveData('src_container_height_factor', src_container_height_factor);
 
-	src_container_top_factor = input_src_container_top_factor.value;
-	//console.log('src_container_top_factor = ', src_container_top_factor);
-	saveData('src_container_top_factor', src_container_top_factor);
+	src_container_top_factor = document.querySelector("#input_src_container_top_factor").value;
+	//console.log('src_container_top_factor =', src_container_top_factor);
+	//saveData('src_container_top_factor', src_container_top_factor);
 
-	centerize_src = checkbox_centerize_src.checked;
-	//console.log('centerize_src = ', centerize_src);
-	saveData('centerize_src', centerize_src);
+	centerize_src = document.querySelector("#checkbox_centerize_src").checked;
+	//console.log('centerize_src =', centerize_src);
+	//saveData('centerize_src', centerize_src);
 
 	var textarea_rect = get_textarea_rect();
 	if (document.querySelector("#checkbox_centerize_src").checked) {
 		src_left = textarea_rect.src_left;
-		//console.log('textarea_rect.src_left = ', textarea_rect.src_left);
+		//console.log('textarea_rect.src_left =', textarea_rect.src_left);
 		src_container_left_factor = (src_left - getRect(document.querySelector("#my_yt_iframe")).left)/getRect(document.querySelector("#my_yt_iframe")).width;
-		//console.log('src_container_left_factor = ', src_container_left_factor);
+		//console.log('src_container_left_factor =', src_container_left_factor);
 		document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
 	} else {
 		src_container_left_factor = document.querySelector("#input_src_container_left_factor").value;
-		//console.log('src_container_left_factor = ', src_container_left_factor);
+		//console.log('src_container_left_factor =', src_container_left_factor);
 	}
 
-	src_container_color = input_src_container_color.value;
-	//console.log('src_container_color = ', src_container_color);
-	saveData('src_container_color', src_container_color);
+	src_container_color = document.querySelector("#input_src_container_color").value;
+	//console.log('src_container_color =', src_container_color);
+	//saveData('src_container_color', src_container_color);
 
-	src_container_opacity = input_src_container_opacity.value;
-	//console.log('src_container_opacity = ', src_container_opacity);
-	saveData('src_container_opacity', src_container_opacity);
+	src_container_opacity = document.querySelector("#input_src_container_opacity").value;
+	//console.log('src_container_opacity =', src_container_opacity);
+	//saveData('src_container_opacity', src_container_opacity);
 
 
 
-    dst_selected_font = select_dst_font.value;
-	//console.log('dst_selected_font = ', dst_selected_font);
-	saveData('dst_selected_font', dst_selected_font);
+    dst_selected_font = document.querySelector("#select_dst_font").value;
+	//console.log('dst_selected_font =', dst_selected_font);
+	//saveData('dst_selected_font', dst_selected_font);
 
-	dst_selected_font_index = select_dst_font.selectedIndex;
-	//console.log('dst_selected_font_index = ', dst_selected_font_index);
-	saveData('dst_selected_font_index', dst_selected_font_index);
+	dst_selected_font_index = document.querySelector("#select_dst_font").selectedIndex;
+	//console.log('dst_selected_font_index =', dst_selected_font_index);
+	//saveData('dst_selected_font_index', dst_selected_font_index);
 
-    dst_font_size = input_dst_font_size.value;
-	//console.log('dst_font_size = ', dst_font_size);
-	saveData('dst_font_size', dst_font_size);
+    dst_font_size = document.querySelector("#input_dst_font_size").value;
+	//console.log('dst_font_size =', dst_font_size);
+	//saveData('dst_font_size', dst_font_size);
 
-	dst_font_color = input_dst_font_color.value;
-	//console.log('dst_font_color = ', dst_font_color);
-	saveData('dst_font_color', dst_font_color);
+	dst_font_color = document.querySelector("#input_dst_font_color").value;
+	//console.log('dst_font_color =', dst_font_color);
+	//saveData('dst_font_color', dst_font_color);
 
-	dst_container_width_factor = input_dst_container_width_factor.value;
-	//console.log('dst_container_width_factor = ', dst_container_width_factor);
-	saveData('dst_container_width_factor', dst_container_width_factor);
+	dst_container_width_factor = document.querySelector("#input_dst_container_width_factor").value;
+	//console.log('dst_container_width_factor =', dst_container_width_factor);
+	//saveData('dst_container_width_factor', dst_container_width_factor);
 
-	dst_container_height_factor = input_dst_container_height_factor.value;
-	//console.log('dst_container_height_factor = ', dst_container_height_factor);
-	saveData('dst_container_height_factor', dst_container_width_factor);
+	dst_container_height_factor = document.querySelector("#input_dst_container_height_factor").value;
+	//console.log('dst_container_height_factor =', dst_container_height_factor);
+	//saveData('dst_container_height_factor', dst_container_width_factor);
 
-	dst_container_top_factor = input_dst_container_top_factor.value;
-	//console.log('dst_container_top_factor = ', dst_container_top_factor);
-	saveData('dst_container_top_factor', dst_container_top_factor);
+	dst_container_top_factor = document.querySelector("#input_dst_container_top_factor").value;
+	//console.log('dst_container_top_factor =', dst_container_top_factor);
+	//saveData('dst_container_top_factor', dst_container_top_factor);
 
-	centerize_dst = checkbox_centerize_dst.checked;
-	//console.log('centerize_dst = ', centerize_dst);
-	saveData('centerize_dst', centerize_dst);
+	centerize_dst = document.querySelector("#checkbox_centerize_dst").checked;
+	//console.log('centerize_dst =', centerize_dst);
+	//saveData('centerize_dst', centerize_dst);
 
 	if (document.querySelector("#checkbox_centerize_dst").checked) {
 		dst_left = textarea_rect.dst_left;
-		//console.log('textarea_rect.dst_left = ', textarea_rect.dst_left);
+		//console.log('textarea_rect.dst_left =', textarea_rect.dst_left);
 		dst_container_left_factor = (dst_left - getRect(document.querySelector("#my_yt_iframe")).left)/getRect(document.querySelector("#my_yt_iframe")).width;
-		//console.log('dst_container_left_factor = ', dst_container_left_factor);
+		//console.log('dst_container_left_factor =', dst_container_left_factor);
 		document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
 	} else {
 		dst_container_left_factor = document.querySelector("#input_dst_container_left_factor").value;
-		//console.log('dst_container_left_factor = ', dst_container_left_factor);
+		//console.log('dst_container_left_factor =', dst_container_left_factor);
 	}
 
-	dst_container_color = input_dst_container_color.value;
-	//console.log('dst_container_color = ', dst_container_color);
-	saveData('dst_container_color', dst_container_color);
+	dst_container_color = document.querySelector("#input_dst_container_color").value;
+	//console.log('dst_container_color =', dst_container_color);
+	//saveData('dst_container_color', dst_container_color);
 
-	dst_container_opacity = input_dst_container_opacity.value;
-	//console.log('dst_container_opacity = ', dst_container_opacity);
-	saveData('dst_container_opacity', dst_container_opacity);
+	dst_container_opacity = document.querySelector("#input_dst_container_opacity").value;
+	//console.log('dst_container_opacity =', dst_container_opacity);
+	//saveData('dst_container_opacity', dst_container_opacity);
 
-	saveAll();
+	//saveAllSettings();
 
 	if (document.querySelector("#src_textarea_container") || document.querySelector("#dst_textarea_container")) {
 		regenerate_textarea();
@@ -1226,37 +2819,37 @@ function getRect(element) {
 
 function get_textarea_rect() {
 	src_width = document.querySelector("#input_src_container_width_factor").value*getRect(document.querySelector("#my_yt_iframe")).width;
-	//console.log('src_width = ', src_width);
+	//console.log('src_width =', src_width);
 
 	src_height = document.querySelector("#input_src_container_height_factor").value*getRect(document.querySelector("#my_yt_iframe")).height;
-	//console.log('src_height = ', src_width);
+	//console.log('src_height =', src_width);
 
 	src_top = getRect(document.querySelector("#my_yt_iframe")).top + document.querySelector("#input_src_container_top_factor").value*getRect(document.querySelector("#my_yt_iframe")).height;
-	//console.log('src_top = ', src_top);
+	//console.log('src_top =', src_top);
 
 	if (document.querySelector("#checkbox_centerize_src").checked) {
 		src_left = getRect(document.querySelector("#my_yt_iframe")).left + 0.5*(getRect(document.querySelector("#my_yt_iframe")).width - document.querySelector("#input_src_container_width_factor").value*getRect(document.querySelector("#my_yt_iframe")).width);
-		//console.log('src_left = ', src_left);
+		//console.log('src_left =', src_left);
 	} else {
 		src_left = getRect(document.querySelector("#my_yt_iframe")).left + document.querySelector("#input_src_container_left_factor").value*getRect(document.querySelector("#my_yt_iframe")).width;
-		//console.log('src_left = ', src_left);
+		//console.log('src_left =', src_left);
 	}
 
 	dst_width = document.querySelector("#input_dst_container_width_factor").value*getRect(document.querySelector("#my_yt_iframe")).width;
-	//console.log('dst_width = ', dst_width);
+	//console.log('dst_width =', dst_width);
 		
 	dst_height = document.querySelector("#input_dst_container_height_factor").value*getRect(document.querySelector("#my_yt_iframe")).height;
-	//console.log('dst_height = ', dst_height);
+	//console.log('dst_height =', dst_height);
 
 	dst_top = getRect(document.querySelector("#my_yt_iframe")).top + document.querySelector("#input_dst_container_top_factor").value*getRect(document.querySelector("#my_yt_iframe")).height;
-	//console.log('dst_top = ', dst_top);
+	//console.log('dst_top =', dst_top);
 
 	if (document.querySelector("#checkbox_centerize_dst").checked) {
 		dst_left = getRect(document.querySelector("#my_yt_iframe")).left + 0.5*(getRect(document.querySelector("#my_yt_iframe")).width - document.querySelector("#input_dst_container_width_factor").value*getRect(document.querySelector("#my_yt_iframe")).width);
-		//console.log('dst_left = ', dst_left);
+		//console.log('dst_left =', dst_left);
 	} else {
 		dst_left = getRect(document.querySelector("#my_yt_iframe")).left + document.querySelector("#input_dst_container_left_factor").value*getRect(document.querySelector("#my_yt_iframe")).width;
-		//console.log('dst_left = ', dst_left);
+		//console.log('dst_left =', dst_left);
 	}
 
 	return {
@@ -1311,7 +2904,7 @@ function regenerate_textarea() {
 				})
 				.offset({top:textarea_rect.src_top, left:textarea_rect.src_left})
 
-			src = select_src_dialect.value.split('-')[0];
+			src = document.querySelector("#select_src_dialect").value.split('-')[0];
 			console.log('src =', src);
 			if (timestamped_sample_text && src) var tt_src = gtranslate(timestamped_sample_text, 'en', src).then((result => {
 				result = result.replace(/(\d+),(\d+)/g, '$1.$2');
@@ -1336,21 +2929,21 @@ function regenerate_textarea() {
 				result = formatTranscript(result);
 				result = result.replace(/\n\s*$/, '');
 				result = removeEmptyLines(result);
-				console.log('result =', result);
+				//console.log('result =', result);
 				src_timestamped_sample_text = result;
 
 				show_timestamp_src = document.querySelector("#checkbox_show_timestamp_src").checked;
-				console.log('show_timestamp_src = ', show_timestamp_src);
+				//console.log('show_timestamp_src =', show_timestamp_src);
 
 				if (src_timestamped_sample_text) {
 					show_timestamp_src = document.querySelector("#checkbox_show_timestamp_src").checked;
 					saveData('show_timestamp_src', show_timestamp_src);
 					if (document.querySelector("#checkbox_show_timestamp_src").checked) {
 						document.querySelector("#src_textarea").value = src_timestamped_sample_text;
-						console.log('src_timestamped_sample_text = ', src_timestamped_sample_text);
+						//console.log('src_timestamped_sample_text =', src_timestamped_sample_text);
 					} else {
 						document.querySelector("#src_textarea").value = removeTimestamps(src_timestamped_sample_text);
-						console.log('removeTimestamps(src_timestamped_sample_text) = ', removeTimestamps(src_timestamped_sample_text));
+						//console.log('removeTimestamps(src_timestamped_sample_text) =', removeTimestamps(src_timestamped_sample_text));
 					}
 				}
 			}));
@@ -1414,10 +3007,9 @@ function regenerate_textarea() {
 				})
 				.offset({top:textarea_rect.dst_top, left:textarea_rect.dst_left})
 
-			dst = select_dst_dialect.value.split('-')[0];
-			console.log('dst = ', dst);
+			dst = document.querySelector("#select_dst_dialect").value.split('-')[0];
+			console.log('dst =', dst);
 			if (timestamped_sample_text && dst) var tt_dst = gtranslate(timestamped_sample_text, 'en', dst).then((result => {
-				result = result.replace();
 				result = result.replace(/(\d+),(\d+)/g, '$1.$2');
 				result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
 				result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
@@ -1436,21 +3028,21 @@ function regenerate_textarea() {
 				result = convertDatesToISOFormat(result);
 				result = formatTranscript(result);
 				result = result.replace(/\n\s*$/, '');
-				//console.log('result = ', result);
+				//console.log('result =', result);
 				dst_timestamped_sample_text = result;
 
 				show_timestamp_dst = document.querySelector("#checkbox_show_timestamp_dst").checked;
-				console.log('show_timestamp_dst = ', show_timestamp_dst);
+				//console.log('show_timestamp_dst =', show_timestamp_dst);
 
 				if (dst_timestamped_sample_text) {
 					show_timestamp_dst = document.querySelector("#checkbox_show_timestamp_dst").checked;
 					saveData('show_timestamp_dst', show_timestamp_dst);
 					if (document.querySelector("#checkbox_show_timestamp_dst").checked) {
 						document.querySelector("#dst_textarea").value = dst_timestamped_sample_text;
-						console.log('dst_timestamped_sample_text = ', dst_timestamped_sample_text);
+						//console.log('dst_timestamped_sample_text =', dst_timestamped_sample_text);
 					} else {
 						document.querySelector("#dst_textarea").value = removeTimestamps(dst_timestamped_sample_text);
-						console.log('removeTimestamps(dst_timestamped_sample_text) = ', removeTimestamps(dst_timestamped_sample_text));
+						//console.log('removeTimestamps(dst_timestamped_sample_text) =', removeTimestamps(dst_timestamped_sample_text));
 					}
 				}
 			}));
@@ -1527,12 +3119,7 @@ function create_modal_text_area() {
 			console.log('src_textarea_container has already exist');
 		}
 
-
-		//document.querySelector("#src_textarea").value = 'src = ' + src;
-
-
 		if (timestamped_sample_text && src) var tt_src = gtranslate(timestamped_sample_text, 'en', src).then((result => {
-			result = result.replace();
 			result = result.replace(/(\d+),(\d+)/g, '$1.$2');
 			result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
 			result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
@@ -1551,18 +3138,18 @@ function create_modal_text_area() {
 			result = convertDatesToISOFormat(result);
 			result = formatTranscript(result);
 			result = result.replace(/\n\s*$/, '');
-			//console.log('result = ', result);
+			//console.log('result =', result);
 			src_timestamped_sample_text = result;
 
 			show_timestamp_src = document.querySelector("#checkbox_show_timestamp_src").checked;
 			saveData('show_timestamp_src', show_timestamp_src);
-			console.log('show_timestamp_src = ', show_timestamp_src);
+			//console.log('show_timestamp_src =', show_timestamp_src);
 			if (document.querySelector("#checkbox_show_timestamp_src").checked) {
 				document.querySelector("#src_textarea").value = src_timestamped_sample_text;
-				console.log('src_timestamped_sample_text = ', src_timestamped_sample_text);
+				//console.log('src_timestamped_sample_text =', src_timestamped_sample_text);
 			} else {
 				document.querySelector("#src_textarea").value = removeTimestamps(src_timestamped_sample_text);
-				console.log('removeTimestamps(src_timestamped_sample_text) = ', removeTimestamps(src_timestamped_sample_text));
+				//console.log('removeTimestamps(src_timestamped_sample_text) =', removeTimestamps(src_timestamped_sample_text));
 			}
 
 		}));
@@ -1591,25 +3178,66 @@ function create_modal_text_area() {
 			video_info = getVideoPlayerInfo();
 			if (video_info) {
 				src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/video_info.width;
-				//console.log('src_container_width_factor = ', src_container_width_factor);
+				//console.log('src_container_width_factor =', src_container_width_factor);
 				document.querySelector("#input_src_container_width_factor").value = src_container_width_factor;
-				saveData("src_container_width_factor", src_container_width_factor);
+				//saveData("src_container_width_factor", src_container_width_factor);
 
 				src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/video_info.height;
-				//console.log('src_container_height_factor = ', src_container_height_factor);
+				//console.log('src_container_height_factor =', src_container_height_factor);
 				document.querySelector("#input_src_container_height_factor").value = src_container_height_factor;
-				saveData("src_container_height_factor", src_container_height_factor);
+				//saveData("src_container_height_factor", src_container_height_factor);
 			} else {
 				src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/window.innerWidth;
-				//console.log('src_container_width_factor = ', src_container_width_factor);
+				//console.log('src_container_width_factor =', src_container_width_factor);
 				document.querySelector("#input_src_container_width_factor").value = src_container_width_factor;
-				saveData("src_container_width_factor", src_container_width_factor);
+				//saveData("src_container_width_factor", src_container_width_factor);
 
 				src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/window.innerHeight;
-				//console.log('src_container_height_factor = ', src_container_height_factor);
+				//console.log('src_container_height_factor =', src_container_height_factor);
 				document.querySelector("#input_src_container_height_factor").value = src_container_height_factor;
-				saveData("src_container_height_factor", src_container_height_factor);
+				//saveData("src_container_height_factor", src_container_height_factor);
 			}
+
+			if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
+				centerize_src = false;
+				saveData('centerize_src', centerize_src);
+				document.querySelector("#checkbox_centerize_src").checked = centerize_src;
+			}
+
+			chrome.storage.local.get(['recognizing'], (result) => {
+				if (chrome.runtime.lastError) {
+					console.error("Error retrieving data: ", chrome.runtime.lastError);
+					return;
+				}
+				console.log('result =', result);
+				if (typeof result.recognizing === 'undefined') {
+					recognizing = false;
+				} else {
+					recognizing = result.recognizing;
+				}
+				console.log('recognizing =', recognizing);
+				if (recognizing) {
+					// SENDING MESSAGES TO background.js
+					chrome.runtime.sendMessage({
+						cmd: 'changed_src_container_width_factor',
+						data: {
+							value: src_container_width_factor
+						}, function(response) {
+							console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
+						}
+					});
+					chrome.runtime.sendMessage({
+						cmd: 'changed_src_container_height_factor',
+						data: {
+							value: src_container_height_factor
+						}, function(response) {
+							console.log('response.status =', response.status);
+						}
+					});
+				} else {
+					saveAllSettings();
+				}
+			});
 		});
 
 		document.querySelector("#src_textarea").offsetParent.ondrag = (function(){
@@ -1626,33 +3254,74 @@ function create_modal_text_area() {
 					src_container_top_factor = 0;
 				}
 				document.querySelector("#input_src_container_top_factor").value = src_container_top_factor;
-				//console.log('src_container_top_factor = ', src_container_top_factor);
-				saveData("src_container_top_factor", src_container_top_factor);
+				//console.log('src_container_top_factor =', src_container_top_factor);
+				//saveData("src_container_top_factor", src_container_top_factor);
 
 				src_container_left_factor = (getRect(document.querySelector("#src_textarea_container")).left - video_info.left)/video_info.width;
 				if (src_container_left_factor <= 0) {
 					src_container_left_factor = 0;
 				}
 				document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
-				//console.log('src_container_left_factor = ', src_container_left_factor);
-				saveData("src_container_left_factor", src_container_left_factor);
+				//console.log('src_container_left_factor =', src_container_left_factor);
+				//saveData("src_container_left_factor", src_container_left_factor);
 			} else {
 				src_container_top_factor = getRect(document.querySelector("#src_textarea_container")).top/window.innerHeight;
 				if (src_container_top_factor <= 0) {
 					src_container_top_factor = 0;
 				}
 				document.querySelector("#input_src_container_top_factor").value = src_container_top_factor;
-				//console.log('src_container_top_factor = ', src_container_top_factor);
-				saveData("src_container_top_factor", src_container_top_factor);
+				//console.log('src_container_top_factor =', src_container_top_factor);
+				//saveData("src_container_top_factor", src_container_top_factor);
 
 				src_container_left_factor = getRect(document.querySelector("#src_textarea_container")).left/window.innerWidth;
 				if (src_container_left_factor <= 0) {
 					src_container_left_factor = 0;
 				}
 				document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
-				//console.log('src_container_left_factor = ', src_container_left_factor);
-				saveData("src_container_left_factor", src_container_left_factor);
+				//console.log('src_container_left_factor =', src_container_left_factor);
+				//saveData("src_container_left_factor", src_container_left_factor);
 			}
+
+			if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
+				centerize_src = false;
+				saveData('centerize_src', centerize_src);
+				document.querySelector("#checkbox_centerize_src").checked = centerize_src;
+			}
+
+			chrome.storage.local.get(['recognizing'], (result) => {
+				if (chrome.runtime.lastError) {
+					console.error("Error retrieving data: ", chrome.runtime.lastError);
+					return;
+				}
+				console.log('result =', result);
+				if (typeof result.recognizing === 'undefined') {
+					recognizing = false;
+				} else {
+					recognizing = result.recognizing;
+				}
+				console.log('recognizing =', recognizing);
+				if (recognizing) {
+					// SENDING MESSAGES TO background.js
+					chrome.runtime.sendMessage({
+						cmd: 'changed_src_container_top_factor',
+						data: {
+							value: src_container_top_factor
+						}, function(response) {
+							console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
+						}
+					});
+					chrome.runtime.sendMessage({
+						cmd: 'changed_src_container_left_factor',
+						data: {
+							value: src_container_left_factor
+						}, function(response) {
+							console.log('response.status =', response.status);
+						}
+					});
+				} else {
+					saveAllSettings();
+				}
+			});
 		});
 	} else {
 		saveData("show_src", show_src);
@@ -1698,11 +3367,7 @@ function create_modal_text_area() {
 		}
 
 
-		//document.querySelector("#dst_textarea").value = 'dst = ' + dst;
-
-
 		if (timestamped_sample_text && dst) var tt_dst = gtranslate(timestamped_sample_text, 'en', dst).then((result => {
-			result = result.replace();
 			result = result.replace(/(\d+),(\d+)/g, '$1.$2');
 			result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
 			result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
@@ -1721,18 +3386,18 @@ function create_modal_text_area() {
 			result = convertDatesToISOFormat(result);
 			result = formatTranscript(result);
 			result = result.replace(/\n\s*$/, '');
-			//console.log('result = ', result);
+			//console.log('result =', result);
 			dst_timestamped_sample_text = result;
 
 			show_timestamp_dst = document.querySelector("#checkbox_show_timestamp_dst").checked;
 			saveData('show_timestamp_dst', show_timestamp_dst);
-			console.log('show_timestamp_dst = ', show_timestamp_dst);
+			//console.log('show_timestamp_dst =', show_timestamp_dst);
 			if (document.querySelector("#checkbox_show_timestamp_dst").checked) {
 				document.querySelector("#dst_textarea").value = dst_timestamped_sample_text;
-				console.log('dst_timestamped_sample_text = ', dst_timestamped_sample_text);
+				//console.log('dst_timestamped_sample_text =', dst_timestamped_sample_text);
 			} else {
 				document.querySelector("#dst_textarea").value = removeTimestamps(dst_timestamped_sample_text);
-				console.log('removeTimestamps(dst_timestamped_sample_text) = ', removeTimestamps(dst_timestamped_sample_text));
+				//console.log('removeTimestamps(dst_timestamped_sample_text) =', removeTimestamps(dst_timestamped_sample_text));
 			}
 		}));
 
@@ -1750,36 +3415,77 @@ function create_modal_text_area() {
 		document.querySelector("#dst_textarea").style.fontSize = String(dst_font_size)+'px';
 
 		document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
-			document.querySelector("#dst_textarea").style.position='absolute';
-			document.querySelector("#dst_textarea").style.width = '100%';
-			document.querySelector("#dst_textarea").style.height = '100%';
-
 			if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
 				document.querySelector("#checkbox_centerize_dst").checked = false;
 			}
 
+			document.querySelector("#dst_textarea").style.position='absolute';
+			document.querySelector("#dst_textarea").style.width = '100%';
+			document.querySelector("#dst_textarea").style.height = '100%';
+
 			video_info = getVideoPlayerInfo();
 			if (video_info) {
 				dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/video_info.width;
-				//console.log('dst_container_width_factor = ', dst_container_width_factor);
+				//console.log('dst_container_width_factor =', dst_container_width_factor);
 				document.querySelector("#input_dst_container_width_factor").value = dst_container_width_factor;
-				saveData("dst_container_width_factor", dst_container_width_factor);
+				//saveData("dst_container_width_factor", dst_container_width_factor);
 
 				dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/video_info.height;
-				//console.log('dst_container_height_factor = ', dst_container_height_factor);
+				//console.log('dst_container_height_factor =', dst_container_height_factor);
 				document.querySelector("#input_dst_container_height_factor").value = dst_container_height_factor;
-				saveData("dst_container_height_factor", dst_container_height_factor);
+				//saveData("dst_container_height_factor", dst_container_height_factor);
 			} else {
 				dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/window.innerWidth;
-				//console.log('dst_container_width_factor = ', dst_container_width_factor);
+				//console.log('dst_container_width_factor =', dst_container_width_factor);
 				document.querySelector("#input_dst_container_width_factor").value = dst_container_width_factor;
-				saveData("dst_container_width_factor", dst_container_width_factor);
+				//saveData("dst_container_width_factor", dst_container_width_factor);
 
 				dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/window.innerHeight;
-				//console.log('dst_container_height_factor = ', dst_container_height_factor);
+				//console.log('dst_container_height_factor =', dst_container_height_factor);
 				document.querySelector("#input_dst_container_height_factor").value = dst_container_height_factor;
-				saveData("dst_container_height_factor", dst_container_height_factor);
+				//saveData("dst_container_height_factor", dst_container_height_factor);
 			}
+
+			if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+				centerize_dst = false;
+				saveData('centerize_dst', centerize_dst);
+				document.querySelector("#checkbox_centerize_dst").checked = centerize_dst;
+			}
+
+			chrome.storage.local.get(['recognizing'], (result) => {
+				if (chrome.runtime.lastError) {
+					console.error("Error retrieving data: ", chrome.runtime.lastError);
+					return;
+				}
+				console.log('result =', result);
+				if (typeof result.recognizing === 'undefined') {
+					recognizing = false;
+				} else {
+					recognizing = result.recognizing;
+				}
+				console.log('recognizing =', recognizing);
+				if (recognizing) {
+					// SENDING MESSAGES TO background.js
+					chrome.runtime.sendMessage({
+						cmd: 'changed_dst_container_width_factor',
+						data: {
+							value: dst_container_width_factor
+						}, function(response) {
+							console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
+						}
+					});
+					chrome.runtime.sendMessage({
+						cmd: 'changed_dst_container_height_factor',
+						data: {
+							value: dst_container_height_factor
+						}, function(response) {
+							console.log('response.status =', response.status);
+						}
+					});
+				} else {
+					saveAllSettings();
+				}
+			});
 		});
 
 		document.querySelector("#dst_textarea").offsetParent.ondrag = (function(){
@@ -1796,33 +3502,74 @@ function create_modal_text_area() {
 					dst_container_top_factor = 0;
 				}
 				document.querySelector("#input_dst_container_top_factor").value = dst_container_top_factor;
-				//console.log('dst_container_top_factor = ', dst_container_top_factor);
-				saveData("dst_container_top_factor", dst_container_top_factor);
+				//console.log('dst_container_top_factor =', dst_container_top_factor);
+				//saveData("dst_container_top_factor", dst_container_top_factor);
 
 				dst_container_left_factor = (getRect(document.querySelector("#dst_textarea_container")).left - video_info.left)/video_info.width;
 				if (dst_container_left_factor <= 0) {
 					dst_container_left_factor = 0;
 				}
 				document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
-				//console.log('dst_container_left_factor = ', dst_container_left_factor);
-				saveData("dst_container_left_factor", dst_container_left_factor);
+				//console.log('dst_container_left_factor =', dst_container_left_factor);
+				//saveData("dst_container_left_factor", dst_container_left_factor);
 			} else {
 				dst_container_top_factor = getRect(document.querySelector("#dst_textarea_container")).top/window.innerHeight;
 				if (dst_container_top_factor <= 0) {
 					dst_container_top_factor = 0;
 				}
 				document.querySelector("#input_dst_container_top_factor").value = dst_container_top_factor;
-				//console.log('dst_container_top_factor = ', dst_container_top_factor);
-				saveData("dst_container_top_factor", dst_container_top_factor);
+				//console.log('dst_container_top_factor =', dst_container_top_factor);
+				//saveData("dst_container_top_factor", dst_container_top_factor);
 
 				dst_container_left_factor = getRect(document.querySelector("#dst_textarea_container")).left/window.innerWidth;
 				if (dst_container_left_factor <= 0) {
 					dst_container_left_factor = 0;
 				}
 				document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
-				//console.log('dst_container_left_factor = ', dst_container_left_factor);
-				saveData("dst_container_left_factor", dst_container_left_factor);
+				//console.log('dst_container_left_factor =', dst_container_left_factor);
+				//saveData("dst_container_left_factor", dst_container_left_factor);
 			}
+
+			if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+				centerize_dst = false;
+				saveData('centerize_dst', centerize_dst);
+				document.querySelector("#checkbox_centerize_dst").checked = centerize_dst;
+			}
+
+			chrome.storage.local.get(['recognizing'], (result) => {
+				if (chrome.runtime.lastError) {
+					console.error("Error retrieving data: ", chrome.runtime.lastError);
+					return;
+				}
+				console.log('result =', result);
+				if (typeof result.recognizing === 'undefined') {
+					recognizing = false;
+				} else {
+					recognizing = result.recognizing;
+				}
+				console.log('recognizing =', recognizing);
+				if (recognizing) {
+					// SENDING MESSAGES TO background.js
+					chrome.runtime.sendMessage({
+						cmd: 'changed_dst_container_top_factor',
+						data: {
+							value: dst_container_top_factor
+						}, function(response) {
+							console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
+						}
+					});
+					chrome.runtime.sendMessage({
+						cmd: 'changed_dst_container_left_factor',
+						data: {
+							value: dst_container_left_factor
+						}, function(response) {
+							console.log('response.status =', response.status);
+						}
+					});
+				} else {
+					saveAllSettings();
+				}
+			});
 		});
 	} else {
 		saveData("show_dst", show_dst);
@@ -1836,7 +3583,7 @@ function create_modal_text_area() {
 
 function getVideoPlayerInfo() {
 	var elements = document.querySelectorAll('video, iframe');
-	//console.log('elements = ',  elements);
+	//console.log('elements =',  elements);
 	var largestVideoElement = null;
 	var largestSize = 0;
 
@@ -1851,7 +3598,7 @@ function getVideoPlayerInfo() {
 			}
 			var videoPlayerID = elements[i].id;
 			var style = window.getComputedStyle(elements[i]);
-			//console.log('videoPlayerID = ',  videoPlayerID);
+			//console.log('videoPlayerID =',  videoPlayerID);
 			var position = style.position !== 'static' ? style.position : 'relative';
 			var zIndex = style.zIndex !== 'auto' && style.zIndex !== '0' ? parseInt(style.zIndex) : 1;
 
@@ -1993,7 +3740,7 @@ var gtranslate = async (t, src, dst) => {
 
 
 function capitalizeSentences(transcription) {
-	//console.log('transcription = ', transcription);
+	//console.log('transcription =', transcription);
 
     // Split the transcription into individual lines
     const lines = transcription.split('\n');
@@ -2005,8 +3752,8 @@ function capitalizeSentences(transcription) {
         //const parts = lines[i].split(' : ');
 		const colon = lines[i].match(/\s*: /);
 		const parts = lines[i].split(colon);
-		//console.log('parts[0] = ', parts[0]);
-		//console.log('parts[1] = ', parts[1]);
+		//console.log('parts[0] =', parts[0]);
+		//console.log('parts[1] =', parts[1]);
 
         // If the line is in the correct format (startTimestamp : sentence)
         if (parts.length === 2) {
@@ -2016,13 +3763,13 @@ function capitalizeSentences(transcription) {
             // Replace the original sentence with the capitalized one
             //lines[i] = parts[0] + ' : ' + capitalizedSentence;
 			lines[i] = parts[0] + colon + capitalizedSentence;
-			//console.log('i = ', i );
-			//console.log('lines[i] = ', lines[i] );
+			//console.log('i =', i );
+			//console.log('lines[i] =', lines[i] );
         }
     }
     
     // Join the lines back into a single string and return
-	//console.log('lines.join("\n") = ', lines.join('\n'));
+	//console.log('lines.join("\n") =', lines.join('\n'));
     return lines.join('\n');
 }
 
@@ -2074,70 +3821,39 @@ function formatTranscript(transcript) {
 function createTimeStampedSampleText() {
 	end_time_1 = new Date(start_time_1.getTime()); // Create a new Date object based on start_time_1
 	end_time_1.setSeconds(end_time_1.getSeconds() + 10);
-	//console.log('end_time_1 = ', end_time_1);
+	//console.log('end_time_1 =', end_time_1);
 
 	startTimestamp1 = formatTimestampToISOLocalString(start_time_1);
-	//console.log('startTimestamp1 = ', startTimestamp1);
+	//console.log('startTimestamp1 =', startTimestamp1);
 
 	endTimestamp1 = formatTimestampToISOLocalString(end_time_1);
-	//console.log('endTimestamp1 = ', endTimestamp1);
+	//console.log('endTimestamp1 =', endTimestamp1);
 
 	timestamped_sample_text_1 = startTimestamp1 + ' ' + timestamp_separator + ' ' + endTimestamp1 + ' : ' + sample_text_1;
-	//console.log('timestamped_sample_text_1 = ', timestamped_sample_text_1);
+	//console.log('timestamped_sample_text_1 =', timestamped_sample_text_1);
 
 	start_time_2 = new Date(end_time_1.getTime()); // Create a new Date object based on end_time_1
 	start_time_2.setSeconds(start_time_2.getSeconds() + 30);
-	//console.log('start_time_2 = ', start_time_2);
+	//console.log('start_time_2 =', start_time_2);
 
 	end_time_2 = new Date(start_time_2.getTime()); // Create a new Date object based on start_time
 	end_time_2.setSeconds(end_time_2.getSeconds() + 10);
-	//console.log('end_time_2 = ', end_time_2);
+	//console.log('end_time_2 =', end_time_2);
 
 	startTimestamp2 = formatTimestampToISOLocalString(start_time_2);
-	//console.log('startTimestamp2 = ', startTimestamp2);
+	//console.log('startTimestamp2 =', startTimestamp2);
 
 	endTimestamp2 = formatTimestampToISOLocalString(end_time_2);
-	//console.log('endTimestamp2 = ', endTimestamp2);
+	//console.log('endTimestamp2 =', endTimestamp2);
 
 	timestamped_sample_text_2 = startTimestamp2 + ' ' + timestamp_separator + ' ' + endTimestamp2 + ' : ' + sample_text_2;
-	//console.log('timestamped_sample_text_2 = ', timestamped_sample_text_2);
+	//console.log('timestamped_sample_text_2 =', timestamped_sample_text_2);
 
 	timestamped_sample_text = timestamped_sample_text_1 + "\n" + timestamped_sample_text_2;
-	//console.log('timestamped_sample_text = ', timestamped_sample_text);
+	//console.log('timestamped_sample_text =', timestamped_sample_text);
 
 	return timestamped_sample_text;
 }
-
-/*
-var debounceTimeout;
-function saveData(key, data) {
-    clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(() => {
-        chrome.storage.sync.set({ [key]: data }, () => {
-            console.log(key + ' data saved.');
-            // Adding a small delay before checking the data
-            setTimeout(() => {
-                verifyData(key, data);
-            }, 100); // Adjust the delay as needed
-        });
-    }, 1000); // Adjust the timeout as needed
-}
-
-
-function verifyData(key, expectedData) {
-    chrome.storage.sync.get(key, (result) => {
-        if (result[key] === expectedData) {
-            console.log(key + ' data verified.');
-			console.log('key =', key);
-			console.log('expectedData =', expectedData);
-        } else {
-            console.log(key + ' data mismatch. Expected: ' + expectedData + ', Found: ' + result[key]);
-			console.log('key =', key);
-			console.log('expectedData =', expectedData);
-        }
-    });
-}
-*/
 
 
 var debounceTimeout;
@@ -2145,10 +3861,10 @@ function saveData(key, data) {
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
         // Retrieve current settings
-        chrome.storage.sync.get(['settings'], (result) => {
+        chrome.storage.local.get(['settings'], (result) => {
             let settings = result.settings || {};
             settings[key] = data;
-            chrome.storage.sync.set({ 'settings': settings }, () => {
+            chrome.storage.local.set({ 'settings': settings }, () => {
                 console.log(key + ' data saved within settings.');
                 setTimeout(() => {
                     verifyData(key, data, 'settings');
@@ -2160,7 +3876,7 @@ function saveData(key, data) {
 
 
 function verifyData(key, data, parentKey = null) {
-    chrome.storage.sync.get([parentKey || key], (result) => {
+    chrome.storage.local.get([parentKey || key], (result) => {
         if (parentKey) {
             console.log(result[parentKey][key] === data ? 'Data verified.' : 'Data verification failed.');
         } else {
@@ -2174,8 +3890,8 @@ var Timeout;
 function checkData(key, data, parentKey = null) {
     clearTimeout(Timeout);
     Timeout = setTimeout(() => {
-		//chrome.storage.sync.get([key], function(result) {
-		chrome.storage.sync.get([parentKey || key], (result) => {
+		//chrome.storage.local.get([key], function(result) {
+		chrome.storage.local.get([parentKey || key], (result) => {
 			if (parentKey) {
 				data = result[parentKey][key];
 				console.log(result[parentKey][key] === data ? 'Data verified.' : 'Data verification failed.');
@@ -2195,7 +3911,7 @@ function checkData(key, data, parentKey = null) {
 
 
 function getData(key, callback) {
-    chrome.storage.sync.get(['settings'], (result) => {
+    chrome.storage.local.get(['settings'], (result) => {
         if (chrome.runtime.lastError) {
             console.error("Error retrieving data: ", chrome.runtime.lastError);
             return;
@@ -2207,14 +3923,50 @@ function getData(key, callback) {
 }
 
 
-function saveAll() {
+function getRecognizingStatus() {
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+			return recognizing;
+		} else {
+			recognizing = result.recognizing;
+			return recognizing;
+		}
+    });
+}
+
+
+function saveSetting(key, value, callback) {
+    let setting = {};
+    setting[key] = value;
+    chrome.storage.local.set(setting, function() {
+        if (chrome.runtime.lastError) {
+            console.error("Error setting data for key", key, ":", chrome.runtime.lastError);
+        } else {
+            console.log(`save ${key} = `, value);
+        }
+        if (callback) {
+            callback();
+        }
+    });
+}
+
+
+function saveAllSettings() {
     const settings = {
         'src': src,
-        'dst': dst,
         'src_language_index': src_language_index,
         'src_dialect': src_dialect,
+        'src_dialect_index': src_dialect_index,
+        'dst': dst,
         'dst_language_index': dst_language_index,
         'dst_dialect': dst_dialect,
+        'dst_dialect_index': dst_dialect_index,
         'show_src': show_src,
         'show_dst': show_dst,
         'show_timestamp_src': show_timestamp_src,
@@ -2246,15 +3998,21 @@ function saveAll() {
         'dst_container_opacity': dst_container_opacity,
     };
 
-    chrome.storage.sync.set(settings, function() {
-        if (chrome.runtime.lastError) {
-            console.error("Error setting data: ", chrome.runtime.lastError);
+    const keys = Object.keys(settings);
+    let index = 0;
+
+    function saveNext() {
+        if (index < keys.length) {
+            const key = keys[index];
+            const value = settings[key];
+            saveSetting(key, value, function() {
+                index++;
+                setTimeout(saveNext, 100); // Adjust the delay as necessary
+            });
         } else {
-            // Log saved values for debugging
-            for (const [key, value] of Object.entries(settings)) {
-                console.log(`save ${key} = `, value);
-            }
-            console.log("Data saved successfully.");
+            console.log("All data saved successfully.");
         }
-    });
+    }
+
+    saveNext();
 }
