@@ -472,12 +472,12 @@ function onLoad() {
 /*
 								//saveTemporaryTranscript(unique_text) for debug;
 								saveTranscriptAsFile(unique_text, 'tmp_transcript.txt')
+*/
 								if (show_timestamp_src) {
 									saveTranscript(unique_text);
 								} else {
 									saveTranscript(removeTimestamps(unique_text));
 								}
-*/
 								// SAVING TRANSLATION
 								var tt = translateText(unique_text, src, dst).then(result => {
 									timestamped_translated_final_and_interim_transcript = result + '\n';
