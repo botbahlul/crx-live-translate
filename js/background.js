@@ -1,8 +1,8 @@
 var recognizing = false;
 function onLoad() {
 	var recognition, recognizing;
-	var src, dst, src_dialect, dst_dialect;
-	var show_src, show_dst, show_timestamp_src, show_timestamp_dst;
+	var src, src_dialect, show_src, show_timestamp_src, save_src;
+	var dst, dst_dialect, show_dst, show_timestamp_dst, save_dst;
 	var icon_text_listening, icon_text_no_mic, icon_text_blocked, icon_text_blocked, icon_text_denied;
 
 	var src_selected_font, src_font_size, src_font_color;
@@ -30,9 +30,8 @@ function onLoad() {
 
 	var settings_has_changed = false;
 
-	var changed_src_dialect, changed_dst_dialect;
-	var changed_show_src, changed_show_dst;
-	var changed_show_timestamp_src, changed_show_timestamp_dst;
+	var changed_src_dialect, changed_show_src, changed_show_timestamp_src, changed_save_src;
+	var changed_dst_dialect, changed_show_dst, changed_show_timestamp_dst, changed_save_dst;
 	var changed_pause_threshold;
 
 	var changed_src_selected_font, changed_src_font_size, changed_src_font_color;
@@ -84,12 +83,14 @@ function onLoad() {
 
 
 	console.log('Reading all saved settings');
-	chrome.storage.local.get(['src_dialect', 'dst_dialect', 'show_src', 'show_dst', 
-			'show_timestamp_src', 'show_timestamp_dst', 'pause_threshold', 
+	chrome.storage.local.get([
+			'src_dialect', 'show_src', 'show_timestamp_src', 'save_src', 
 			'src_selected_font', 'src_font_size', 'src_font_color', 'src_container_width_factor', 'src_container_height_factor', 
 			'src_container_top_factor', 'src_container_left_factor', 'centerize_src', 'src_container_color', 'src_container_opacity', 
+			'dst_dialect', 'show_dst', 'show_timestamp_dst', 'save_dst', 
 			'dst_selected_font', 'dst_font_size', 'dst_font_color', 'dst_container_width_factor', 'dst_container_height_factor', 
-			'dst_container_top_factor', 'dst_container_left_factor', 'centerize_dst', 'dst_container_color', 'dst_container_opacity'], function(result) {
+			'dst_container_top_factor', 'dst_container_left_factor', 'centerize_dst', 'dst_container_color', 'dst_container_opacity', 
+			'pause_threshold'], function(result) {
 
 
 		console.log('onLoad: recognizing =', recognizing);
@@ -147,25 +148,10 @@ function onLoad() {
 			if (typeof result.show_src === "undefined") show_src = true;
 			//console.log('show_src =', show_src);
 
-			show_dst = result.show_dst;
-			//console.log('result.show_dst =', result.show_dst);
-			if (typeof result.show_dst === 'undefined') show_dst = true;
-			//console.log('show_dst =', show_dst);
-
 			show_timestamp_src = result.show_timestamp_src;
 			//console.log('result.show_timestamp_src =', result.show_timestamp_dst);
 			if (typeof result.show_timestamp_src === 'undefined') show_timestamp_src = true;
 			//console.log('show_timestamp_dst =', show_timestamp_dst);
-
-			show_timestamp_dst = result.show_timestamp_dst;
-			//console.log('result.show_timestamp_dst', result.show_timestamp_dst);
-			if (typeof result.show_timestamp_dst === 'undefined') show_timestamp_dst = true;
-			//console.log('show_timestamp_dst', show_timestamp_dst);
-
-			pause_threshold = result.pause_threshold;
-			//console.log('result.pause_threshold =', result.pause_threshold);
-			if (!result.pause_threshold) pause_threshold = 5000;
-			//console.log('pause_threshold =', pause_threshold);
 
 			src_selected_font = result.src_selected_font;
 			//console.log('result.src_selected_font =', result.src_selected_font);
@@ -217,6 +203,21 @@ function onLoad() {
 			if (!result.src_container_opacity) src_container_opacity = 0.3;
 			//console.log('src_container_opacity =', src_container_opacity);
 
+			save_src = result.save_src;
+			//console.log('result.save_src =', result.save_src);
+			if (typeof result.save_src === "undefined") save_src = true;
+			//console.log('save_src =', save_src);
+
+
+			show_dst = result.show_dst;
+			//console.log('result.show_dst =', result.show_dst);
+			if (typeof result.show_dst === 'undefined') show_dst = true;
+			//console.log('show_dst =', show_dst);
+
+			show_timestamp_dst = result.show_timestamp_dst;
+			//console.log('result.show_timestamp_dst', result.show_timestamp_dst);
+			if (typeof result.show_timestamp_dst === 'undefined') show_timestamp_dst = true;
+			//console.log('show_timestamp_dst', show_timestamp_dst);
 
 			dst_selected_font = result.dst_selected_font;
 			//console.log('result.dst_selected_font =', result.dst_selected_font);
@@ -267,6 +268,16 @@ function onLoad() {
 			//console.log('result.dst_container_opacity =', result.dst_container_opacity);
 			if (!result.dst_container_opacity) dst_container_opacity = 0.3;
 			//console.log('dst_container_opacity =', dst_container_opacity);
+
+			save_dst = result.save_dst;
+			//console.log('result.save_dst =', result.save_dst);
+			if (typeof result.save_dst === "undefined") save_dst = true;
+			//console.log('save_dst =', save_dst);
+
+			pause_threshold = result.pause_threshold;
+			//console.log('result.pause_threshold =', result.pause_threshold);
+			if (!result.pause_threshold) pause_threshold = 5000;
+			//console.log('pause_threshold =', pause_threshold);
 
 			//saveAllChangedSettings();
 
@@ -435,10 +446,12 @@ function onLoad() {
 						console.log('recognition.onend: stopping because recognizing =', recognizing);
 
 						if (timestamped_final_and_interim_transcript) {
+
 							timestamped_final_and_interim_transcript = formatTranscript(timestamped_final_and_interim_transcript);
-							//console.log('t =', t);
+
 							// Split text into an array of lines
 							var lines = timestamped_final_and_interim_transcript.trim().split('\n');
+
 							var new_unique_lines = [];
 							var last_line;
 							var translated_last_line;
@@ -448,6 +461,7 @@ function onLoad() {
 								const timestamped_line = line.match(/(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*\.$/);
 								if (timestamped_line) {
 									new_unique_lines.push(line);
+								// Give timestamp to last interim transcript
 								} else {
 									if (line !== '' && line !== '.') {
 										line = line + '.';
@@ -461,6 +475,7 @@ function onLoad() {
 
 							//console.log('unique_text =', unique_text);
 							if (unique_text) {
+								// Move every timestamps to a new line for ISO Date format
 								unique_text = unique_text.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
 								unique_text = removeEmptySentences(unique_text);
 								unique_text = removePeriodOnlySentences(unique_text);
@@ -468,38 +483,46 @@ function onLoad() {
 								unique_text = unique_text + '\n';
 								//console.log('unique_text =', unique_text);
 
-								// SAVING TRANSCRIPTIONS
-/*
 								//saveTemporaryTranscript(unique_text) for debug;
-								saveTranscriptAsFile(unique_text, 'tmp_transcript.txt')
-*/
-								if (show_timestamp_src) {
-									saveTranscript(unique_text);
-								} else {
-									saveTranscript(removeTimestamps(unique_text));
-								}
-								// SAVING TRANSLATION
-								var tt = translateText(unique_text, src, dst).then(result => {
-									timestamped_translated_final_and_interim_transcript = result + '\n';
+								//saveTranscriptAsFile(unique_text, 'tmp_transcript.txt')
 
-									if (timestamped_translated_final_and_interim_transcript) {
-										timestamped_translated_final_and_interim_transcript = timestamped_translated_final_and_interim_transcript.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-										timestamped_translated_final_and_interim_transcript = timestamped_translated_final_and_interim_transcript.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-										timestamped_translated_final_and_interim_transcript = removeEmptySentences(timestamped_translated_final_and_interim_transcript);
-										timestamped_translated_final_and_interim_transcript = removePeriodOnlySentences(timestamped_translated_final_and_interim_transcript);
-
-										if (show_timestamp_dst) {
-											saveTranslatedTranscript(timestamped_translated_final_and_interim_transcript);
-										} else {
-											saveTranslatedTranscript(removeTimestamps(timestamped_translated_final_and_interim_transcript));
-										}
-										array_all_translated_final_transcripts = [];
-										timestamped_translated_final_and_interim_transcript = '';
+								// SAVING TRANSCRIPTIONS
+								if (save_src) {
+									if (show_timestamp_src) {
+										saveTranscript(unique_text);
+									} else {
+										saveTranscript(removeTimestamps(unique_text));
 									}
+								}
+								
 
-								}).catch(error => {
-									console.error('Error:', error);
-								});
+								// SAVING TRANSLATION
+								if (save_dst) {
+									var tt = translateText(unique_text, src, dst).then(result => {
+										timestamped_translated_final_and_interim_transcript = result + '\n';
+
+										if (timestamped_translated_final_and_interim_transcript) {
+											// Move every timestamps to a new line for ISO Date format
+											timestamped_translated_final_and_interim_transcript = timestamped_translated_final_and_interim_transcript.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+											// Move every timestamps to a new line for Local Date format
+											timestamped_translated_final_and_interim_transcript = timestamped_translated_final_and_interim_transcript.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+
+											timestamped_translated_final_and_interim_transcript = removeEmptySentences(timestamped_translated_final_and_interim_transcript);
+											timestamped_translated_final_and_interim_transcript = removePeriodOnlySentences(timestamped_translated_final_and_interim_transcript);
+
+											if (show_timestamp_dst) {
+												saveTranslatedTranscript(timestamped_translated_final_and_interim_transcript);
+											} else {
+												saveTranslatedTranscript(removeTimestamps(timestamped_translated_final_and_interim_transcript));
+											}
+											array_all_translated_final_transcripts = [];
+											timestamped_translated_final_and_interim_transcript = '';
+										}
+
+									}).catch(error => {
+										console.error('Error:', error);
+									});
+								}
 							}
 						}
 
@@ -592,6 +615,8 @@ function onLoad() {
 
 
 						if (show_dst) {
+							// IF WE TRANSLATE ALL OF unique_text WE WILL GET 400 RESPONSE CODE FROM GOOGLE TRANSLATE SERVER
+							// SO WE CAN ONLY TRANSLATE last_final_transcript + interim_transcript;
 							var transcript_to_translate = '';
 							if (array_all_final_transcripts.length > 0) {
 								array_all_final_transcripts = arrayRemoveDuplicates(array_all_final_transcripts);
@@ -605,48 +630,15 @@ function onLoad() {
 
 							if (transcript_to_translate) transcript_to_translate = transcript_to_translate.replace('undefined', '');
 
-							//var  t = unique_text; // CAN'T BE USED BECAUSE GOOGLE TRANSLATE SERVER WILL RESPOND WITH 403 AFTER SOME REQUESTS
+							//var  t = unique_text; // CAN'T BE USED BECAUSE GOOGLE TRANSLATE SERVER WILL RESPOND WITH 400 AFTER SOME REQUESTS
 							var t = transcript_to_translate;
 							if ((Date.now() - translate_time > 1000) && recognizing) {
 								if (t) {
 									var tt = gtranslate(t, src, dst).then(result => {
 										if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'block';
 										if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").style.display = 'inline-block';
-										// Replace commas with periods in timestamps
-										result = result.replace(/(\d+),(\d+)/g, '$1.$2');
-										// Remove spaces within timestamps for ISO Date format
-										result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
-										// Remove spaces within timestamps for Local Date format
-										result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
-										// Remove any spaces between the date components for ISO Date format
-										result = result.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
-										// Remove any spaces between the date components for Local Date format
-										result = result.replace(/(\d{2})-\s?(\d{2})-\s?(\d{4})/g, '$1-$2-$3');
-										// Ensure the timestamp format follows "yyyy-mm-dd hh:mm.ddd" format and remove spaces around the hyphens
-										result = result.replace(/(\d{4})\s*-\s*(\d{2})\s*-\s*(\d{2})/g, '$1-$2-$3');
-										// Ensure the timestamp format follows "dd-mm-yyyy hh:mm.ddd" format and remove spaces around the hyphens
-										result = result.replace(/(\d{2})\s*-\s*(\d{2})\s*-\s*(\d{5})/g, '$1-$2-$3');
-										// Remove any spaces around the colons in the time component.
-										result = result.replace(/(\d{2})\s*:\s*(\d{2})\s*:\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
-										// Replace the time_separator with correct strings "-->" for ISO Date format
-										result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
-										// Replace the time_separator with correct strings "-->" for Local Date format
-										result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{2}-\d{2}-\d{5} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
-										// Move every timestamps to a new line for Local Date format
-										result = result.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-										// Move every timestamps to a new line for ISO Date format
-										result = result.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
 
-										result = result.replace('.,', '.');
-										result = result.replace(',.', ',');
-										result = result.replace('. .', '.');
-
-										result = convertDatesToISOFormat(result);
 										result = formatTranscript(result);
-										// Remove last blank line
-										result = result.replace(/\n\s*$/, '');
-										result = removeEmptyLines(result);
-
 
 										if (result.match(/(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*\.\n/gm)) {
 											var buffer = getTimestampedLines(result);
@@ -664,6 +656,7 @@ function onLoad() {
 											var lines = displayed_translation.trim().split('\n');
 											var unique_lines = [...new Set(lines)];
 											var unique_text = unique_lines.join('\n');
+											// Remove periode only sentences
 											var interim_translation = result.replace(/^\d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*\.\n/gm, '');
 
 											if (!transcript_is_final) {
@@ -700,8 +693,8 @@ function onLoad() {
 				// WE NEED TO DO THIS chrome.runtime.onMessage.addListener() 'start' 'stop' AGAIN HERE TO SPEED UP THAT recognition.stop() PROCESS
 				chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 					console.log('onresult: message =', message);
-					sendResponse('OK from onresult');
 					if (message === 'stop') {
+						sendResponse('OK STOP from onresult');
 						recognizing = false;
 						try{
 							if (recognition) recognition.stop()
@@ -753,54 +746,6 @@ function onLoad() {
 							saveData('show_timestamp_src', show_timestamp_src);
 							regenerate_textarea();
 						}
-
-						if (variable_name === 'changed_dst_dialect') {
-							sendResponse({status: 'changed_dst_dialect processed'});
-							console.log('changed_dst_dialect =', variable_value);
-							dst_dialect = variable_value;
-							saveData('dst_dialect', dst_dialect);
-							dst = dst_dialect.split('-')[0];
-							saveData('dst', dst);
-							//regenerate_textarea();
-							recognition.lang = dst_dialect;
-							recognition.stop();
-							if (recognizing) {
-								icon_text_listening = src.toUpperCase() + ':' + dst.toUpperCase();
-								chrome.runtime.sendMessage({
-									cmd: 'icon_text_listening',
-									data: {
-										value: icon_text_listening
-									}, function(response) {
-										console.log('response.status =', response.status);
-									}
-								});
-							}
-						}
-
-						if (variable_name === 'changed_show_dst') {
-							sendResponse({status: 'changed_show_dst processed'});
-							console.log('changed_show_dst =', variable_value);
-							show_dst = variable_value;
-							saveData('show_dst', show_dst);
-							regenerate_textarea();
-						}
-
-						if (variable_name === 'changed_show_timestamp_dst') {
-							sendResponse({status: 'changed_show_timestamp_dst processed'});
-							console.log('changed_show_timestamp_dst =', variable_value);
-							show_timestamp_dst = variable_value;
-							saveData('show_timestamp_dst', show_timestamp_dst);
-							regenerate_textarea();
-						}
-
-						if (variable_name === 'changed_pause_threshold') {
-							sendResponse({status: 'changed_pause_threshold processed'});
-							console.log('changed_pause_threshold =', variable_value);
-							pause_threshold = variable_value;
-							saveData('pause_threshold', pause_threshold);
-							regenerate_textarea();
-						}
-
 
 
 						if (variable_name === 'changed_src_selected_font') {
@@ -893,6 +838,53 @@ function onLoad() {
 							regenerate_textarea();
 						}
 
+						if (variable_name === 'changed_save_src') {
+							sendResponse({status: 'changed_save_src processed'});
+							console.log('changed_save_src =', variable_value);
+							save_src = variable_value;
+							saveData('save_src', save_src);
+							regenerate_textarea();
+						}
+
+
+						if (variable_name === 'changed_dst_dialect') {
+							sendResponse({status: 'changed_dst_dialect processed'});
+							console.log('changed_dst_dialect =', variable_value);
+							dst_dialect = variable_value;
+							saveData('dst_dialect', dst_dialect);
+							dst = dst_dialect.split('-')[0];
+							saveData('dst', dst);
+							//regenerate_textarea();
+							recognition.lang = dst_dialect;
+							recognition.stop();
+							if (recognizing) {
+								icon_text_listening = src.toUpperCase() + ':' + dst.toUpperCase();
+								chrome.runtime.sendMessage({
+									cmd: 'icon_text_listening',
+									data: {
+										value: icon_text_listening
+									}, function(response) {
+										console.log('response.status =', response.status);
+									}
+								});
+							}
+						}
+
+						if (variable_name === 'changed_show_dst') {
+							sendResponse({status: 'changed_show_dst processed'});
+							console.log('changed_show_dst =', variable_value);
+							show_dst = variable_value;
+							saveData('show_dst', show_dst);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_show_timestamp_dst') {
+							sendResponse({status: 'changed_show_timestamp_dst processed'});
+							console.log('changed_show_timestamp_dst =', variable_value);
+							show_timestamp_dst = variable_value;
+							saveData('show_timestamp_dst', show_timestamp_dst);
+							regenerate_textarea();
+						}
 
 						if (variable_name === 'changed_dst_selected_font') {
 							sendResponse({status: 'changed_dst_selected_font processed'});
@@ -981,6 +973,22 @@ function onLoad() {
 							console.log('changed_dst_container_opacity =', variable_value);
 							dst_container_opacity = variable_value;
 							saveData('dst_container_opacity', dst_container_opacity);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_save_dst') {
+							sendResponse({status: 'changed_save_dst processed'});
+							console.log('changed_save_dst =', variable_value);
+							save_dst = variable_value;
+							saveData('save_dst', save_dst);
+							regenerate_textarea();
+						}
+
+						if (variable_name === 'changed_pause_threshold') {
+							sendResponse({status: 'changed_pause_threshold processed'});
+							console.log('changed_pause_threshold =', variable_value);
+							pause_threshold = variable_value;
+							saveData('pause_threshold', pause_threshold);
 							regenerate_textarea();
 						}
 					}
@@ -1100,11 +1108,48 @@ function onLoad() {
 
 
 		function formatTranscript(transcript) {
+			// Replace commas with periods in timestamps
+			transcript = transcript.replace(/(\d+),(\d+)/g, '$1.$2');
+			// Remove spaces within timestamps for ISO Date format
+			transcript = transcript.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
+			// Remove spaces within timestamps for Local Date format
+			transcript = transcript.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
+			// Remove any spaces between the date components for ISO Date format
+			transcript = transcript.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
+			// Remove any spaces between the date components for Local Date format
+			transcript = transcript.replace(/(\d{2})-\s?(\d{2})-\s?(\d{4})/g, '$1-$2-$3');
+			// Ensure the timestamp format follows "yyyy-mm-dd hh:mm.ddd" format and remove spaces around the hyphens
+			transcript = transcript.replace(/(\d{4})\s*-\s*(\d{2})\s*-\s*(\d{2})/g, '$1-$2-$3');
+			// Ensure the timestamp format follows "dd-mm-yyyy hh:mm.ddd" format and remove spaces around the hyphens
+			transcript = transcript.replace(/(\d{2})\s*-\s*(\d{2})\s*-\s*(\d{5})/g, '$1-$2-$3');
+			// Remove any spaces around the colons in the time component.
+			transcript = transcript.replace(/(\d{2})\s*:\s*(\d{2})\s*:\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
+			// Replace the time_separator with correct strings "-->" for ISO Date format
+			transcript = transcript.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
+			// Replace the time_separator with correct strings "-->" for Local Date format
+			transcript = transcript.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{2}-\d{2}-\d{5} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
+			// Move every timestamps to a new line for Local Date format
+			transcript = transcript.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+			// Move every timestamps to a new line for ISO Date format
+			transcript = transcript.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+
+			transcript = transcript.replace('.,', '.');
+			transcript = transcript.replace(',.', ',');
+			transcript = transcript.replace('. .', '.');
+
+			transcript = convertDatesToISOFormat(transcript);
+			// Remove last blank line
+			transcript = transcript.replace(/\n\s*$/, '');
+			transcript = removeEmptyLines(transcript);
+
 			// Replace URL-encoded spaces with regular spaces
 			transcript = transcript.replace(/%20/g, ' ');
 			transcript = transcript.trim();
+			// Give space between time part and colon
 			transcript = transcript.replace(/(\d{2}:\d{2}:\d{2}\.\d{3}): /g, '$1 : ');
+			// Move every timestamps to a new line for Local Date format
 			transcript = transcript.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+			// Move every timestamps to a new line for ISO Date format
 			transcript = transcript.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
 
 			// Match timestamps in the transcript
@@ -1361,50 +1406,14 @@ function onLoad() {
 
 
 		const translateText = async (text, src, dst, maxLength = 10000) => {
+			// WE SHOULD SPLIT LARGE TRANSCRIPTION INTO SMALLER PARTS TO AVOID 400 STATUS RESPONSE FROM GOOGLE TRANSLATE SERVER
 			var chunks = splitText(text, maxLength);
 			var translatedChunks = [];
 
 			for (var chunk of chunks) {
 				try {
 					var translatedChunk = await gtranslate(chunk, src, dst);
-					// Replace commas with periods in timestamps
-					translatedChunk = translatedChunk.replace(/(\d+),(\d+)/g, '$1.$2');
-					// Remove spaces within timestamps for ISO Date format
-					translatedChunk = translatedChunk.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
-					// Remove spaces within timestamps for Local Date format
-					translatedChunk = translatedChunk.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
-					// Remove any spaces between the date components for ISO Date format
-					translatedChunk = translatedChunk.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
-					// Remove any spaces between the date components for Local Date format
-					translatedChunk = translatedChunk.replace(/(\d{2})-\s?(\d{2})-\s?(\d{4})/g, '$1-$2-$3');
-					// Ensure the timestamp format follows "yyyy-mm-dd hh:mm.ddd" format and remove spaces around the hyphens
-					translatedChunk = translatedChunk.replace(/(\d{4})\s*-\s*(\d{2})\s*-\s*(\d{2})/g, '$1-$2-$3');
-					// Ensure the timestamp format follows "dd-mm-yyyy hh:mm.ddd" format and remove spaces around the hyphens
-					translatedChunk = translatedChunk.replace(/(\d{2})\s*-\s*(\d{2})\s*-\s*(\d{5})/g, '$1-$2-$3');
-					// Remove any spaces around the colons in the time component.
-					translatedChunk = translatedChunk.replace(/(\d{2})\s*:\s*(\d{2})\s*:\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
-					// Replace the time_separator with correct strings "-->" for ISO Date format
-					translatedChunk = translatedChunk.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
-					// Replace the time_separator with correct strings "-->" for Local Date format
-					translatedChunk = translatedChunk.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{2}-\d{2}-\d{5} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
-					// Move every timestamps to a new line for Local Date format
-					translatedChunk = translatedChunk.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-					// Move every timestamps to a new line for ISO Date format
-					translatedChunk = translatedChunk.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-
-					translatedChunk = translatedChunk.replace('.,', '.');
-					translatedChunk = translatedChunk.replace(',.', ',');
-					translatedChunk = translatedChunk.replace('. .', '.');
-
-					// Replace the extra space between the timestamps
-					translatedChunk = translatedChunk.replace(/\.\s+/g, '.');
-					// Replace the period followed by a space (". ") with a period followed by a newline (".\n")
-					translatedChunk = translatedChunk.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : [^\.]*\.) /g, "$1\n");
-					// Remove last blank line
-					translatedChunk = translatedChunk.replace(/\n\s*$/, '');
-					translatedChunk = convertDatesToISOFormat(translatedChunk);
 					translatedChunk = formatTranscript(translatedChunk);
-
 					translatedChunks.push(translatedChunk);
 
 				} catch (error) {
@@ -1653,41 +1662,29 @@ function onLoad() {
 					//console.log('src_width =', getRect(document.querySelector("#src_textarea")).width);
 					//console.log('video_info.width =', video_info.width);
 					src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/video_info.width;
-					if (src_container_width_factor < 0) {
-						src_container_width_factor = 0;
-					}
 					//console.log('src_container_width_factor =', src_container_width_factor);
 					saveData('src_container_width_factor', src_container_width_factor);
 
 					//console.log('src_height =', getRect(document.querySelector("#src_textarea")).height);
 					//console.log('video_info.height =', video_info.height);
 					src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/video_info.height;
-					if (src_container_height_factor < 0) {
-						src_container_height_factor = 0;
-					}
 					//console.log('src_container_height_factor =', src_container_height_factor);
 					saveData('src_container_height_factor', src_container_height_factor);
 				} else {
 					//console.log('src_width =', getRect(document.querySelector("#src_textarea")).width);
 					//console.log('window.innerWidth =', window.innerWidth);
 					src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/window.innerWidth;
-					if (src_container_width_factor < 0) {
-						src_container_width_factor = 0;
-					}
 					//console.log('src_container_width_factor =', src_container_width_factor);
 					saveData('src_container_width_factor', src_container_width_factor);
 
 					//console.log('src_height =', getRect(document.querySelector("#src_textarea")).height);
 					//console.log('window.innerHeight =', window.innerHeight);
 					src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/window.innerHeight;
-					if (src_container_height_factor < 0) {
-						src_container_height_factor = 0;
-					}
 					//console.log('src_container_height_factor =', src_container_height_factor);
 					saveData('src_container_height_factor', src_container_height_factor);
 				}
 
-				if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
+				if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#src_textarea_container")).width)) {
 					centerize_src = false;
 					saveData('centerize_src', centerize_src);
 					// SENDING MESSAGES TO settings.js
@@ -1719,44 +1716,36 @@ function onLoad() {
 					}
 				});
 
+				// After do saveData() to save a single data into settings we need to do saveAllChangedSettings() to make them written correctly in chrome storage
+				saveAllChangedSettings();
+
 			});
 
 
 			document.querySelector("#src_textarea").offsetParent.ondrag = (function(){
+
 				document.querySelector("#dst_textarea").style.position='absolute';
 
 				video_info = getVideoPlayerInfo();
 				if (video_info) {
 					src_container_top_factor = (getRect(document.querySelector("#src_textarea_container")).top - video_info.top)/video_info.height;
-					//if (src_container_top_factor < 0) {
-					//	src_container_top_factor = 0;
-					//}
 					//console.log('src_container_top_factor =', src_container_top_factor);
 					saveData("src_container_top_factor", src_container_top_factor);
 
 					src_container_left_factor = (getRect(document.querySelector("#src_textarea_container")).left - video_info.left)/video_info.width;
-					//if (src_container_left_factor < 0) {
-					//	src_container_left_factor = 0;
-					//}
 					//console.log('src_container_left_factor =', src_container_left_factor);
 					saveData("src_container_left_factor", src_container_left_factor);
 				} else {
 					src_container_top_factor = getRect(document.querySelector("#src_textarea_container")).top/window.innerHeight;
-					//if (src_container_top_factor < 0) {
-					//	src_container_top_factor = 0;
-					//}
 					//console.log('src_container_top_factor =', src_container_top_factor);
 					saveData("src_container_top_factor", src_container_top_factor);
 
 					src_container_left_factor = (getRect(document.querySelector("#src_textarea_container")).left - video_info.left)/window.innerWidth;
-					//if (src_container_left_factor < 0) {
-					//	src_container_left_factor = 0;
-					//}
 					//console.log('src_container_left_factor =', src_container_left_factor);
 					saveData("src_container_left_factor", src_container_left_factor);
 				}
 
-				if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
+				if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#src_textarea_container")).width)) {
 					centerize_src = false;
 					saveData('centerize_src', centerize_src);
 					// SENDING MESSAGES TO settings.js
@@ -1787,6 +1776,9 @@ function onLoad() {
 						console.log('response.status =', response.status);
 					}
 				});
+
+				// After do saveData() to save a single data into settings we need to do saveAllChangedSettings() to make them written correctly in chrome storage
+				saveAllChangedSettings();
 
 			});
 
@@ -1846,41 +1838,29 @@ function onLoad() {
 					//console.log('dst_width =', getRect(document.querySelector("#dst_textarea")).width);
 					//console.log('video_info.width =', video_info.width);
 					dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/video_info.width;
-					if (dst_container_width_factor < 0) {
-						dst_container_width_factor = 0;
-					}
 					//console.log('dst_container_width_factor =', dst_container_width_factor);
 					saveData('dst_container_width_factor', dst_container_width_factor);
 
 					//console.log('dst_height =', getRect(document.querySelector("#dst_textarea")).height);
 					//console.log('video_info.height =', video_info.height);
 					dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/video_info.height;
-					if (dst_container_height_factor < 0) {
-						dst_container_height_factor = 0;
-					}
 					//console.log('dst_container_height_factor =', dst_container_height_factor);
 					saveData('dst_container_height_factor', dst_container_height_factor);
 				} else {
 					//console.log('dst_width =', getRect(document.querySelector("#dst_textarea")).width);
 					//console.log('window.innerWidth =', window.innerWidth);
 					dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/window.innerWidth;
-					if (dst_container_width_factor < 0) {
-						dst_container_width_factor = 0;
-					}
 					//console.log('dst_container_width_factor =', dst_container_width_factor);
 					saveData('dst_container_width_factor', dst_container_width_factor);
 
 					//console.log('dst_height =', getRect(document.querySelector("#dst_textarea")).height);
 					//console.log('video_info.height =', video_info.height);
 					dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/window.innerHeight;
-					if (dst_container_height_factor < 0) {
-						dst_container_height_factor = 0;
-					}
 					//console.log('dst_container_height_factor =', dst_container_height_factor);
 					saveData('dst_container_height_factor', dst_container_height_factor);
 				}
 
-				if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+				if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#dst_textarea_container")).width)) {
 					centerize_dst = false;
 					saveData('centerize_dst', centerize_dst);
 					// SENDING MESSAGES TO settings.js
@@ -1912,44 +1892,36 @@ function onLoad() {
 					}
 				});
 
+				// After do saveData() to save a single data into settings we need to do saveAllChangedSettings() to make them written correctly in chrome storage
+				saveAllChangedSettings();
+
 			});
 
 
 			document.querySelector("#dst_textarea").offsetParent.ondrag = (function(){
+
 				document.querySelector("#dst_textarea").style.position='absolute';
 
 				video_info = getVideoPlayerInfo();
 				if (video_info) {
 					dst_container_top_factor = (getRect(document.querySelector("#dst_textarea_container")).top - video_info.top)/video_info.height;
-					//if (dst_container_top_factor < 0) {
-					//	dst_container_top_factor = 0;
-					//}
 					//console.log('dst_container_top_factor =', dst_container_top_factor);
 					saveData("dst_container_top_factor", dst_container_top_factor);
 
 					dst_container_left_factor = (getRect(document.querySelector("#dst_textarea_container")).left - video_info.left)/video_info.width;
-					//if (dst_container_left_factor < 0) {
-					//	dst_container_left_factor = 0;
-					//}
 					//console.log('dst_container_left_factor =', dst_container_left_factor);
 					saveData("dst_container_left_factor", dst_container_left_factor);
 				} else {
 					dst_container_top_factor = getRect(document.querySelector("#dst_textarea_container")).top/window.innerHeight;
-					//if (dst_container_top_factor < 0) {
-					//	dst_container_top_factor = 0;
-					//}
 					//console.log('dst_container_top_factor =', dst_container_top_factor);
 					saveData("dst_container_top_factor", dst_container_top_factor);
 
 					dst_container_left_factor = getRect(document.querySelector("#dst_textarea_container")).left/window.innerWidth;
-					//if (dst_container_left_factor < 0) {
-					//	dst_container_left_factor = 0;
-					//}
 					//console.log('dst_container_left_factor =', dst_container_left_factor);
 					saveData("dst_container_left_factor", dst_container_left_factor);
 				}
 
-				if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+				if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#dst_textarea_container")).width)) {
 					centerize_dst = false;
 					saveData('centerize_dst', centerize_dst);
 					// SENDING MESSAGES TO settings.js
@@ -1980,6 +1952,9 @@ function onLoad() {
 						console.log('response.status =', response.status);
 					}
 				});
+
+				// After do saveData() to save a single data into settings we need to do saveAllChangedSettings() to make them written correctly in chrome storage
+				saveAllChangedSettings();
 
 			});
 		}
@@ -2412,10 +2387,10 @@ function onLoad() {
 					let settings = result.settings || {};
 					settings[key] = data;
 					chrome.storage.local.set({ 'settings': settings }, () => {
-						console.log(key + ' data saved within settings.');
+						console.log(key + ' = ' + data  + ' saved within settings.');
 						setTimeout(() => {
 							verifyData(key, data, 'settings');
-						}, 200);
+						}, 100);
 					});
 				});
 			}, 100);
@@ -2425,9 +2400,9 @@ function onLoad() {
 		function verifyData(key, data, parentKey = null) {
 			chrome.storage.local.get([parentKey || key], (result) => {
 				if (parentKey) {
-					console.log(result[parentKey][key] === data ? 'Data verified.' : 'Data verification failed.');
+					console.log(result[parentKey][key] === data ? key + ' = ' + data + ' data verified.' : key + ' = ' + data + ' data verification failed.');
 				} else {
-					console.log(result[key] === data ? 'Data verified.' : 'Data verification failed.');
+					console.log(result[key] === data ? key + ' = ' + data + ' data verified.' : key + ' = ' + data + ' data verification failed.');
 				}
 			});
 		}
@@ -2440,7 +2415,7 @@ function onLoad() {
 				if (chrome.runtime.lastError) {
 					console.error("Error setting data for key", key, ":", chrome.runtime.lastError);
 				} else {
-					console.log(`save ${key} = `, value);
+					console.log(`saving ${key} = `, value);
 				}
 				if (callback) {
 					callback();
@@ -2599,7 +2574,7 @@ chrome.action.onClicked.addListener((tab) => {
 		chrome.storage.local.set({'recognizing' : recognizing}, (() => {}));
 
 		chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-			chrome.tabs.sendMessage(tabs[0].id, 'start', function(response) {
+			chrome.tabs.sendMessage(tab.id, 'start', function(response) {
 				console.log('response =', response);
 			});
 		});
@@ -2661,18 +2636,6 @@ chrome.action.onClicked.addListener((tab) => {
 			}
 		});
 
-		var changed_dst_dialect = '';
-		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
-			sendResponse({status: 'changed_dst_dialect processed'});
-			if (request.cmd === 'changed_dst_dialect') {
-				changed_dst_dialect = request.data.value;
-				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_dst_dialect', variable_value: changed_dst_dialect});
-				});
-				//return true;
-			}
-		});
-
 		var changed_show_src = '';
 		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
 			if (request.cmd === 'changed_show_src') {
@@ -2680,18 +2643,6 @@ chrome.action.onClicked.addListener((tab) => {
 				changed_show_src = request.data.value;
 				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
 					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_show_src', variable_value: changed_show_src});
-				});
-				//return true;
-			}
-		});
-
-		var changed_show_dst = '';
-		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
-			if (request.cmd === 'changed_show_dst') {
-				sendResponse({status: 'changed_show_dst processed'});
-				changed_show_dst = request.data.value;
-				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_show_dst', variable_value: changed_show_dst});
 				});
 				//return true;
 			}
@@ -2709,29 +2660,6 @@ chrome.action.onClicked.addListener((tab) => {
 			}
 		});
 
-		var changed_show_timestamp_dst = '';
-		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
-			if (request.cmd === 'changed_show_timestamp_dst') {
-				sendResponse({status: 'changed_show_timestamp_dst processed'});
-				changed_show_timestamp_dst = request.data.value;
-				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_show_timestamp_dst', variable_value: changed_show_timestamp_dst});
-				});
-				//return true;
-			}
-		});
-
-		var changed_pause_threshold = '';
-		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
-			if (request.cmd === 'changed_pause_threshold') {
-				sendResponse({status: 'changed_pause_threshold processed'});
-				changed_pause_threshold = request.data.value;
-				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_pause_threshold', variable_value: changed_pause_threshold});
-				});
-				//return true;
-			}
-		});
 
 		var changed_src_selected_font = '';
 		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
@@ -2848,6 +2776,56 @@ chrome.action.onClicked.addListener((tab) => {
 				changed_src_container_opacity = request.data.value;
 				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
 					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_src_container_opacity', variable_value: changed_src_container_opacity});
+				});
+				//return true;
+			}
+		});
+
+		var changed_save_src = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_save_src') {
+				sendResponse({status: 'changed_save_src processed'});
+				changed_save_src = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_save_src', variable_value: changed_save_src});
+				});
+				//return true;
+			}
+		});
+
+
+
+		var changed_dst_dialect = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			sendResponse({status: 'changed_dst_dialect processed'});
+			if (request.cmd === 'changed_dst_dialect') {
+				changed_dst_dialect = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_dst_dialect', variable_value: changed_dst_dialect});
+				});
+				//return true;
+			}
+		});
+
+		var changed_show_dst = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_show_dst') {
+				sendResponse({status: 'changed_show_dst processed'});
+				changed_show_dst = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_show_dst', variable_value: changed_show_dst});
+				});
+				//return true;
+			}
+		});
+
+		var changed_show_timestamp_dst = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_show_timestamp_dst') {
+				sendResponse({status: 'changed_show_timestamp_dst processed'});
+				changed_show_timestamp_dst = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_show_timestamp_dst', variable_value: changed_show_timestamp_dst});
 				});
 				//return true;
 			}
@@ -2973,6 +2951,31 @@ chrome.action.onClicked.addListener((tab) => {
 			}
 		});
 
+		var changed_save_dst = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_save_dst') {
+				sendResponse({status: 'changed_save_dst processed'});
+				changed_save_dst = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_save_dst', variable_value: changed_save_dst});
+				});
+				//return true;
+			}
+		});
+
+
+		var changed_pause_threshold = '';
+		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
+			if (request.cmd === 'changed_pause_threshold') {
+				sendResponse({status: 'changed_pause_threshold processed'});
+				changed_pause_threshold = request.data.value;
+				chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+					chrome.tabs.sendMessage(tab.id, {variable_name: 'changed_pause_threshold', variable_value: changed_pause_threshold});
+				});
+				//return true;
+			}
+		});
+
 
 		chrome.scripting.insertCSS({
 			target: {tabId:tab.id},
@@ -2994,7 +2997,7 @@ chrome.action.onClicked.addListener((tab) => {
 
 	} else {
 		chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-			chrome.tabs.sendMessage(tabs[0].id, 'stop', function(response) {
+			chrome.tabs.sendMessage(tab.id, 'stop', function(response) {
 				console.log('response =', response);
 			});
 		});
@@ -3007,3 +3010,61 @@ chrome.action.onClicked.addListener((tab) => {
 	}
 });
 
+
+chrome.runtime.onInstalled.addListener(() => {
+	//console.log("Extension installed");
+	chrome.contextMenus.create({
+		id: "Settings",
+		title: "Settings",
+		contexts: ["action"],
+	}, () => {
+		if (chrome.runtime.lastError) {
+			console.error(chrome.runtime.lastError.message);
+		} else {
+			//console.log("Context menu item created");
+		}
+	});
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+	if (info.menuItemId === "Settings") {
+		//console.log("Settings item clicked");
+/*
+		chrome.notifications.create({
+			type: "basic",
+			iconUrl: "icons/48.png",
+			title: "Context Menu Clicked",
+			message: "Settings item clicked",
+		}, (notificationId) => {
+			if (chrome.runtime.lastError) {
+				console.error(chrome.runtime.lastError.message);
+			} else {
+				console.log("Notification shown with ID:", notificationId);
+			}
+		});
+*/
+		chrome.tabs.create({
+			url: chrome.runtime.getURL("settings.html")
+		}, (newTab) => {
+			if (chrome.runtime.lastError) {
+				console.error(chrome.runtime.lastError.message);
+			} else {
+				console.log("Settings tab opened with ID:", newTab.id);
+			}
+		});
+    }
+});
+
+/*
+// Function to update the context menu item
+function updateContextMenu() {
+	chrome.contextMenus.update("Settings", {
+		title: "Updated Menu Settings ",
+	});
+}
+
+// Function to remove the context menu item
+function removeContextMenu() {
+	chrome.contextMenus.remove("Settings");
+}
+*/

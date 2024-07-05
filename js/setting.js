@@ -1,6 +1,6 @@
 console.log('INITIALIZING VARIABLES');
-var src, src_language_index, src_dialect, src_dialect_index, show_src, show_timestamp_src;
-var dst, dst_language_index, dst_dialect, dst_dialect_index, show_dst, show_timestamp_dst;
+var src, src_language_index, src_dialect, src_dialect_index, show_src, show_timestamp_src, save_src;
+var dst, dst_language_index, dst_dialect, dst_dialect_index, show_dst, show_timestamp_dst, save_dst;
 var changed_src, changed_src_dialect;
 var changed_dst, changed_dst_dialect;
 
@@ -35,6 +35,8 @@ var start_time_2, end_time_2, startTimestamp2, endTimestamp2, timestamped_sample
 var timestamped_sample_text, sample_text;
 var timestamp_separator = "-->";
 var src_timestamped_sample_text, dst_timestamped_sample_text;
+
+const font_scale = 360/540;
 
 var recognizing = false;
 
@@ -426,6 +428,7 @@ function CheckStoredValues() {
 		console.log('recognizing =', recognizing);
     });
 
+
 	chrome.storage.local.get(['src_language_index'], function(result) {
 		src_language_index = result.src_language_index;
 		console.log('CheckStoredValues before if: src_language_index =', src_language_index);
@@ -476,56 +479,6 @@ function CheckStoredValues() {
 		console.log('CheckStoredValues after if: src_dialect_index =', src_dialect_index);
 	});
 
-	chrome.storage.local.get(['dst_language_index'], function(result) {
-		dst_language_index = result.dst_language_index;
-		console.log('CheckStoredValues before if: dst_language_index =', dst_language_index);
-		if (typeof dst_language_index === 'undefined') {
-			dst_language_index = 15;
-		} else {
-			dst_language_index = result.dst_language_index;
-		}
-		console.log('CheckStoredValues after if: dst_language_index =', dst_language_index);
-		document.querySelector("#select_dst_language").selectedIndex = dst_language_index;
-		saveData('dst_language_index', dst_language_index);
-		[dst, dst_language_index, dst_dialect, dst_dialect_index] = update_dst_country();
-	});
-
-	chrome.storage.local.get(['dst_dialect'], function(result) {
-		dst_dialect = result.dst_dialect;
-		console.log('CheckStoredValues before if: dst_dialect =', dst_dialect);
-		if (result.dst_dialect) {
-			dst_dialect = result.dst_dialect;
-			console.log('CheckStoredValues: result.dst_dialect =', result.dst_dialect);
-		} else {
-			if (dst_language[dst_language_index].length > 2) {
-				if (dst === 'en') {
-					dst_dialect = 'en-US';
-					console.log('CheckStoredValues: dst_dialect =', dst_dialect);
-				} else {
-					dst_dialect = document.querySelector("#select_dst_dialect").value;
-					console.log('CheckStoredValues: dst_dialect =', dst_dialect);
-				}
-			} else {
-				dst_dialect = dst_language[document.querySelector("#select_dst_language").selectedIndex][1][0];
-				console.log('CheckStoredValues: dst_dialect =', dst_dialect);
-			}
-		}
-		for (let i = 0; i < document.querySelector("#select_dst_dialect").length; i++) {
-			if (select_dst_dialect[i].value === dst_dialect) {
-				dst_dialect_index = i;
-				document.querySelector("#select_dst_dialect").selectedIndex = dst_dialect_index;
-				saveData('dst_dialect_index', dst_dialect_index);
-				break;
-			}
-		}
-		console.log('CheckStoredValues after if: dst_dialect =', dst_dialect);
-		dst = document.querySelector("#select_dst_dialect").value.split('-')[0];
-		console.log('CheckStoredValues after if: dst =', dst);
-		saveData('dst', dst);
-		saveData('dst_dialect', dst_dialect);
-		console.log('CheckStoredValues after if: dst_dialect_index =', dst_dialect_index);
-	});
-
 	chrome.storage.local.get(['show_src'], function(result) {
 		show_src = result.show_src;
 		console.log('CheckStoredValues before if: show_src =', show_src);
@@ -543,23 +496,6 @@ function CheckStoredValues() {
 		saveData('show_src', show_src);
 	});
 
-	chrome.storage.local.get(['show_dst'], function(result) {
-		show_dst = result.show_dst;
-		console.log('CheckStoredValues before if: show_dst =', show_dst);
-		if (typeof show_dst === 'undefined') {
-			document.querySelector("#checkbox_show_dst").checked = true;
-		} else {
-			if (result.show_dst === true) {
-				document.querySelector("#checkbox_show_dst").checked = true;
-			} else {
-				document.querySelector("#checkbox_show_dst").checked = false;
-			}
-		}
-		show_dst = document.querySelector("#checkbox_show_dst").checked;
-		console.log('CheckStoredValues after if: show_dst =', show_dst);
-		saveData('show_dst', show_dst);
-	});
-
 	chrome.storage.local.get(['show_timestamp_src'], function(result) {
 		show_timestamp_src = result.show_timestamp_src;
 		console.log('CheckStoredValues before if: show_timestamp_src =', show_timestamp_src);
@@ -575,36 +511,6 @@ function CheckStoredValues() {
 		show_timestamp_src = document.querySelector("#checkbox_show_timestamp_src").checked;
 		console.log('CheckStoredValues after if: show_timestamp_src =', show_timestamp_src);
 		saveData('show_timestamp_src', show_timestamp_src);
-	});
-
-	chrome.storage.local.get(['show_timestamp_dst'], function(result) {
-		show_timestamp_dst = result.show_timestamp_dst;
-		console.log('CheckStoredValues before if: show_timestamp_dst =', show_timestamp_dst);
-		if (typeof show_timestamp_dst === 'undefined') {
-			document.querySelector("#checkbox_show_timestamp_dst").checked = true;
-		} else {
-			if (result.show_timestamp_dst === true) {
-				document.querySelector("#checkbox_show_timestamp_dst").checked = true;
-			} else {
-				document.querySelector("#checkbox_show_timestamp_dst").checked = false;
-			}
-		}
-		show_timestamp_dst = document.querySelector("#checkbox_show_timestamp_dst").checked;
-		console.log('CheckStoredValues after if: show_timestamp_dst =', show_timestamp_dst);
-		saveData('show_timestamp_dst', show_timestamp_dst);
-	});
-
-	chrome.storage.local.get(['pause_threshold'], function(result) {
-		pause_threshold = result.pause_threshold;
-		console.log('CheckStoredValues before if: result.pause_threshold =', result.pause_threshold);
-		if (typeof pause_threshold === 'undefined') {
-			document.querySelector("#input_pause_threshold").value = 5000;
-		} else {
-			document.querySelector("#input_pause_threshold").value = result.pause_threshold;
-		}
-		pause_threshold = document.querySelector("#input_pause_threshold").value;
-		console.log('CheckStoredValues after if: pause_threshold =', pause_threshold);
-		saveData('pause_threshold', pause_threshold);
 	});
 
 	chrome.storage.local.get(['src_selected_font_index'], function(result) {
@@ -733,7 +639,108 @@ function CheckStoredValues() {
 		console.log('CheckStoredValues after if: src_container_opacity =', src_container_opacity);
 	});
 
+	chrome.storage.local.get(['save_src'], function(result) {
+		save_src = result.save_src;
+		console.log('CheckStoredValues before if: save_src =', save_src);
+		if (typeof save_src === 'undefined') {
+			document.querySelector("#checkbox_save_src").checked = true;
+		} else {
+			if (result.save_src === true) {
+				document.querySelector("#checkbox_save_src").checked = true;
+			} else {
+				document.querySelector("#checkbox_save_src").checked = false;
+			}
+		}
+		save_src = document.querySelector("#checkbox_save_src").checked;
+		console.log('CheckStoredValues aftere if: save_src =', save_src);
+		saveData('save_src', save_src);
+	});
 
+
+
+	chrome.storage.local.get(['dst_language_index'], function(result) {
+		dst_language_index = result.dst_language_index;
+		console.log('CheckStoredValues before if: dst_language_index =', dst_language_index);
+		if (typeof dst_language_index === 'undefined') {
+			dst_language_index = 15;
+		} else {
+			dst_language_index = result.dst_language_index;
+		}
+		console.log('CheckStoredValues after if: dst_language_index =', dst_language_index);
+		document.querySelector("#select_dst_language").selectedIndex = dst_language_index;
+		saveData('dst_language_index', dst_language_index);
+		[dst, dst_language_index, dst_dialect, dst_dialect_index] = update_dst_country();
+	});
+
+	chrome.storage.local.get(['dst_dialect'], function(result) {
+		dst_dialect = result.dst_dialect;
+		console.log('CheckStoredValues before if: dst_dialect =', dst_dialect);
+		if (result.dst_dialect) {
+			dst_dialect = result.dst_dialect;
+			console.log('CheckStoredValues: result.dst_dialect =', result.dst_dialect);
+		} else {
+			if (dst_language[dst_language_index].length > 2) {
+				if (dst === 'en') {
+					dst_dialect = 'en-US';
+					console.log('CheckStoredValues: dst_dialect =', dst_dialect);
+				} else {
+					dst_dialect = document.querySelector("#select_dst_dialect").value;
+					console.log('CheckStoredValues: dst_dialect =', dst_dialect);
+				}
+			} else {
+				dst_dialect = dst_language[document.querySelector("#select_dst_language").selectedIndex][1][0];
+				console.log('CheckStoredValues: dst_dialect =', dst_dialect);
+			}
+		}
+		for (let i = 0; i < document.querySelector("#select_dst_dialect").length; i++) {
+			if (select_dst_dialect[i].value === dst_dialect) {
+				dst_dialect_index = i;
+				document.querySelector("#select_dst_dialect").selectedIndex = dst_dialect_index;
+				saveData('dst_dialect_index', dst_dialect_index);
+				break;
+			}
+		}
+		console.log('CheckStoredValues after if: dst_dialect =', dst_dialect);
+		dst = document.querySelector("#select_dst_dialect").value.split('-')[0];
+		console.log('CheckStoredValues after if: dst =', dst);
+		saveData('dst', dst);
+		saveData('dst_dialect', dst_dialect);
+		console.log('CheckStoredValues after if: dst_dialect_index =', dst_dialect_index);
+	});
+
+	chrome.storage.local.get(['show_dst'], function(result) {
+		show_dst = result.show_dst;
+		console.log('CheckStoredValues before if: show_dst =', show_dst);
+		if (typeof show_dst === 'undefined') {
+			document.querySelector("#checkbox_show_dst").checked = true;
+		} else {
+			if (result.show_dst === true) {
+				document.querySelector("#checkbox_show_dst").checked = true;
+			} else {
+				document.querySelector("#checkbox_show_dst").checked = false;
+			}
+		}
+		show_dst = document.querySelector("#checkbox_show_dst").checked;
+		console.log('CheckStoredValues after if: show_dst =', show_dst);
+		saveData('show_dst', show_dst);
+	});
+
+	chrome.storage.local.get(['show_timestamp_dst'], function(result) {
+		show_timestamp_dst = result.show_timestamp_dst;
+		console.log('CheckStoredValues before if: show_timestamp_dst =', show_timestamp_dst);
+		if (typeof show_timestamp_dst === 'undefined') {
+			document.querySelector("#checkbox_show_timestamp_dst").checked = true;
+		} else {
+			if (result.show_timestamp_dst === true) {
+				document.querySelector("#checkbox_show_timestamp_dst").checked = true;
+			} else {
+				document.querySelector("#checkbox_show_timestamp_dst").checked = false;
+			}
+		}
+		show_timestamp_dst = document.querySelector("#checkbox_show_timestamp_dst").checked;
+		console.log('CheckStoredValues after if: show_timestamp_dst =', show_timestamp_dst);
+		saveData('show_timestamp_dst', show_timestamp_dst);
+	});
 
 	chrome.storage.local.get(['dst_selected_font_index'], function(result) {
 		dst_selected_font_index = result.dst_selected_font_index;
@@ -846,6 +853,38 @@ function CheckStoredValues() {
 		}
 		console.log('CheckStoredValues after if: dst_container_opacity =', dst_container_opacity);
 	});
+
+	chrome.storage.local.get(['save_dst'], function(result) {
+		save_dst = result.save_dst;
+		console.log('CheckStoredValues before if: save_dst =', save_dst);
+		if (typeof save_dst === 'undefined') {
+			document.querySelector("#checkbox_save_dst").checked = true;
+		} else {
+			if (result.save_dst === true) {
+				document.querySelector("#checkbox_save_dst").checked = true;
+			} else {
+				document.querySelector("#checkbox_save_dst").checked = false;
+			}
+		}
+		save_dst = document.querySelector("#checkbox_save_dst").checked;
+		console.log('CheckStoredValues aftere if: save_dst =', save_dst);
+		saveData('save_dst', save_dst);
+	});
+
+
+	chrome.storage.local.get(['pause_threshold'], function(result) {
+		pause_threshold = result.pause_threshold;
+		console.log('CheckStoredValues before if: result.pause_threshold =', result.pause_threshold);
+		if (typeof pause_threshold === 'undefined') {
+			document.querySelector("#input_pause_threshold").value = 5000;
+		} else {
+			document.querySelector("#input_pause_threshold").value = result.pause_threshold;
+		}
+		pause_threshold = document.querySelector("#input_pause_threshold").value;
+		console.log('CheckStoredValues after if: pause_threshold =', pause_threshold);
+		saveData('pause_threshold', pause_threshold);
+	});
+
 
 	if (first_check) {
 		update_sample_text();
@@ -1145,39 +1184,6 @@ document.querySelector("#checkbox_show_timestamp_dst").addEventListener('change'
 				cmd: 'changed_show_timestamp_dst',
 				data: {
 					value: show_timestamp_dst
-				}, function(response) {
-					console.log('response.status =', response.status);
-				}
-			});
-		} else {
-			saveAllSettings();
-		}
-    });
-});
-
-document.querySelector("#input_pause_threshold").addEventListener('change', function(){
-	console.log('document.querySelector("#input_pause_threshold").addEventListener.addEventListener("change")');
-	pause_threshold = document.querySelector("#input_pause_threshold").value;
-	console.log('pause_threshold =', pause_threshold);
-	saveData('pause_threshold', pause_threshold);
-    chrome.storage.local.get(['recognizing'], (result) => {
-        if (chrome.runtime.lastError) {
-            console.error("Error retrieving data: ", chrome.runtime.lastError);
-            return;
-        }
-		console.log('result =', result);
-		if (typeof result.recognizing === 'undefined') {
-			recognizing = false;
-		} else {
-			recognizing = result.recognizing;
-		}
-		console.log('recognizing =', recognizing);
-		if (recognizing) {
-			console.log('chrome.runtime.sendMessage({ cmd: "changed_pause_threshold", data: { value: pause_threshold } })');
-			chrome.runtime.sendMessage({
-				cmd: 'changed_pause_threshold',
-				data: {
-					value: pause_threshold
 				}, function(response) {
 					console.log('response.status =', response.status);
 				}
@@ -1625,7 +1631,7 @@ document.querySelector("#input_src_container_left_factor").addEventListener('inp
 	console.log('src_container_left_factor =', src_container_left_factor);
 	saveData('src_container_left_factor', src_container_left_factor);
 	video_info = getVideoPlayerInfo();
-	if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
+	if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#src_textarea_container")).width)) {
 		centerize_src = false;
 		saveData('centerize_src', centerize_src);
 		document.querySelector("#checkbox_centerize_src").checked = centerize_src;
@@ -1684,7 +1690,7 @@ document.querySelector("#input_src_container_left_factor").addEventListener('cha
 	console.log('src_container_left_factor =', src_container_left_factor);
 	saveData('src_container_left_factor', src_container_left_factor);
 	video_info = getVideoPlayerInfo();
-	if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
+	if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#src_textarea_container")).width)) {
 		centerize_src = false;
 		saveData('centerize_src', centerize_src);
 		document.querySelector("#checkbox_centerize_src").checked = centerize_src;
@@ -1853,6 +1859,40 @@ document.querySelector("#input_src_container_opacity").addEventListener('change'
 				cmd: 'changed_src_container_opacity',
 				data: {
 					value: src_container_opacity
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#checkbox_save_src").addEventListener('change', function(){
+	console.log('document.querySelector("#checkbox_save_src").addEventListener("change")');
+	console.log('document.querySelector("#checkbox_save_src").checked =', document.querySelector("#checkbox_save_src").checked);
+	save_src = document.querySelector("#checkbox_save_src").checked;
+	saveData('save_src', save_src);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_save_src", data: { value: save_src } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_save_src',
+				data: {
+					value: save_src
 				}, function(response) {
 					console.log('response.status =', response.status);
 				}
@@ -2300,7 +2340,7 @@ document.querySelector("#input_dst_container_left_factor").addEventListener('inp
 	console.log('dst_container_left_factor =', dst_container_left_factor);
 	saveData('dst_container_left_factor', dst_container_left_factor);
 	video_info = getVideoPlayerInfo();
-	if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+	if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#dst_textarea_container")).width)) {
 		centerize_dst = false;
 		saveData('centerize_dst', centerize_dst);
 		document.querySelector("#checkbox_centerize_dst").checked = centerize_dst;
@@ -2359,7 +2399,7 @@ document.querySelector("#input_dst_container_left_factor").addEventListener('cha
 	console.log('dst_container_left_factor =', dst_container_left_factor);
 	saveData('dst_container_left_factor', dst_container_left_factor);
 	video_info = getVideoPlayerInfo();
-	if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+	if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#dst_textarea_container")).width)) {
 		centerize_dst = false;
 		saveData('centerize_dst', centerize_dst);
 		document.querySelector("#checkbox_centerize_dst").checked = centerize_dst;
@@ -2528,6 +2568,73 @@ document.querySelector("#input_dst_container_opacity").addEventListener('change'
 				cmd: 'changed_dst_container_opacity',
 				data: {
 					value: dst_container_opacity
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#checkbox_save_dst").addEventListener('change', function(){
+	console.log('document.querySelector("#checkbox_save_dst").addEventListener("change")');
+	console.log('document.querySelector("#checkbox_save_dst").checked =', document.querySelector("#checkbox_save_dst").checked);
+	save_dst = document.querySelector("#checkbox_save_dst").checked;
+	saveData('save_dst', save_dst);
+	update_sample_text();
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_save_dst", data: { value: save_dst } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_save_dst',
+				data: {
+					value: save_dst
+				}, function(response) {
+					console.log('response.status =', response.status);
+				}
+			});
+		} else {
+			saveAllSettings();
+		}
+    });
+});
+
+document.querySelector("#input_pause_threshold").addEventListener('change', function(){
+	console.log('document.querySelector("#input_pause_threshold").addEventListener.addEventListener("change")');
+	pause_threshold = document.querySelector("#input_pause_threshold").value;
+	console.log('pause_threshold =', pause_threshold);
+	saveData('pause_threshold', pause_threshold);
+    chrome.storage.local.get(['recognizing'], (result) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data: ", chrome.runtime.lastError);
+            return;
+        }
+		console.log('result =', result);
+		if (typeof result.recognizing === 'undefined') {
+			recognizing = false;
+		} else {
+			recognizing = result.recognizing;
+		}
+		console.log('recognizing =', recognizing);
+		if (recognizing) {
+			console.log('chrome.runtime.sendMessage({ cmd: "changed_pause_threshold", data: { value: pause_threshold } })');
+			chrome.runtime.sendMessage({
+				cmd: 'changed_pause_threshold',
+				data: {
+					value: pause_threshold
 				}, function(response) {
 					console.log('response.status =', response.status);
 				}
@@ -2894,7 +3001,7 @@ function regenerate_textarea() {
 				.css({
 					'position': 'absolute',
 					'fontFamily': document.querySelector("#select_src_font").value + ', sans-serif',
-					'fontSize': document.querySelector("#input_src_font_size").value,
+					'fontSize': font_scale * document.querySelector("#input_src_font_size").value - 1,
 					'color': document.querySelector("#input_src_font_color").value,
 					'backgroundColor': hexToRgba(document.querySelector("#input_src_container_color").value, document.querySelector("#input_src_container_opacity").value),
 					'border': 'none',
@@ -2907,29 +3014,8 @@ function regenerate_textarea() {
 			src = document.querySelector("#select_src_dialect").value.split('-')[0];
 			console.log('src =', src);
 			if (timestamped_sample_text && src) var tt_src = gtranslate(timestamped_sample_text, 'en', src).then((result => {
-				result = result.replace(/(\d+),(\d+)/g, '$1.$2');
-				result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
-				result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
-				result = result.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
-				result = result.replace(/(\d{2})-\s?(\d{2})-\s?(\d{4})/g, '$1-$2-$3');
-				result = result.replace(/(\d{4})\s*-\s*(\d{2})\s*-\s*(\d{2})/g, '$1-$2-$3');
-				result = result.replace(/(\d{2})\s*-\s*(\d{2})\s*-\s*(\d{4})/g, '$1-$2-$3');
-				result = result.replace(/(\d{2})\s*:\s*(\d{2})\s*:\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
-				result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
-				result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
-				result = result.replace(/(\d{2}:\d{2}:\d{2}\.\d{3}): /g, '$1 : ');
-				result = result.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-				result = result.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-				result = result.replace(/ (\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/g, /(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/);
-				result = result.replace(/ (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/g, /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/);
-				result = result.replace('.,', '.');
-				result = result.replace(',.', ',');
-				result = result.replace('. .', '.');
-				result = convertDatesToISOFormat(result);
+
 				result = formatTranscript(result);
-				result = result.replace(/\n\s*$/, '');
-				result = removeEmptyLines(result);
-				//console.log('result =', result);
 				src_timestamped_sample_text = result;
 
 				show_timestamp_src = document.querySelector("#checkbox_show_timestamp_src").checked;
@@ -2945,6 +3031,7 @@ function regenerate_textarea() {
 						document.querySelector("#src_textarea").value = removeTimestamps(src_timestamped_sample_text);
 						//console.log('removeTimestamps(src_timestamped_sample_text) =', removeTimestamps(src_timestamped_sample_text));
 					}
+					document.querySelector("#src_textarea").scrollTop = document.querySelector("#src_textarea").scrollHeight;
 				}
 			}));
 
@@ -2957,7 +3044,7 @@ function regenerate_textarea() {
 			document.querySelector("#src_textarea").style.overflow = 'hidden';
 
 			document.querySelector("#src_textarea").style.fontFamily = document.querySelector("#select_src_font").value + ", sans-serif";
-			document.querySelector("#src_textarea").style.fontSize = String(document.querySelector("#input_src_font_size").value)+'px';
+			document.querySelector("#src_textarea").style.fontSize = String(font_scale * document.querySelector("#input_src_font_size").value - 1) + 'px';
 			document.querySelector("#src_textarea").style.color = document.querySelector("#input_src_font_color").value;
 			document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_src_container_color").value, document.querySelector("#input_src_container_opacity").value);
 
@@ -2997,7 +3084,7 @@ function regenerate_textarea() {
 				.css({
 					'position': 'absolute',
 					'fontFamily': document.querySelector("#select_dst_font").value + ', sans-serif',
-					'fontSize': document.querySelector("#input_dst_font_size").value,
+					'fontSize': font_scale * document.querySelector("#input_dst_font_size").value - 1,
 					'color': document.querySelector("#input_dst_font_color").value,
 					'backgroundColor': hexToRgba(document.querySelector("#input_dst_container_color").value, document.querySelector("#input_dst_container_opacity").value),
 					'border': 'none',
@@ -3010,25 +3097,8 @@ function regenerate_textarea() {
 			dst = document.querySelector("#select_dst_dialect").value.split('-')[0];
 			console.log('dst =', dst);
 			if (timestamped_sample_text && dst) var tt_dst = gtranslate(timestamped_sample_text, 'en', dst).then((result => {
-				result = result.replace(/(\d+),(\d+)/g, '$1.$2');
-				result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
-				result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
-				result = result.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
-				result = result.replace(/(\d{2})-\s?(\d{2})-\s?(\d{4})/g, '$1-$2-$3');
-				result = result.replace(/(\d{4})\s*-\s*(\d{2})\s*-\s*(\d{2})/g, '$1-$2-$3');
-				result = result.replace(/(\d{2})\s*-\s*(\d{2})\s*-\s*(\d{5})/g, '$1-$2-$3');
-				result = result.replace(/(\d{2})\s*:\s*(\d{2})\s*:\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
-				result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
-				result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{2}-\d{2}-\d{5} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
-				result = result.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-				result = result.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-				result = result.replace('.,', '.');
-				result = result.replace(',.', ',');
-				result = result.replace('. .', '.');
-				result = convertDatesToISOFormat(result);
+
 				result = formatTranscript(result);
-				result = result.replace(/\n\s*$/, '');
-				//console.log('result =', result);
 				dst_timestamped_sample_text = result;
 
 				show_timestamp_dst = document.querySelector("#checkbox_show_timestamp_dst").checked;
@@ -3044,6 +3114,7 @@ function regenerate_textarea() {
 						document.querySelector("#dst_textarea").value = removeTimestamps(dst_timestamped_sample_text);
 						//console.log('removeTimestamps(dst_timestamped_sample_text) =', removeTimestamps(dst_timestamped_sample_text));
 					}
+					document.querySelector("#dst_textarea").scrollTop = document.querySelector("#dst_textarea").scrollHeight;
 				}
 			}));
 
@@ -3056,7 +3127,7 @@ function regenerate_textarea() {
 			document.querySelector("#dst_textarea").style.overflow = 'hidden';
 
 			document.querySelector("#dst_textarea").style.fontFamily = document.querySelector("#select_dst_font").value + ", sans-serif";
-			document.querySelector("#dst_textarea").style.fontSize = String(document.querySelector("#input_dst_font_size").value)+'px';
+			document.querySelector("#dst_textarea").style.fontSize = String(font_scale * document.querySelector("#input_dst_font_size").value - 1) + 'px';
 			document.querySelector("#dst_textarea").style.color = document.querySelector("#input_dst_font_color").value;
 			document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_dst_container_color").value, document.querySelector("#input_dst_container_opacity").value);
 
@@ -3102,7 +3173,7 @@ function create_modal_text_area() {
 			.css({
 				'position': 'absolute',
 				'fontFamily': document.querySelector("#select_src_font").value + ', sans-serif',
-				'fontSize': document.querySelector("#input_src_font_size").value,
+				'fontSize': font_scale * document.querySelector("#input_src_font_size").value - 1,
 				'color': document.querySelector("#input_src_font_color").value,
 				'backgroundColor': hexToRgba(document.querySelector("#input_src_container_color").value, document.querySelector("#input_src_container_opacity").value),
 				'border': 'none',
@@ -3119,26 +3190,11 @@ function create_modal_text_area() {
 			console.log('src_textarea_container has already exist');
 		}
 
+		src = document.querySelector("#select_src_dialect").value.split('-')[0];
+		console.log('src =', src);
 		if (timestamped_sample_text && src) var tt_src = gtranslate(timestamped_sample_text, 'en', src).then((result => {
-			result = result.replace(/(\d+),(\d+)/g, '$1.$2');
-			result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
-			result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
-			result = result.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
-			result = result.replace(/(\d{2})-\s?(\d{2})-\s?(\d{4})/g, '$1-$2-$3');
-			result = result.replace(/(\d{4})\s*-\s*(\d{2})\s*-\s*(\d{2})/g, '$1-$2-$3');
-			result = result.replace(/(\d{2})\s*-\s*(\d{2})\s*-\s*(\d{5})/g, '$1-$2-$3');
-			result = result.replace(/(\d{2})\s*:\s*(\d{2})\s*:\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
-			result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
-			result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{2}-\d{2}-\d{5} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
-			result = result.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-			result = result.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-			result = result.replace('.,', '.');
-			result = result.replace(',.', ',');
-			result = result.replace('. .', '.');
-			result = convertDatesToISOFormat(result);
+
 			result = formatTranscript(result);
-			result = result.replace(/\n\s*$/, '');
-			//console.log('result =', result);
 			src_timestamped_sample_text = result;
 
 			show_timestamp_src = document.querySelector("#checkbox_show_timestamp_src").checked;
@@ -3151,7 +3207,7 @@ function create_modal_text_area() {
 				document.querySelector("#src_textarea").value = removeTimestamps(src_timestamped_sample_text);
 				//console.log('removeTimestamps(src_timestamped_sample_text) =', removeTimestamps(src_timestamped_sample_text));
 			}
-
+			document.querySelector("#src_textarea").scrollTop = document.querySelector("#src_textarea").scrollHeight;
 		}));
 
 		document.querySelector("#src_textarea").style.width = '100%';
@@ -3164,41 +3220,42 @@ function create_modal_text_area() {
 		document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
 		document.querySelector("#src_textarea").style.color = src_font_color;
 		document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_src_container_color").value, document.querySelector("#input_src_container_opacity").value);
-		document.querySelector("#src_textarea").style.fontSize = String(src_font_size)+'px';
+		document.querySelector("#src_textarea").style.fontSize = String(font_scale * src_font_size - 1) + 'px';
 
 		document.querySelector("#src_textarea").offsetParent.onresize = (function(){
-			if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
-				document.querySelector("#checkbox_centerize_src").checked = false;
-			}
 
 			document.querySelector("#src_textarea").style.position='absolute';
 			document.querySelector("#src_textarea").style.width = '100%';
 			document.querySelector("#src_textarea").style.height = '100%';
+
+			if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#src_textarea_container")).width)) {
+				document.querySelector("#checkbox_centerize_src").checked = false;
+			}
 
 			video_info = getVideoPlayerInfo();
 			if (video_info) {
 				src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/video_info.width;
 				//console.log('src_container_width_factor =', src_container_width_factor);
 				document.querySelector("#input_src_container_width_factor").value = src_container_width_factor;
-				//saveData("src_container_width_factor", src_container_width_factor);
+				saveData("src_container_width_factor", src_container_width_factor);
 
 				src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/video_info.height;
 				//console.log('src_container_height_factor =', src_container_height_factor);
 				document.querySelector("#input_src_container_height_factor").value = src_container_height_factor;
-				//saveData("src_container_height_factor", src_container_height_factor);
+				saveData("src_container_height_factor", src_container_height_factor);
 			} else {
 				src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/window.innerWidth;
 				//console.log('src_container_width_factor =', src_container_width_factor);
 				document.querySelector("#input_src_container_width_factor").value = src_container_width_factor;
-				//saveData("src_container_width_factor", src_container_width_factor);
+				saveData("src_container_width_factor", src_container_width_factor);
 
 				src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/window.innerHeight;
 				//console.log('src_container_height_factor =', src_container_height_factor);
 				document.querySelector("#input_src_container_height_factor").value = src_container_height_factor;
-				//saveData("src_container_height_factor", src_container_height_factor);
+				saveData("src_container_height_factor", src_container_height_factor);
 			}
 
-			if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
+			if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#src_textarea_container")).width)) {
 				centerize_src = false;
 				saveData('centerize_src', centerize_src);
 				document.querySelector("#checkbox_centerize_src").checked = centerize_src;
@@ -3235,54 +3292,45 @@ function create_modal_text_area() {
 						}
 					});
 				} else {
+					// After do saveData() to save a single data into settings we need to do saveAllSettings() to make them written correctly in chrome storage
 					saveAllSettings();
 				}
 			});
 		});
 
+
 		document.querySelector("#src_textarea").offsetParent.ondrag = (function(){
-			if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
-				document.querySelector("#checkbox_centerize_src").checked = false;
-			}
 
 			document.querySelector("#src_textarea").style.position='absolute';
+
+			if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#src_textarea_container")).width)) {
+				document.querySelector("#checkbox_centerize_src").checked = false;
+			}
 
 			video_info = getVideoPlayerInfo();
 			if (video_info) {
 				src_container_top_factor = (getRect(document.querySelector("#src_textarea_container")).top - video_info.top)/video_info.height;
-				if (src_container_top_factor <= 0) {
-					src_container_top_factor = 0;
-				}
 				document.querySelector("#input_src_container_top_factor").value = src_container_top_factor;
 				//console.log('src_container_top_factor =', src_container_top_factor);
-				//saveData("src_container_top_factor", src_container_top_factor);
+				saveData("src_container_top_factor", src_container_top_factor);
 
 				src_container_left_factor = (getRect(document.querySelector("#src_textarea_container")).left - video_info.left)/video_info.width;
-				if (src_container_left_factor <= 0) {
-					src_container_left_factor = 0;
-				}
 				document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
 				//console.log('src_container_left_factor =', src_container_left_factor);
-				//saveData("src_container_left_factor", src_container_left_factor);
+				saveData("src_container_left_factor", src_container_left_factor);
 			} else {
 				src_container_top_factor = getRect(document.querySelector("#src_textarea_container")).top/window.innerHeight;
-				if (src_container_top_factor <= 0) {
-					src_container_top_factor = 0;
-				}
 				document.querySelector("#input_src_container_top_factor").value = src_container_top_factor;
 				//console.log('src_container_top_factor =', src_container_top_factor);
-				//saveData("src_container_top_factor", src_container_top_factor);
+				saveData("src_container_top_factor", src_container_top_factor);
 
 				src_container_left_factor = getRect(document.querySelector("#src_textarea_container")).left/window.innerWidth;
-				if (src_container_left_factor <= 0) {
-					src_container_left_factor = 0;
-				}
 				document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
 				//console.log('src_container_left_factor =', src_container_left_factor);
-				//saveData("src_container_left_factor", src_container_left_factor);
+				saveData("src_container_left_factor", src_container_left_factor);
 			}
 
-			if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#src_textarea_container")).width)) {
+			if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#src_textarea_container")).width)) {
 				centerize_src = false;
 				saveData('centerize_src', centerize_src);
 				document.querySelector("#checkbox_centerize_src").checked = centerize_src;
@@ -3319,6 +3367,7 @@ function create_modal_text_area() {
 						}
 					});
 				} else {
+					// After do saveData() to save a single data into settings we need to do saveAllSettings() to make them written correctly in chrome storage
 					saveAllSettings();
 				}
 			});
@@ -3349,7 +3398,7 @@ function create_modal_text_area() {
 			.css({
 				'position': 'absolute',
 				'fontFamily': document.querySelector("#select_dst_font").value + ', sans-serif',
-				'fontSize': document.querySelector("#input_dst_font_size").value,
+				'fontSize': font_scale * document.querySelector("#input_dst_font_size").value - 1,
 				'color': document.querySelector("#input_dst_font_color").value,
 				'backgroundColor': hexToRgba(document.querySelector("#input_dst_container_color").value, document.querySelector("#input_dst_container_opacity").value),
 				'border': 'none',
@@ -3367,26 +3416,11 @@ function create_modal_text_area() {
 		}
 
 
+		dst = document.querySelector("#select_dst_dialect").value.split('-')[0];
+		console.log('dst =', dst);
 		if (timestamped_sample_text && dst) var tt_dst = gtranslate(timestamped_sample_text, 'en', dst).then((result => {
-			result = result.replace(/(\d+),(\d+)/g, '$1.$2');
-			result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
-			result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
-			result = result.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
-			result = result.replace(/(\d{2})-\s?(\d{2})-\s?(\d{4})/g, '$1-$2-$3');
-			result = result.replace(/(\d{4})\s*-\s*(\d{2})\s*-\s*(\d{2})/g, '$1-$2-$3');
-			result = result.replace(/(\d{2})\s*-\s*(\d{2})\s*-\s*(\d{5})/g, '$1-$2-$3');
-			result = result.replace(/(\d{2})\s*:\s*(\d{2})\s*:\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
-			result = result.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
-			result = result.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{2}-\d{2}-\d{5} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
-			result = result.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-			result = result.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-			result = result.replace('.,', '.');
-			result = result.replace(',.', ',');
-			result = result.replace('. .', '.');
-			result = convertDatesToISOFormat(result);
+
 			result = formatTranscript(result);
-			result = result.replace(/\n\s*$/, '');
-			//console.log('result =', result);
 			dst_timestamped_sample_text = result;
 
 			show_timestamp_dst = document.querySelector("#checkbox_show_timestamp_dst").checked;
@@ -3399,6 +3433,7 @@ function create_modal_text_area() {
 				document.querySelector("#dst_textarea").value = removeTimestamps(dst_timestamped_sample_text);
 				//console.log('removeTimestamps(dst_timestamped_sample_text) =', removeTimestamps(dst_timestamped_sample_text));
 			}
+			document.querySelector("#dst_textarea").scrollTop = document.querySelector("#dst_textarea").scrollHeight;
 		}));
 
 
@@ -3412,41 +3447,42 @@ function create_modal_text_area() {
 		document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif";
 		document.querySelector("#dst_textarea").style.color = dst_font_color;
 		document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_dst_container_color").value, document.querySelector("#input_dst_container_opacity").value);
-		document.querySelector("#dst_textarea").style.fontSize = String(dst_font_size)+'px';
+		document.querySelector("#dst_textarea").style.fontSize = String(font_scale * dst_font_size - 1) + 'px';
 
 		document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
-			if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
-				document.querySelector("#checkbox_centerize_dst").checked = false;
-			}
 
 			document.querySelector("#dst_textarea").style.position='absolute';
 			document.querySelector("#dst_textarea").style.width = '100%';
 			document.querySelector("#dst_textarea").style.height = '100%';
+
+			if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#dst_textarea_container")).width)) {
+				document.querySelector("#checkbox_centerize_dst").checked = false;
+			}
 
 			video_info = getVideoPlayerInfo();
 			if (video_info) {
 				dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/video_info.width;
 				//console.log('dst_container_width_factor =', dst_container_width_factor);
 				document.querySelector("#input_dst_container_width_factor").value = dst_container_width_factor;
-				//saveData("dst_container_width_factor", dst_container_width_factor);
+				saveData("dst_container_width_factor", dst_container_width_factor);
 
 				dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/video_info.height;
 				//console.log('dst_container_height_factor =', dst_container_height_factor);
 				document.querySelector("#input_dst_container_height_factor").value = dst_container_height_factor;
-				//saveData("dst_container_height_factor", dst_container_height_factor);
+				saveData("dst_container_height_factor", dst_container_height_factor);
 			} else {
 				dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/window.innerWidth;
 				//console.log('dst_container_width_factor =', dst_container_width_factor);
 				document.querySelector("#input_dst_container_width_factor").value = dst_container_width_factor;
-				//saveData("dst_container_width_factor", dst_container_width_factor);
+				saveData("dst_container_width_factor", dst_container_width_factor);
 
 				dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/window.innerHeight;
 				//console.log('dst_container_height_factor =', dst_container_height_factor);
 				document.querySelector("#input_dst_container_height_factor").value = dst_container_height_factor;
-				//saveData("dst_container_height_factor", dst_container_height_factor);
+				saveData("dst_container_height_factor", dst_container_height_factor);
 			}
 
-			if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+			if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#dst_textarea_container")).width)) {
 				centerize_dst = false;
 				saveData('centerize_dst', centerize_dst);
 				document.querySelector("#checkbox_centerize_dst").checked = centerize_dst;
@@ -3483,54 +3519,45 @@ function create_modal_text_area() {
 						}
 					});
 				} else {
+					// After do saveData() to save a single data into settings we need to do saveAllSettings() to make them written correctly in chrome storage
 					saveAllSettings();
 				}
 			});
 		});
 
+
 		document.querySelector("#dst_textarea").offsetParent.ondrag = (function(){
+
 			document.querySelector("#dst_textarea").style.position='absolute';
 
-			if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+			if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#dst_textarea_container")).width)) {
 				document.querySelector("#checkbox_centerize_dst").checked = false;
 			}
 
 			video_info = getVideoPlayerInfo();
 			if (video_info) {
 				dst_container_top_factor = (getRect(document.querySelector("#dst_textarea_container")).top - video_info.top)/video_info.height;
-				if (dst_container_top_factor <= 0) {
-					dst_container_top_factor = 0;
-				}
 				document.querySelector("#input_dst_container_top_factor").value = dst_container_top_factor;
 				//console.log('dst_container_top_factor =', dst_container_top_factor);
-				//saveData("dst_container_top_factor", dst_container_top_factor);
+				saveData("dst_container_top_factor", dst_container_top_factor);
 
 				dst_container_left_factor = (getRect(document.querySelector("#dst_textarea_container")).left - video_info.left)/video_info.width;
-				if (dst_container_left_factor <= 0) {
-					dst_container_left_factor = 0;
-				}
 				document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
 				//console.log('dst_container_left_factor =', dst_container_left_factor);
-				//saveData("dst_container_left_factor", dst_container_left_factor);
+				saveData("dst_container_left_factor", dst_container_left_factor);
 			} else {
 				dst_container_top_factor = getRect(document.querySelector("#dst_textarea_container")).top/window.innerHeight;
-				if (dst_container_top_factor <= 0) {
-					dst_container_top_factor = 0;
-				}
 				document.querySelector("#input_dst_container_top_factor").value = dst_container_top_factor;
 				//console.log('dst_container_top_factor =', dst_container_top_factor);
-				//saveData("dst_container_top_factor", dst_container_top_factor);
+				saveData("dst_container_top_factor", dst_container_top_factor);
 
 				dst_container_left_factor = getRect(document.querySelector("#dst_textarea_container")).left/window.innerWidth;
-				if (dst_container_left_factor <= 0) {
-					dst_container_left_factor = 0;
-				}
 				document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
 				//console.log('dst_container_left_factor =', dst_container_left_factor);
-				//saveData("dst_container_left_factor", dst_container_left_factor);
+				saveData("dst_container_left_factor", dst_container_left_factor);
 			}
 
-			if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5*(video_info.width-getRect(document.querySelector("#dst_textarea_container")).width)) {
+			if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#dst_textarea_container")).width)) {
 				centerize_dst = false;
 				saveData('centerize_dst', centerize_dst);
 				document.querySelector("#checkbox_centerize_dst").checked = centerize_dst;
@@ -3567,6 +3594,7 @@ function create_modal_text_area() {
 						}
 					});
 				} else {
+					// After do saveData() to save a single data into settings we need to do saveAllSettings() to make them written correctly in chrome storage
 					saveAllSettings();
 				}
 			});
@@ -3761,7 +3789,6 @@ function capitalizeSentences(transcription) {
             const capitalizedSentence = (parts[1].trimLeft()).charAt(0).toUpperCase() + (parts[1].trimLeft()).slice(1);
 
             // Replace the original sentence with the capitalized one
-            //lines[i] = parts[0] + ' : ' + capitalizedSentence;
 			lines[i] = parts[0] + colon + capitalizedSentence;
 			//console.log('i =', i );
 			//console.log('lines[i] =', lines[i] );
@@ -3773,13 +3800,94 @@ function capitalizeSentences(transcription) {
     return lines.join('\n');
 }
 
-
+/*
 function formatTranscript(transcript) {
 	// Replace URL-encoded spaces with regular spaces
 	transcript = transcript.replace(/%20/g, ' ');
 	transcript = transcript.trim();
 	transcript = transcript.replace(/(\d{2}:\d{2}:\d{2}\.\d{3}): /g, '$1 : ');
 	transcript = transcript.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+	transcript = transcript.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+
+	// Match timestamps in the transcript
+	const timestamps = transcript.match(/(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: /);
+
+	if (timestamps) {
+		// Split the transcript based on timestamps
+		const lines = transcript.split(timestamps);
+
+		let formattedTranscript = "";
+		for (let line of lines) {
+			line = line.trim();
+			// Replace the separator format in the timestamps
+			line = line.replace(timestamps, '$1 --> $2');
+
+			const colon = line.match(/\s*: /);
+			const parts = line.split(colon);
+			if (parts.length === 2) {
+				const capitalizedSentence = (parts[1].trimLeft()).charAt(0).toUpperCase() + (parts[1].trimLeft()).slice(1);
+				line = parts[0] + colon + capitalizedSentence;
+			}
+
+			// Add the formatted line to the result
+			if (line !== '') formattedTranscript += line.trim() + "\n";
+		}
+        
+		const regex = /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : [^]+?)(?=\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} -->|\s*$)/g;
+		const matches = formattedTranscript.match(regex);
+		if (regex && formattedTranscript) formattedTranscript = matches.join('');
+
+		return formattedTranscript.trim(); // Trim any leading/trailing whitespace from the final result
+
+	} else {
+		return transcript.trim();
+	}
+}
+*/
+
+function formatTranscript(transcript) {
+	// Replace commas with periods in timestamps
+	transcript = transcript.replace(/(\d+),(\d+)/g, '$1.$2');
+	// Remove spaces within timestamps for ISO Date format
+	transcript = transcript.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
+	// Remove spaces within timestamps for Local Date format
+	transcript = transcript.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
+	// Remove any spaces between the date components for ISO Date format
+	transcript = transcript.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
+	// Remove any spaces between the date components for Local Date format
+	transcript = transcript.replace(/(\d{2})-\s?(\d{2})-\s?(\d{4})/g, '$1-$2-$3');
+	// Ensure the timestamp format follows "yyyy-mm-dd hh:mm.ddd" format and remove spaces around the hyphens
+	transcript = transcript.replace(/(\d{4})\s*-\s*(\d{2})\s*-\s*(\d{2})/g, '$1-$2-$3');
+	// Ensure the timestamp format follows "dd-mm-yyyy hh:mm.ddd" format and remove spaces around the hyphens
+	transcript = transcript.replace(/(\d{2})\s*-\s*(\d{2})\s*-\s*(\d{5})/g, '$1-$2-$3');
+	// Remove any spaces around the colons in the time component.
+	transcript = transcript.replace(/(\d{2})\s*:\s*(\d{2})\s*:\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
+	// Replace the time_separator with correct strings "-->" for ISO Date format
+	transcript = transcript.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
+	// Replace the time_separator with correct strings "-->" for Local Date format
+	transcript = transcript.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{2}-\d{2}-\d{5} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
+	// Move every timestamps to a new line for Local Date format
+	transcript = transcript.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+	// Move every timestamps to a new line for ISO Date format
+	transcript = transcript.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+
+	transcript = transcript.replace('.,', '.');
+	transcript = transcript.replace(',.', ',');
+	transcript = transcript.replace('. .', '.');
+
+	transcript = convertDatesToISOFormat(transcript);
+	// Remove last blank line
+	transcript = transcript.replace(/\n\s*$/, '');
+	transcript = removeEmptyLines(transcript);
+
+	// Replace URL-encoded spaces with regular spaces
+	transcript = transcript.replace(/%20/g, ' ');
+	transcript = transcript.trim();
+	// Give space between time part and colon
+	transcript = transcript.replace(/(\d{2}:\d{2}:\d{2}\.\d{3}): /g, '$1 : ');
+	// Move every timestamps to a new line for Local Date format
+	transcript = transcript.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+	// Move every timestamps to a new line for ISO Date format
 	transcript = transcript.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
 
 	// Match timestamps in the transcript
@@ -3865,22 +3973,22 @@ function saveData(key, data) {
             let settings = result.settings || {};
             settings[key] = data;
             chrome.storage.local.set({ 'settings': settings }, () => {
-                console.log(key + ' data saved within settings.');
+                console.log(key + ' = ' + data  + ' saved within settings.');
                 setTimeout(() => {
                     verifyData(key, data, 'settings');
                 }, 100);
             });
         });
-    }, 1000);
+    }, 100);
 }
 
 
 function verifyData(key, data, parentKey = null) {
     chrome.storage.local.get([parentKey || key], (result) => {
         if (parentKey) {
-            console.log(result[parentKey][key] === data ? 'Data verified.' : 'Data verification failed.');
+            console.log(result[parentKey][key] === data ? key + ' = ' + data + ' data verified.' : key + ' = ' + data + ' data verification failed.');
         } else {
-            console.log(result[key] === data ? 'Data verified.' : 'Data verification failed.');
+            console.log(result[key] === data ? key + ' = ' + data + ' data verified.' : key + ' = ' + data + ' data verification failed.');
         }
     });
 }
@@ -3948,7 +4056,7 @@ function saveSetting(key, value, callback) {
         if (chrome.runtime.lastError) {
             console.error("Error setting data for key", key, ":", chrome.runtime.lastError);
         } else {
-            console.log(`save ${key} = `, value);
+            console.log(`saving ${key} = `, value);
         }
         if (callback) {
             callback();
@@ -3971,6 +4079,8 @@ function saveAllSettings() {
         'show_dst': show_dst,
         'show_timestamp_src': show_timestamp_src,
         'show_timestamp_dst': show_timestamp_dst,
+        'save_src': save_src,
+        'save_dst': save_dst,
         'pause_threshold': pause_threshold,
 
         'src_selected_font_index': src_selected_font_index,
