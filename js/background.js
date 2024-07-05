@@ -3010,7 +3010,7 @@ chrome.action.onClicked.addListener((tab) => {
 	}
 });
 
-
+/*
 chrome.runtime.onInstalled.addListener(() => {
 	//console.log("Extension installed");
 	chrome.contextMenus.create({
@@ -3021,10 +3021,11 @@ chrome.runtime.onInstalled.addListener(() => {
 		if (chrome.runtime.lastError) {
 			console.error(chrome.runtime.lastError.message);
 		} else {
-			//console.log("Context menu item created");
+			console.log("Context menu item created");
 		}
 	});
 });
+*/
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
 	if (info.menuItemId === "Settings") {
