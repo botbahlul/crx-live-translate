@@ -1,13 +1,15 @@
 {
-	"name": "Live Audio/Video Translate",
-	"options_page": "settings.html",
+	"name": "Live Translate",
 	"description": "Recognize any LIVE audio/video streaming and TRANSLATE it for FREE!",
-	"version": "0.2.9",
+	"version": "0.2.10",
 	"manifest_version": 3,
-	"permissions": ["scripting", "background", "tabs", "activeTab", "storage", "contextMenus", "declarativeContent", "declarativeNetRequest", "declarativeNetRequestFeedback"],
+	"permissions": ["scripting", "background", "tabs", "activeTab", "storage", "contextMenus", "notifications", "declarativeContent", "declarativeNetRequest", "declarativeNetRequestFeedback"],
+	"background": {
+		"service_worker": "js/background.js"
+	},
 	"host_permissions": ["*://*/*"],
 	"action": {
-		"default_title": "Left Click to START/STOP, \nRight Click to set OPTIONS of language",
+		"default_title": "LIVE TRANSLATE 0.2.10\n(Left Click to START/STOP, \nRight Click to set language settings)",
 		"default_icon": {
 			"16": "icons/16.png",
 			"32": "icons/32.png",
@@ -20,9 +22,5 @@
 		"32": "icons/32.png",
 		"48": "icons/48.png",
 		"64": "icons/64.png"
-	},
-	"background": {
-		"service_worker": "js/background.js"
 	}
 }
-
