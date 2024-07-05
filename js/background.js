@@ -3010,62 +3010,35 @@ chrome.action.onClicked.addListener((tab) => {
 	}
 });
 
-/*
+
 chrome.runtime.onInstalled.addListener(() => {
-	//console.log("Extension installed");
-	chrome.contextMenus.create({
-		id: "Settings",
-		title: "Settings",
-		contexts: ["action"],
-	}, () => {
-		if (chrome.runtime.lastError) {
-			console.error(chrome.runtime.lastError.message);
-		} else {
-			console.log("Context menu item created");
-		}
-	});
+  console.log("Extension installed");
+  
+  // Create the "Settings" context menu item
+  chrome.contextMenus.create({
+    id: "settings",
+    title: "Settings",
+    contexts: ["action"],
+  }, () => {
+    if (chrome.runtime.lastError) {
+      console.error(chrome.runtime.lastError.message);
+    } else {
+      console.log("Settings context menu item created");
+    }
+  });
 });
-*/
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-	if (info.menuItemId === "Settings") {
-		//console.log("Settings item clicked");
-/*
-		chrome.notifications.create({
-			type: "basic",
-			iconUrl: "icons/48.png",
-			title: "Context Menu Clicked",
-			message: "Settings item clicked",
-		}, (notificationId) => {
-			if (chrome.runtime.lastError) {
-				console.error(chrome.runtime.lastError.message);
-			} else {
-				console.log("Notification shown with ID:", notificationId);
-			}
-		});
-*/
-		chrome.tabs.create({
-			url: chrome.runtime.getURL("settings.html")
-		}, (newTab) => {
-			if (chrome.runtime.lastError) {
-				console.error(chrome.runtime.lastError.message);
-			} else {
-				console.log("Settings tab opened with ID:", newTab.id);
-			}
-		});
-    }
+  if (info.menuItemId === "settings") {
+    console.log("Settings item clicked");
+    chrome.tabs.create({
+      url: chrome.runtime.getURL("settings.html")
+    }, (newTab) => {
+      if (chrome.runtime.lastError) {
+        console.error(chrome.runtime.lastError.message);
+      } else {
+        console.log("Settings tab opened with ID:", newTab.id);
+      }
+    });
+  }
 });
-
-/*
-// Function to update the context menu item
-function updateContextMenu() {
-	chrome.contextMenus.update("Settings", {
-		title: "Updated Menu Settings ",
-	});
-}
-
-// Function to remove the context menu item
-function removeContextMenu() {
-	chrome.contextMenus.remove("Settings");
-}
-*/
