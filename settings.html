@@ -14,11 +14,21 @@
 	}
 	.two-column {
 		display: flex;
-		gap: 10px;
+		gap: 5px;
+	}
+	.two-column-2 {
+		display: flex;
+		gap: 5px;
 	}
 	.column {
 		flex: 1;
 		padding: 10px;
+	}
+	.column-2-1 {
+	width: 23%
+	}
+	.column-2-2 {
+	width: 77%
 	}
 
 	#column1 {
@@ -43,84 +53,92 @@
 		margin: 10px auto;
 	}
 
+	#select_src_language {
+		width: 160px; /* Adjust width as needed */
+		height: 14px; /* Adjust height as needed */
+	}
+	#select_src_dialect {
+		width: 240px; /* Adjust width as needed */
+		height: 14px; /* Adjust height as needed */
+	}
 	#select_src_font {
 		width: 160px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+		height: 14px; /* Adjust height as needed */
 	}
 	#input_src_font_size {
 		width: 40px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+		height: 14px; /* Adjust height as needed */
 	}
-	#input_src_font_color {
-		width: 50px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+	#slider_src_font_color {
+		width: 40px; /* Adjust width as needed */
+		height: 14px; /* Adjust height as needed */
 	}
 	#input_src_container_width_factor {
-		width: 56px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+		width: 50px; /* Adjust width as needed */
+		height: 14px; /* Adjust height as needed */
 	}
 	#input_src_container_height_factor {
-		width: 56px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+		width: 50px; /* Adjust width as needed */
+		height: 14px; /* Adjust height as needed */
 	}
 	#input_src_container_top_factor {
-		width: 56px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+		width: 50px; /* Adjust width as needed */
+		height: 14px; /* Adjust height as needed */
 	}
 	#input_src_container_left_factor {
-		width: 56px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+		width: 50px; /* Adjust width as needed */
+		height: 14px; /* Adjust height as needed */
 	}
-	#input_src_container_color {
-		width: 56px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+	#slider_src_container_color {
+		width: 100px; /* Adjust width as needed */
+		height: 14px; /* Adjust height as needed */
 	}
-	#input_src_container_opacity {
-		width: 80px; /* Adjust width as needed */
+	#slider_src_container_opacity {
+		width: 100px; /* Adjust width as needed */
 		height: 4px; /* Adjust height as needed */
 	}
 	#select_dst_language {
 		width: 160px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+		height: 14px; /* Adjust height as needed */
 	}
 	#select_dst_dialect {
 		width: 240px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+		height: 14px; /* Adjust height as needed */
 	}
 	#select_dst_font {
 		width: 160px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+		height: 14px; /* Adjust height as needed */
 	}
 	#input_dst_font_size {
 		width: 40px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+		height: 14px; /* Adjust height as needed */
 	}
-	#input_dst_font_color {
-		width: 50px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+	#slider_dst_font_color {
+		width: 40px; /* Adjust width as needed */
+		height: 14px; /* Adjust height as needed */
 	}
 	#input_dst_container_width_factor {
-		width: 56px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+		width: 50px; /* Adjust width as needed */
+		height: 14px; /* Adjust height as needed */
 	}
 	#input_dst_container_height_factor {
-		width: 56px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+		width: 50px; /* Adjust width as needed */
+		height: 14px; /* Adjust height as needed */
 	}
 	#input_dst_container_top_factor {
-		width: 56px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+		width: 50px; /* Adjust width as needed */
+		height: 14px; /* Adjust height as needed */
 	}
 	#input_dst_container_left_factor {
-		width: 56px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+		width: 50px; /* Adjust width as needed */
+		height: 14px; /* Adjust height as needed */
 	}
-	#input_dst_container_color {
-		width: 56px; /* Adjust width as needed */
-		height: 16px; /* Adjust height as needed */
+	#slider_dst_container_color {
+		width: 100px; /* Adjust width as needed */
+		height: 14px; /* Adjust height as needed */
 	}
-	#input_dst_container_opacity {
-		width: 80px; /* Adjust width as needed */
+	#slider_dst_container_opacity {
+		width: 100px; /* Adjust width as needed */
 		height: 4px; /* Adjust height as needed */
 	}
 </style>
@@ -133,109 +151,239 @@
 </head>
 <body>
 
-	<h1 style="font-size: 16px">Live Translate v0.3.0</h1> 
+	<h1 style="font-size: 16px">Live Translate v0.3.1</h1> 
 	<br>
-	<h2 style="font-size: 14px">Settings</h2> 
+	<h2 style="font-size: 12px">Settings</h2> 
 
     <div class="container">
         <div class="two-column">
             <div class="column left-column" id='column1'>
-				<label style='font-size: 12px'>Audio Language&nbsp;&nbsp;&nbsp;&nbsp;</label>
-				<select id='select_src_language' style='width: 160px' style='font-size: 12px'></select>
-				<select id='select_src_dialect' style='width: 240px' style='font-size: 12px'></select>
-				<br>
-				<input type="checkbox" id="checkbox_show_src" name="checkbox_show_src" style='font-size: 12px' checked='true;'>
-				<label style='font-size: 12px'> Show Transcription </label>
-				<br>
-				<input type="checkbox" id="checkbox_show_timestamp_src" name="checkbox_show_timestamp_src" style='font-size: 12px' checked='true;'>
-				<label style='font-size: 12px'> Show Timestamps </label>
-				<br>
-				<label for="select_src_font" style="font-size: 12px">Subtitle Font&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-				<select id="select_src_font" style="font-size: 12px"></select>
-				<input type="number" id="input_src_font_size" min="1" value="18" style='font-size:12px'>
-				<input type="color" id="input_src_font_color" value="#ffff00" style='font-size:12px'>
-				<br>
-				<label for="input_src_container_width_factor" style="font-size: 12px" >Container Width&nbsp;&nbsp;&nbsp;&nbsp;</label>
-				<input type="number" id="input_src_container_width_factor" min="0" max="1" step="0.001" value="0.795" style='font-size:12px'>
-				<label for="src_container_width_continuing_text" style="font-size: 12px" >x Video Width</label>
-				<br>
-				<label for="input_src_container_height_factor" style="font-size: 12px">Container Height&nbsp;&nbsp;&nbsp;</label>
-				<input type="number" id="input_src_container_height_factor" min="0" max="1" step="0.001" value="0.165" style='font-size:12px'>
-				<label for="src_container_height_continuing_text" style="font-size: 12px">x Video Height&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-				<br>
-				<label for="input_src_container_top_factor" style="font-size: 12px">Container Top&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-				<input type="number" id="input_src_container_top_factor" min="0" max="1" step="0.01" value="0.01" style='font-size:12px'>
-				<label for="src_container_top_continuing_text" style="font-size: 12px">x Video Height</label>
-				<br>
-				<label for="input_src_container_left_factor" style="font-size: 12px">Container Left&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-				<input type="number" id="input_src_container_left_factor" min="0" max="1" step="0.01" value="0.1" style='font-size:12px'>
-				<label for="src_container_left_continuing_text" style="font-size: 12px">x Video Width</label>
-				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-				<input type="checkbox" id="checkbox_centerize_src" name="checkbox_centerize_src" style='font-size: 12px' checked='true;'>
-				<label style='font-size: 12px'> Centerize Horizontally </label>
-				<br>
-				<label for="input_src_container_color" style="font-size: 12px">Container Color&nbsp;&nbsp;&nbsp;&nbsp;</label>
-				<input type="color" id="input_src_container_color" value="#000000" style='font-size:12px'>
-				<br>
-				<label for="input_src_container_opacity" style="font-size: 12px">Container Opacity&nbsp;</label>
-				<input type="range" id="input_src_container_opacity" min="0" max="1" step="0.01" value="0.3" style='font-size:12px'>
-				<br>
-				<input type="checkbox" id="checkbox_save_src" name="checkbox_save_src" style='font-size: 12px' checked='true;'>
-				<label style='font-size: 12px'> Save Transcription </label>
-				<br>
-				<br>
-				<label style='font-size: 12px'>Translation&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-				<select id='select_dst_language' style='width:160px' style='font-size:12px'></select>
-				<select id='select_dst_dialect' style='width:240px' style='font-size:12px'></select>
-				<br>
-				<input type="checkbox" id="checkbox_show_dst" name="checkbox_show_dst" style='font-size:12px' checked='true;'>
-				<label style='font-size: 12px'> Show Translation</label>
-				<br>
-				<input type="checkbox" id="checkbox_show_timestamp_dst" name="checkbox_show_timestamp_dst" style='font-size: 12px' checked='true;'>
-				<label style='font-size: 12px'> Show Timestamps </label>
-				<br>
-				<label for="select_dst_font" style="font-size: 12px">Subtitle Font&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-				<select id="select_dst_font" style="font-size: 12px"></select>
-				<input type="number" id="input_dst_font_size" min="1" value="18" style='font-size:12px'>
-				<input type="color" id="input_dst_font_color" value="#ffff00" style='font-size:12px'>
-				<br>
-				<label for="input_dst_container_width_factor" style="font-size: 12px">Container Width&nbsp;&nbsp;&nbsp;&nbsp;</label>
-				<input type="number" id="input_dst_container_width_factor" min="0" max="1" step="0.001" value="0.795" style='font-size:12px'>
-				<label for="dst_container_width_continuing_text" style="font-size: 12px">x Video Width</label>
-				<br>
-				<label for="input_dst_container_height_factor" style="font-size: 12px">Container Height&nbsp;&nbsp;&nbsp;</label>
-				<input type="number" id="input_dst_container_height_factor" min="0" max="1" step="0.001" value="0.225" style='font-size:12px'>
-				<label for="dst_container_height_continuing_text" style="font-size: 12px">x Video Height</label>
-				<br>
-				<label for="input_dst_container_top_factor" style="font-size: 12px">Container Top&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-				<input type="number" id="input_dst_container_top_factor" min="0" max="1" step="0.01" value="0.65" style='font-size:12px'>
-				<label for="dst_container_top_continuing_text" style="font-size: 12px">x Video Height</label>
-				<br>
-				<label for="input_dst_container_left_factor" style="font-size: 12px">Container Left&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-				<input type="number" id="input_dst_container_left_factor" min="0" max="1" step="0.01" value="0.1" style='font-size:12px'>
-				<label for="dst_container_left_continuing_text" style="font-size: 12px">x Video Width</label>
-				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-				<input type="checkbox" id="checkbox_centerize_dst" name="checkbox_centerize_dst" style='font-size: 12px' checked='true;'>
-				<label style='font-size: 12px'> Centerize Horizontally </label>
-				<br>
-				<label for="input_dst_container_color" style="font-size: 12px">Container Color&nbsp;&nbsp;&nbsp;&nbsp;</label>
-				<input type="color" id="input_dst_container_color" value="#000000" style='font-size:12px'>
-				<br>
-				<label for="input_dst_container_opacity" style="font-size: 12px">Container Opacity&nbsp;</label>
-				<input type="range" id="input_dst_container_opacity" min="0" max="1" step="0.01" value="0.3" style='font-size:12px'>
-				<br>
-				<input type="checkbox" id="checkbox_save_dst" name="checkbox_save_dst" style='font-size: 12px' checked='true;'>
-				<label style='font-size: 12px'> Save Translation </label>
-				<br>
-				<br>
-				<label for="input_pause_threshold" style='font-size: 12px'>Pause Threshold&nbsp;&nbsp;&nbsp;</label>
-				<input style='width:60px' type="number" id="input_pause_threshold" min="0" step="1" value="5000" style='font-size:12px'>
-				<label for="pause_threshold_continuing_text" style='font-size: 12px'> (in miliseconds, silent duration that will trigger speech engine to restart)</label>
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<label style='font-size: 12px'>Audio Language</label>
+							<br>
+							<input type="checkbox" id="checkbox_show_src" name="checkbox_show_src" style='font-size: 12px'>
+							<label style='font-size: 12px'> Show Transcription </label>
+							<br>
+							<input type="checkbox" id="checkbox_show_timestamp_src" name="checkbox_show_timestamp_src" style='font-size: 12px'>
+							<label style='font-size: 12px'> Show Timestamps </label>
+						</div>
+						<div class="column-2-2">
+							<select id='select_src_language' style='width: 160px' style='font-size: 12px'></select>
+							<select id='select_src_dialect' style='width: 240px' style='font-size: 12px'></select>
+							<br>
+							<br>
+							<br>
+						</div>
+					</div>
 
-				<br><br>
-				<button id='save_button' style='position:relative'>Save</button>
-				<br><br>
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<label for="select_src_font" style="font-size: 12px">Subtitle Font</label>
+						</div>
+						<div class="column-2-2">
+							<select id="select_src_font" style="font-size: 12px"></select>
+							<input type="number" id="input_src_font_size" min="1" value="18" style='font-size:12px'>
+							<input type="color" id="slider_src_font_color" value="#00ff1e" style='font-size:12px'>
+							&nbsp;
+							<label id="label_src_font_color" for="slider_src_font_color" style="font-size: 12px"></label>
+						</div>
+					</div>
+					
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<label for="input_src_container_width_factor" style="font-size: 12px" >Container Width</label>
+						</div>
+						<div class="column-2-2">
+							<input type="number" id="input_src_container_width_factor" step="0.001" value="0.795" style='font-size:12px'>
+							<label for="src_container_width_continuing_text" style="font-size: 12px" >x Video Width</label>
+						</div>
+					</div>
 
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<label for="input_src_container_height_factor" style="font-size: 12px">Container Height</label>
+						</div>
+						<div class="column-2-2">
+							<input type="number" id="input_src_container_height_factor" step="0.001" value="0.150" style='font-size:12px'>
+							<label for="src_container_height_continuing_text" style="font-size: 12px">x Video Height</label>
+						</div>
+					</div>
+
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<label for="input_src_container_left_factor" style="font-size: 12px">Container Left</label>
+						</div>
+						<div class="column-2-2">
+							<input type="number" id="input_src_container_left_factor" step="0.01" value="0.100" style='font-size:12px'>
+							<label for="src_container_left_continuing_text" style="font-size: 12px">x Video Width</label>
+							&nbsp;&nbsp;&nbsp;&nbsp;
+							<input type="checkbox" id="checkbox_centerize_src" name="checkbox_centerize_src" style='font-size: 12px' checked='true;'>
+							<label style='font-size: 12px'> Centerize Horizontally </label>
+						</div>
+					</div>
+						
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<label for="input_src_container_top_factor" style="font-size: 12px">Container Top</label>
+						</div>
+						<div class="column-2-2">
+							<input type="number" id="input_src_container_top_factor" step="0.01" value="0.010" style='font-size:12px'>
+							<label for="src_container_top_continuing_text" style="font-size: 12px">x Video Height</label>
+						</div>
+					</div>
+
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<label for="slider_src_container_color" style="font-size: 12px">Container Color</label>
+						</div>
+						<div class="column-2-2">
+							<input type="color" id="slider_src_container_color" value="#000000" style='font-size:12px'>
+							&nbsp;
+							<label id="label_src_container_color" for="slider_src_container_color" style="font-size: 12px"></label>
+						</div>
+					</div>
+
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<label for="slider_src_container_opacity" style="font-size: 12px">Container Opacity</label>
+						</div>
+						<div class="column-2-2">
+							<input type="range" id="slider_src_container_opacity" step="0.01" value="0.3" style='font-size:12px'>
+							&nbsp;
+							<label id="label_src_container_opacity" for="slider_src_container_opacity" style="font-size: 12px"></label>
+						</div>
+					</div>
+
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<input type="checkbox" id="checkbox_save_src" name="checkbox_save_src" style='font-size: 12px' checked='true;'>
+							<label style='font-size: 12px'> Save Transcription </label>
+						</div>
+					</div>
+					
+					<br>
+
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<label style='font-size: 12px'>Translation Language</label>
+							<br>
+							<input type="checkbox" id="checkbox_show_dst" name="checkbox_show_dst" style='font-size: 12px'>
+							<label style='font-size: 12px'> Show Translation </label>
+							<br>
+							<input type="checkbox" id="checkbox_show_timestamp_dst" name="checkbox_show_timestamp_dst" style='font-size: 12px'>
+							<label style='font-size: 12px'> Show Timestamps </label>
+						</div>
+						<div class="column-2-2">
+							<select id='select_dst_language' style='width: 160px' style='font-size: 12px'></select>
+							<select id='select_dst_dialect' style='width: 240px' style='font-size: 12px'></select>
+							<br>
+							<br>
+							<br>
+						</div>
+					</div>
+
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<label for="select_dst_font" style="font-size: 12px">Subtitle Font</label>
+						</div>
+						<div class="column-2-2">
+							<select id="select_dst_font" style="font-size: 12px"></select>
+							<input type="number" id="input_dst_font_size" min="1" value="18" style='font-size:12px'>
+							<input type="color" id="slider_dst_font_color" value="#fff700" style='font-size:12px'>
+							&nbsp;
+							<label id="label_dst_font_color" for="slider_dst_font_color" style="font-size: 12px"></label>
+						</div>
+					</div>
+					
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<label for="input_dst_container_width_factor" style="font-size: 12px" >Container Width</label>
+						</div>
+						<div class="column-2-2">
+							<input type="number" id="input_dst_container_width_factor" step="0.001" value="0.8" style='font-size:12px'>
+							<label for="dst_container_width_continuing_text" style="font-size: 12px" >x Video Width</label>
+						</div>
+					</div>
+
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<label for="input_dst_container_height_factor" style="font-size: 12px">Container Height</label>
+						</div>
+						<div class="column-2-2">
+							<input type="number" id="input_dst_container_height_factor" step="0.001" value="0.225" style='font-size:12px'>
+							<label for="dst_container_height_continuing_text" style="font-size: 12px">x Video Height</label>
+						</div>
+					</div>
+
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<label for="input_dst_container_left_factor" style="font-size: 12px">Container Left</label>
+						</div>
+						<div class="column-2-2">
+							<input type="number" id="input_dst_container_left_factor" step="0.01" value="0.1" style='font-size:12px'>
+							<label for="dst_container_left_continuing_text" style="font-size: 12px">x Video Width</label>
+							&nbsp;&nbsp;&nbsp;&nbsp;
+							<input type="checkbox" id="checkbox_centerize_dst" name="checkbox_centerize_dst" style='font-size: 12px' checked='true;'>
+							<label style='font-size: 12px'> Centerize Horizontally </label>
+						</div>
+					</div>
+						
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<label for="input_dst_container_top_factor" style="font-size: 12px">Container Top</label>
+						</div>
+						<div class="column-2-2">
+							<input type="number" id="input_dst_container_top_factor" step="0.01" value="0.65" style='font-size:12px'>
+							<label for="dst_container_top_continuing_text" style="font-size: 12px">x Video Height</label>
+						</div>
+					</div>
+
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<label for="slider_dst_container_color" style="font-size: 12px">Container Color</label>
+						</div>
+						<div class="column-2-2">
+							<input type="color" id="slider_dst_container_color" value="#000000" style='font-size:12px'>
+							&nbsp;
+							<label id="label_dst_container_color" for="slider_dst_container_color" style="font-size: 12px"></label>
+						</div>
+					</div>
+
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<label for="slider_dst_container_opacity" style="font-size: 12px">Container Opacity</label>
+						</div>
+						<div class="column-2-2">
+							<input type="range" id="slider_dst_container_opacity" step="0.01" value="0.3" style='font-size:12px'>
+							&nbsp;
+							<label id="label_dst_container_opacity" for="slider_dst_container_opacity" style="font-size: 12px"></label>
+						</div>
+					</div>
+
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<input type="checkbox" id="checkbox_save_dst" name="checkbox_save_dst" style='font-size: 12px' checked='true;'>
+							<label style='font-size: 12px'> Save Transcription </label>
+						</div>
+					</div>
+
+					<br>
+
+					<div class="two-column-2">
+						<div class="column-2-1">
+							<label for="input_pause_threshold" style='font-size: 12px'>Pause Threshold&nbsp;&nbsp;&nbsp;</label>
+							<br>
+							<br>
+							<button id='save_button' style='position:relative'>Save</button>
+						</div>
+						<div class="column-2-2">
+							<input style='width:60px' type="number" id="input_pause_threshold" min="0" step="1" value="5000" style='font-size:12px'>
+							<label for="pause_threshold_continuing_text" style='font-size: 12px'> miliseconds (silent duration that will trigger speech engine to restart)</label>
+							<br>
+							<br>
+						</div>
+					</div>
             </div>
 
 			<div class="column right-column" id='column2'>
@@ -247,8 +395,8 @@
 						</div>
 					</div>
 				</div>
-			</div>
 
+			</div>
 		</div>
 	</div>
 

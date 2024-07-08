@@ -1,7 +1,7 @@
 {
 	"name": "Live Translate",
 	"description": "Recognize any LIVE audio/video streaming and TRANSLATE it for FREE!",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"manifest_version": 3,
 	"permissions": ["scripting", "background", "tabs", "activeTab", "storage", "contextMenus", "notifications", "declarativeContent", "declarativeNetRequest", "declarativeNetRequestFeedback"],
 	"background": {
