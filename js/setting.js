@@ -336,6 +336,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 		if (cmd === 'background_src_container_width_factor') {
 			console.log('background_src_container_width_factor =', data.value);
 			src_container_width_factor = data.value;
+			src_container_width_factor = parseFloat(src_container_width_factor).toFixed(3);
 			document.querySelector("#input_src_container_width_factor").value = src_container_width_factor;
 			//return true;
 		}
@@ -343,6 +344,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 		if (cmd === 'background_src_container_height_factor') {
 			console.log('background_src_container_height_factor =', data.value);
 			src_container_height_factor = data.value;
+			src_container_height_factor = parseFloat(src_container_height_factor).toFixed(3);
 			document.querySelector("#input_src_container_height_factor").value = src_container_height_factor;
 			//return true;
 		}
@@ -350,6 +352,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 		if (cmd === 'background_src_container_top_factor') {
 			console.log('background_src_container_top_factor =', data.value);
 			src_container_top_factor = data.value;
+			src_container_top_factor = parseFloat(src_container_top_factor).toFixed(3);
 			document.querySelector("#input_src_container_top_factor").value = src_container_top_factor;
 			//return true;
 		}
@@ -357,6 +360,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 		if (cmd === 'background_src_container_left_factor') {
 			console.log('background_src_container_left_factor =', data.value);
 			src_container_left_factor = data.value;
+			src_container_left_factor = parseFloat(src_container_left_factor).toFixed(3);
 			document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
 			//return true;
 		}
@@ -371,6 +375,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 		if (cmd === 'background_dst_container_width_factor') {
 			console.log('background_dst_container_width_factor =', data.value);
 			dst_container_width_factor = data.value;
+			dst_container_width_factor = parseFloat(dst_container_width_factor).toFixed(3);
 			document.querySelector("#input_dst_container_width_factor").value = dst_container_width_factor;
 			//return true;
 		}
@@ -378,6 +383,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 		if (cmd === 'background_dst_container_height_factor') {
 			console.log('background_dst_container_height_factor =', data.value);
 			dst_container_height_factor = data.value;
+			dst_container_height_factor = parseFloat(dst_container_height_factor).toFixed(3);
 			document.querySelector("#input_dst_container_height_factor").value = dst_container_height_factor;
 			//return true;
 		}
@@ -385,6 +391,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 		if (cmd === 'background_dst_container_top_factor') {
 			console.log('background_dst_container_top_factor =', data.value);
 			dst_container_top_factor = data.value;
+			dst_container_top_factor = parseFloat(dst_container_top_factor).toFixed(3);
 			document.querySelector("#input_dst_container_top_factor").value = dst_container_top_factor;
 			//return true;
 		}
@@ -392,6 +399,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 		if (cmd === 'background_dst_container_left_factor') {
 			console.log('background_dst_container_left_factor =', data.value);
 			dst_container_left_factor = data.value;
+			dst_container_left_factor = parseFloat(dst_container_left_factor).toFixed(3);
 			document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
 			//return true;
 		}
@@ -551,10 +559,12 @@ function CheckStoredValues() {
 		src_font_color = result.src_font_color;
 		console.log('CheckStoredValues before if: result.src_font_color =', result.src_font_color);
 		if (result.src_font_color) {
-			document.querySelector("#input_src_font_color").value = src_font_color;
+			document.querySelector("#slider_src_font_color").value = src_font_color;
+			document.querySelector("#label_src_font_color").textContent = document.querySelector("#slider_src_font_color").value;
 		} else {
-			src_font_color = '#AAFF00';
-			document.querySelector("#input_src_font_color").value = src_font_color;
+			src_font_color = '#00ff1e';
+			document.querySelector("#slider_src_font_color").value = src_font_color;
+			document.querySelector("#label_src_font_color").textContent = document.querySelector("#slider_src_font_color").value;
 		}
 		console.log('CheckStoredValues after if: src_font_color =', src_font_color);
 	});
@@ -563,10 +573,12 @@ function CheckStoredValues() {
 		src_container_width_factor = result.src_container_width_factor;
 		console.log('CheckStoredValues before if: result.src_container_width_factor =', result.src_container_width_factor);
 		if (result.src_container_width_factor) {
+			src_container_width_factor = parseFloat(src_container_width_factor).toFixed(3);
 			document.querySelector("#input_src_container_width_factor").value = src_container_width_factor;
 		} else {
-			document.querySelector("#input_src_container_width_factor").value = 0.795;
 			src_container_width_factor = 0.795;
+			src_container_width_factor = parseFloat(src_container_width_factor).toFixed(3);
+			document.querySelector("#input_src_container_width_factor").value = src_container_width_factor;
 		}
 		console.log('CheckStoredValues after if: src_container_width_factor =', src_container_width_factor);
 	});
@@ -575,10 +587,12 @@ function CheckStoredValues() {
 		src_container_height_factor = result.src_container_height_factor;
 		console.log('CheckStoredValues before if: result.src_container_height_factor =', result.src_container_height_factor);
 		if (result.src_container_height_factor) {
+			src_container_height_factor = parseFloat(src_container_height_factor).toFixed(3);
 			document.querySelector("#input_src_container_height_factor").value = src_container_height_factor;
 		} else {
-			document.querySelector("#input_src_container_height_factor").value = 0.18;
-			src_container_height_factor = 0.18;
+			src_container_height_factor = 0.180;
+			src_container_height_factor = parseFloat(src_container_height_factor).toFixed(3);
+			document.querySelector("#input_src_container_height_factor").value = src_container_height_factor;
 		}
 		console.log('CheckStoredValues after if: src_container_height_factor =', src_container_height_factor);
 	});
@@ -587,10 +601,12 @@ function CheckStoredValues() {
 		src_container_top_factor = result.src_container_top_factor;
 		console.log('CheckStoredValues before if: result.src_container_top_factor =', result.src_container_top_factor);
 		if (result.src_container_top_factor) {
+			src_container_top_factor = parseFloat(src_container_top_factor).toFixed(3);
 			document.querySelector("#input_src_container_top_factor").value = src_container_top_factor;
 		} else {
-			document.querySelector("#input_src_container_top_factor").value = 0.01;
-			src_container_top_factor = 0.01;
+			src_container_top_factor = 0.010;
+			src_container_top_factor = parseFloat(src_container_top_factor).toFixed(3);
+			document.querySelector("#input_src_container_top_factor").value = src_container_top_factor;
 		}
 		console.log('CheckStoredValues after if: src_container_top_factor =', src_container_top_factor);
 	});
@@ -610,9 +626,12 @@ function CheckStoredValues() {
 		src_container_left_factor = result.src_container_left_factor;
 		console.log('CheckStoredValues before if: result.src_container_left_factor =', result.src_container_left_factor);
 		if (result.src_container_left_factor) {
+			src_container_left_factor = parseFloat(src_container_left_factor).toFixed(3);
 			document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
 		} else {
-			document.querySelector("#input_src_container_left_factor").value = 0.1;
+			src_container_left_factor = 0.100;
+			src_container_left_factor = parseFloat(src_container_left_factor).toFixed(3);
+			document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
 		}
 		console.log('CheckStoredValues after if: src_container_left_factor =', src_container_left_factor);
 	});
@@ -621,9 +640,11 @@ function CheckStoredValues() {
 		src_container_color = result.src_container_color;
 		console.log('CheckStoredValues before if: result.src_container_color =', result.src_container_color);
 		if (result.src_container_color) {
-			document.querySelector("#input_src_container_color").value = src_container_color;
+			document.querySelector("#slider_src_container_color").value = src_container_color;
+			document.querySelector("#label_src_container_color").textContent = document.querySelector("#slider_src_container_color").value;
 		} else {
-			document.querySelector("#input_src_container_color").value = "#000000";
+			document.querySelector("#slider_src_container_color").value = "#000000";
+			document.querySelector("#label_src_container_color").textContent = document.querySelector("#slider_src_container_color").value;
 		}
 		console.log('CheckStoredValues after if: src_container_color =', src_container_color);
 	});
@@ -632,9 +653,11 @@ function CheckStoredValues() {
 		src_container_opacity = result.src_container_opacity;
 		console.log('CheckStoredValues before if: result.src_container_opacity =', result.src_container_opacity);
 		if (result.src_container_opacity) {
-			document.querySelector("#input_src_container_opacity").value = src_container_opacity;
+			document.querySelector("#slider_src_container_opacity").value = src_container_opacity;
+			document.querySelector("#label_src_container_opacity").textContent = document.querySelector("#slider_src_container_opacity").value;
 		} else {
-			document.querySelector("#input_src_container_opacity").value = 0.3;
+			document.querySelector("#slider_src_container_opacity").value = 0.3;
+			document.querySelector("#label_src_container_opacity").textContent = document.querySelector("#slider_src_container_opacity").value;
 		}
 		console.log('CheckStoredValues after if: src_container_opacity =', src_container_opacity);
 	});
@@ -772,7 +795,12 @@ function CheckStoredValues() {
 		dst_font_color = result.dst_font_color;
 		console.log('CheckStoredValues before if: result.dst_font_color =', result.dst_font_color);
 		if (result.dst_font_color) {
-			document.querySelector("#input_dst_font_color").value = dst_font_color;
+			document.querySelector("#slider_dst_font_color").value = dst_font_color;
+			document.querySelector("#label_dst_font_color").textContent = document.querySelector("#slider_dst_font_color").value;
+		} else {
+			dst_font_color = '#fff700';
+			document.querySelector("#slider_dst_font_color").value = dst_font_color;
+			document.querySelector("#label_dst_font_color").textContent = document.querySelector("#slider_dst_font_color").value;
 		}
 		console.log('CheckStoredValues after if: dst_font_color =', dst_font_color);
 	});
@@ -781,9 +809,12 @@ function CheckStoredValues() {
 		dst_container_width_factor = result.dst_container_width_factor;
 		console.log('CheckStoredValues before if: result.dst_container_width_factor =', result.dst_container_width_factor);
 		if (result.dst_container_width_factor) {
+			dst_container_width_factor = parseFloat(dst_container_width_factor).toFixed(3);
 			document.querySelector("#input_dst_container_width_factor").value = dst_container_width_factor;
 		} else {
-			document.querySelector("#input_dst_container_width_factor").value = 0.795;
+			dst_container_width_factor = 0.795;
+			dst_container_width_factor = parseFloat(dst_container_width_factor).toFixed(3);
+			document.querySelector("#input_dst_container_width_factor").value = dst_container_width_factor;
 		}
 		console.log('CheckStoredValues after if: dst_container_width_factor =', dst_container_width_factor);
 	});
@@ -792,9 +823,12 @@ function CheckStoredValues() {
 		dst_container_height_factor = result.dst_container_height_factor;
 		console.log('CheckStoredValues before if: result.dst_container_height_factor =', result.dst_container_height_factor);
 		if (result.dst_container_height_factor) {
+			dst_container_height_factor = parseFloat(dst_container_height_factor).toFixed(3);
 			document.querySelector("#input_dst_container_height_factor").value = dst_container_height_factor;
 		} else {
-			document.querySelector("#input_dst_container_height_factor").value = 0.225;
+			dst_container_height_factor = 0.225;
+			dst_container_height_factor = parseFloat(dst_container_height_factor).toFixed(3);
+			document.querySelector("#input_dst_container_height_factor").value = dst_container_height_factor;
 		}
 		console.log('CheckStoredValues after if: dst_container_height_factor =', dst_container_height_factor);
 	});
@@ -803,9 +837,12 @@ function CheckStoredValues() {
 		dst_container_top_factor = result.dst_container_top_factor;
 		console.log('CheckStoredValues before if: result.dst_container_top_factor =', result.dst_container_top_factor);
 		if (result.dst_container_top_factor) {
+			dst_container_top_factor = parseFloat(dst_container_top_factor).toFixed(3);
 			document.querySelector("#input_dst_container_top_factor").value = dst_container_top_factor;
 		} else {
-			document.querySelector("#input_dst_container_top_factor").value = 0.65;
+			dst_container_top_factor = 0.650;
+			dst_container_top_factor = parseFloat(dst_container_top_factor).toFixed(3);
+			document.querySelector("#input_dst_container_top_factor").value = dst_container_top_factor;
 		}
 		console.log('CheckStoredValues after if: dst_container_top_factor =', dst_container_top_factor);
 	});
@@ -825,9 +862,12 @@ function CheckStoredValues() {
 		dst_container_left_factor = result.dst_container_left_factor;
 		console.log('CheckStoredValues before if: result.dst_container_left_factor =', result.dst_container_left_factor);
 		if (result.dst_container_left_factor) {
+			dst_container_left_factor = parseFloat(dst_container_left_factor).toFixed(3);
 			document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
 		} else {
-			document.querySelector("#input_dst_container_left_factor").value = 0.1;
+			dst_container_left_factor = 0.100;
+			dst_container_left_factor = parseFloat(dst_container_left_factor).toFixed(3);
+			document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
 		}
 		console.log('CheckStoredValues after if: dst_container_top_factor =', dst_container_top_factor);
 	});
@@ -836,9 +876,11 @@ function CheckStoredValues() {
 		dst_container_color = result.dst_container_color;
 		console.log('CheckStoredValues before if: result.dst_container_color =', result.dst_container_color);
 		if (result.dst_container_color) {
-			document.querySelector("#input_dst_container_color").value = dst_container_color;
+			document.querySelector("#slider_dst_container_color").value = dst_container_color;
+			document.querySelector("#label_dst_container_color").textContent = document.querySelector("#slider_dst_container_color").value;
 		} else {
-			document.querySelector("#input_dst_container_color").value = "#000000";
+			document.querySelector("#slider_dst_container_color").value = "#000000";
+			document.querySelector("#label_dst_container_color").textContent = document.querySelector("#slider_dst_container_color").value;
 		}
 		console.log('CheckStoredValues after if: dst_container_color =', dst_container_color);
 	});
@@ -847,9 +889,11 @@ function CheckStoredValues() {
 		dst_container_opacity = result.dst_container_opacity;
 		console.log('CheckStoredValues before if: result.dst_container_opacity =', result.dst_container_opacity);
 		if (result.dst_container_opacity) {
-			document.querySelector("#input_dst_container_opacity").value = dst_container_opacity;
+			document.querySelector("#slider_dst_container_opacity").value = dst_container_opacity;
+			document.querySelector("#label_dst_container_opacity").textContent = document.querySelector("#slider_dst_container_opacity").value;
 		} else {
-			document.querySelector("#input_dst_container_opacity").value = 0.3;
+			document.querySelector("#slider_dst_container_opacity").value = 0.3;
+			document.querySelector("#label_dst_container_opacity").textContent = document.querySelector("#slider_dst_container_opacity").value;
 		}
 		console.log('CheckStoredValues after if: dst_container_opacity =', dst_container_opacity);
 	});
@@ -927,9 +971,8 @@ document.querySelector("#select_src_language").addEventListener('change', functi
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -969,9 +1012,8 @@ document.querySelector("#select_src_dialect").addEventListener('change', functio
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -1003,9 +1045,8 @@ document.querySelector("#checkbox_show_src").addEventListener('change', function
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -1078,9 +1119,8 @@ document.querySelector("#select_dst_language").addEventListener('change', functi
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -1120,9 +1160,8 @@ document.querySelector("#select_dst_dialect").addEventListener('change', functio
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -1154,9 +1193,8 @@ document.querySelector("#checkbox_show_dst").addEventListener('change', function
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -1188,9 +1226,8 @@ document.querySelector("#checkbox_show_timestamp_dst").addEventListener('change'
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -1224,9 +1261,8 @@ document.querySelector("#select_src_font").addEventListener("change", function()
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -1258,9 +1294,8 @@ document.querySelector("#input_src_font_size").addEventListener("input", functio
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -1292,15 +1327,15 @@ document.querySelector("#input_src_font_size").addEventListener("change", functi
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
-document.querySelector("#input_src_font_color").addEventListener("input", function(){
-	console.log('document.querySelector("#input_src_font_color").addEventListener("input")');
-	src_font_color = document.querySelector("#input_src_font_color").value;
+document.querySelector("#slider_src_font_color").addEventListener("input", function(){
+	console.log('document.querySelector("#slider_src_font_color").addEventListener("input")');
+	src_font_color = document.querySelector("#slider_src_font_color").value;
+	document.querySelector("#label_src_font_color").textContent = document.querySelector("#slider_src_font_color").value;
 	console.log('src_font_color =', src_font_color);
 	saveData('src_font_color', src_font_color);
 	update_sample_text();
@@ -1326,15 +1361,15 @@ document.querySelector("#input_src_font_color").addEventListener("input", functi
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
-document.querySelector("#input_src_font_color").addEventListener("change", function(){
-	console.log('document.querySelector("#input_src_font_color").addEventListener("change")');
-	src_font_color = document.querySelector("#input_src_font_color").value;
+document.querySelector("#slider_src_font_color").addEventListener("change", function(){
+	console.log('document.querySelector("#slider_src_font_color").addEventListener("change")');
+	src_font_color = document.querySelector("#slider_src_font_color").value;
+	document.querySelector("#label_src_font_color").textContent = document.querySelector("#slider_src_font_color").value;
 	console.log('src_font_color =', src_font_color);
 	saveData('src_font_color', src_font_color);
 	update_sample_text();
@@ -1360,15 +1395,15 @@ document.querySelector("#input_src_font_color").addEventListener("change", funct
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
 document.querySelector("#input_src_container_width_factor").addEventListener("input", function(){
 	console.log('document.querySelector("#input_src_container_width_factor").addEventListener("input")');
 	src_container_width_factor = document.querySelector("#input_src_container_width_factor").value;
+	src_container_width_factor = parseFloat(src_container_width_factor).toFixed(3);
 	console.log('src_container_width_factor =', src_container_width_factor);
 	saveData('src_container_width_factor', src_container_width_factor);
 	update_sample_text();
@@ -1394,15 +1429,15 @@ document.querySelector("#input_src_container_width_factor").addEventListener("in
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
 document.querySelector("#input_src_container_width_factor").addEventListener("change", function(){
 	console.log('document.querySelector("#input_src_container_width_factor").addEventListener("change")');
 	src_container_width_factor = document.querySelector("#input_src_container_width_factor").value;
+	src_container_width_factor = parseFloat(src_container_width_factor).toFixed(3);
 	console.log('src_container_width_factor =', src_container_width_factor);
 	saveData('src_container_width_factor', src_container_width_factor);
 	update_sample_text();
@@ -1428,15 +1463,15 @@ document.querySelector("#input_src_container_width_factor").addEventListener("ch
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
 document.querySelector("#input_src_container_height_factor").addEventListener("input", function(){
 	console.log('document.querySelector("#input_src_container_height_factor").addEventListener("input")');
 	src_container_height_factor = document.querySelector("#input_src_container_height_factor").value;
+	src_container_height_factor = parseFloat(src_container_height_factor).toFixed(3);
 	console.log('src_container_height_factor =', src_container_height_factor);
 	saveData('src_container_height_factor', src_container_height_factor);
 	update_sample_text();
@@ -1462,15 +1497,15 @@ document.querySelector("#input_src_container_height_factor").addEventListener("i
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
 document.querySelector("#input_src_container_height_factor").addEventListener("change", function(){
 	console.log('document.querySelector("#input_src_container_height_factor").addEventListener("change")');
 	src_container_height_factor = document.querySelector("#input_src_container_height_factor").value;
+	src_container_height_factor = parseFloat(src_container_height_factor).toFixed(3);
 	console.log('src_container_height_factor =', src_container_height_factor);
 	saveData('src_container_height_factor', src_container_height_factor);
 	update_sample_text();
@@ -1496,15 +1531,15 @@ document.querySelector("#input_src_container_height_factor").addEventListener("c
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
 document.querySelector("#input_src_container_top_factor").addEventListener("input", function(){
 	console.log('document.querySelector("#input_src_container_top_factor").addEventListener("input")');
 	src_container_top_factor = document.querySelector("#input_src_container_top_factor").value;
+	src_container_top_factor = parseFloat(src_container_top_factor).toFixed(3);
 	console.log('src_container_top_factor =', src_container_top_factor);
 	saveData('src_container_top_factor', src_container_top_factor);
 	update_sample_text();
@@ -1530,15 +1565,15 @@ document.querySelector("#input_src_container_top_factor").addEventListener("inpu
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
 document.querySelector("#input_src_container_top_factor").addEventListener("change", function(){
 	console.log('document.querySelector("#input_src_container_top_factor").addEventListener("change")');
 	src_container_top_factor = document.querySelector("#input_src_container_top_factor").value;
+	src_container_top_factor = parseFloat(src_container_top_factor).toFixed(3);
 	console.log('src_container_top_factor =', src_container_top_factor);
 	saveData('src_container_top_factor', src_container_top_factor);
 	update_sample_text();
@@ -1564,9 +1599,8 @@ document.querySelector("#input_src_container_top_factor").addEventListener("chan
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -1619,15 +1653,15 @@ document.querySelector("#checkbox_centerize_src").addEventListener("change", fun
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
 document.querySelector("#input_src_container_left_factor").addEventListener('input', function(){
 	console.log('document.querySelector("#input_src_container_left_factor").addEventListener("input")');
 	src_container_left_factor = document.querySelector("#input_src_container_left_factor").value;
+	src_container_left_factor = parseFloat(src_container_left_factor).toFixed(3);
 	console.log('src_container_left_factor =', src_container_left_factor);
 	saveData('src_container_left_factor', src_container_left_factor);
 	video_info = getVideoPlayerInfo();
@@ -1668,9 +1702,8 @@ document.querySelector("#input_src_container_left_factor").addEventListener('inp
 					console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -1681,10 +1714,12 @@ document.querySelector("#input_src_container_left_factor").addEventListener('cha
 		src_left = textarea_rect.src_left;
 		//console.log('textarea_rect.src_left =', textarea_rect.src_left);
 		src_container_left_factor = (src_left - getRect(document.querySelector("#my_yt_iframe")).left)/getRect(document.querySelector("#my_yt_iframe")).width;
+		src_container_left_factor = parseFloat(src_container_left_factor).toFixed(3);
 		//console.log('src_container_left_factor =', src_container_left_factor);
 		document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
 	} else {
 		src_container_left_factor = document.querySelector("#input_src_container_left_factor").value;
+		src_container_left_factor = parseFloat(src_container_left_factor).toFixed(3);
 		//console.log('src_container_left_factor =', src_container_left_factor);
 	}
 	console.log('src_container_left_factor =', src_container_left_factor);
@@ -1727,15 +1762,15 @@ document.querySelector("#input_src_container_left_factor").addEventListener('cha
 					console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
-document.querySelector("#input_src_container_color").addEventListener('input', function(){
-	console.log('document.querySelector("#input_src_container_color").addEventListener("input")');
-	src_container_color = document.querySelector("#input_src_container_color").value;
+document.querySelector("#slider_src_container_color").addEventListener('input', function(){
+	console.log('document.querySelector("#slider_src_container_color").addEventListener("input")');
+	src_container_color = document.querySelector("#slider_src_container_color").value;
+	document.querySelector("#label_src_container_color").textContent = document.querySelector("#slider_src_container_color").value;
 	console.log('src_container_color =', src_container_color);
 	saveData('src_container_color', src_container_color);
 	update_sample_text();
@@ -1761,15 +1796,15 @@ document.querySelector("#input_src_container_color").addEventListener('input', f
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
-document.querySelector("#input_src_container_color").addEventListener('change', function(){
-	console.log('document.querySelector("#input_src_container_color").addEventListener("change")');
-	src_container_color = document.querySelector("#input_src_container_color").value;
+document.querySelector("#slider_src_container_color").addEventListener('change', function(){
+	console.log('document.querySelector("#slider_src_container_color").addEventListener("change")');
+	src_container_color = document.querySelector("#slider_src_container_color").value;
+	document.querySelector("#label_src_container_color").textContent = document.querySelector("#slider_src_container_color").value;
 	console.log('src_container_color =', src_container_color);
 	saveData('src_container_color', src_container_color);
 	update_sample_text();
@@ -1795,15 +1830,15 @@ document.querySelector("#input_src_container_color").addEventListener('change', 
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
-document.querySelector("#input_src_container_opacity").addEventListener('input', function(){
-	console.log('document.querySelector("#input_src_container_opacity").addEventListener("input")');
-	src_container_opacity = document.querySelector("#input_src_container_opacity").value;
+document.querySelector("#slider_src_container_opacity").addEventListener('input', function(){
+	console.log('document.querySelector("#slider_src_container_opacity").addEventListener("input")');
+	src_container_opacity = document.querySelector("#slider_src_container_opacity").value;
+	document.querySelector("#label_src_container_opacity").textContent = document.querySelector("#slider_src_container_opacity").value;
 	console.log('src_container_opacity =', src_container_opacity);
 	saveData('src_container_opacity', src_container_opacity);
 	update_sample_text();
@@ -1829,15 +1864,15 @@ document.querySelector("#input_src_container_opacity").addEventListener('input',
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
-document.querySelector("#input_src_container_opacity").addEventListener('change', function(){
-	console.log('document.querySelector("#input_src_container_opacity").addEventListener("change")');
-	src_container_opacity = document.querySelector("#input_src_container_opacity").value;
+document.querySelector("#slider_src_container_opacity").addEventListener('change', function(){
+	console.log('document.querySelector("#slider_src_container_opacity").addEventListener("change")');
+	src_container_opacity = document.querySelector("#slider_src_container_opacity").value;
+	document.querySelector("#label_src_container_opacity").textContent = document.querySelector("#slider_src_container_opacity").value;
 	console.log('src_container_opacity =', src_container_opacity);
 	saveData('src_container_opacity', src_container_opacity);
 	update_sample_text();
@@ -1863,9 +1898,8 @@ document.querySelector("#input_src_container_opacity").addEventListener('change'
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -1897,9 +1931,8 @@ document.querySelector("#checkbox_save_src").addEventListener('change', function
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -1933,9 +1966,8 @@ document.querySelector("#select_dst_font").addEventListener("change", function()
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -1967,9 +1999,8 @@ document.querySelector("#input_dst_font_size").addEventListener("input", functio
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -2001,15 +2032,15 @@ document.querySelector("#input_dst_font_size").addEventListener("change", functi
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
-document.querySelector("#input_dst_font_color").addEventListener("input", function(){
-	console.log('document.querySelector("#input_dst_font_color").addEventListener("input")');
-	dst_font_color = document.querySelector("#input_dst_font_color").value;
+document.querySelector("#slider_dst_font_color").addEventListener("input", function(){
+	console.log('document.querySelector("#slider_dst_font_color").addEventListener("input")');
+	dst_font_color = document.querySelector("#slider_dst_font_color").value;
+	document.querySelector("#label_dst_font_color").textContent = document.querySelector("#slider_dst_font_color").value;
 	console.log('dst_font_color =', dst_font_color);
 	saveData('dst_font_color', dst_font_color);
 	update_sample_text();
@@ -2035,15 +2066,15 @@ document.querySelector("#input_dst_font_color").addEventListener("input", functi
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
-document.querySelector("#input_dst_font_color").addEventListener("change", function(){
-	console.log('document.querySelector("#input_dst_font_color").addEventListener("change")');
-	dst_font_color = document.querySelector("#input_dst_font_color").value;
+document.querySelector("#slider_dst_font_color").addEventListener("change", function(){
+	console.log('document.querySelector("#slider_dst_font_color").addEventListener("change")');
+	dst_font_color = document.querySelector("#slider_dst_font_color").value;
+	document.querySelector("#label_dst_font_color").textContent = document.querySelector("#slider_dst_font_color").value;
 	console.log('dst_font_color =', dst_font_color);
 	saveData('dst_font_color', dst_font_color);
 	update_sample_text();
@@ -2069,15 +2100,15 @@ document.querySelector("#input_dst_font_color").addEventListener("change", funct
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
 document.querySelector("#input_dst_container_width_factor").addEventListener("input", function(){
 	console.log('document.querySelector("#input_dst_container_width_factor").addEventListener("input")');
 	dst_container_width_factor = document.querySelector("#input_dst_container_width_factor").value;
+	dst_container_width_factor = parseFloat(dst_container_width_factor).toFixed(3);
 	console.log('dst_container_width_factor =', dst_container_width_factor);
 	saveData('dst_container_width_factor', dst_container_width_factor);
 	update_sample_text();
@@ -2103,15 +2134,15 @@ document.querySelector("#input_dst_container_width_factor").addEventListener("in
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
 document.querySelector("#input_dst_container_width_factor").addEventListener("change", function(){
 	console.log('document.querySelector("#input_dst_container_width_factor").addEventListener("change")');
 	dst_container_width_factor = document.querySelector("#input_dst_container_width_factor").value;
+	dst_container_width_factor = parseFloat(dst_container_width_factor).toFixed(3);
 	console.log('dst_container_width_factor =', dst_container_width_factor);
 	saveData('dst_container_width_factor', dst_container_width_factor);
 	update_sample_text();
@@ -2137,15 +2168,15 @@ document.querySelector("#input_dst_container_width_factor").addEventListener("ch
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
 document.querySelector("#input_dst_container_height_factor").addEventListener("input", function(){
 	console.log('document.querySelector("#input_dst_container_height_factor").addEventListener("input")');
 	dst_container_height_factor = document.querySelector("#input_dst_container_height_factor").value;
+	dst_container_height_factor = parseFloat(dst_container_height_factor).toFixed(3);
 	console.log('dst_container_height_factor =', dst_container_height_factor);
 	saveData('dst_container_height_factor', dst_container_height_factor);
 	update_sample_text();
@@ -2171,15 +2202,15 @@ document.querySelector("#input_dst_container_height_factor").addEventListener("i
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
 document.querySelector("#input_dst_container_height_factor").addEventListener("change", function(){
 	console.log('document.querySelector("#input_dst_container_height_factor").addEventListener("change")');
 	dst_container_height_factor = document.querySelector("#input_dst_container_height_factor").value;
+	dst_container_height_factor = parseFloat(dst_container_height_factor).toFixed(3);
 	console.log('dst_container_height_factor =', dst_container_height_factor);
 	saveData('dst_container_height_factor', dst_container_height_factor);
 	update_sample_text();
@@ -2205,15 +2236,15 @@ document.querySelector("#input_dst_container_height_factor").addEventListener("c
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
 document.querySelector("#input_dst_container_top_factor").addEventListener("input", function(){
 	console.log('document.querySelector("#input_dst_container_top_factor").addEventListener("input")');
 	dst_container_top_factor = document.querySelector("#input_dst_container_top_factor").value;
+	dst_container_top_factor = parseFloat(dst_container_top_factor).toFixed(3);
 	console.log('dst_container_top_factor =', dst_container_top_factor);
 	saveData('dst_container_top_factor', dst_container_top_factor);
 	update_sample_text();
@@ -2239,15 +2270,15 @@ document.querySelector("#input_dst_container_top_factor").addEventListener("inpu
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
 document.querySelector("#input_dst_container_top_factor").addEventListener("change", function(){
 	console.log('document.querySelector("#input_dst_container_top_factor").addEventListener("change")');
 	dst_container_top_factor = document.querySelector("#input_dst_container_top_factor").value;
+	dst_container_top_factor = parseFloat(dst_container_top_factor).toFixed(3);
 	console.log('dst_container_top_factor =', dst_container_top_factor);
 	saveData('dst_container_top_factor', dst_container_top_factor);
 	update_sample_text();
@@ -2273,9 +2304,8 @@ document.querySelector("#input_dst_container_top_factor").addEventListener("chan
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -2328,15 +2358,15 @@ document.querySelector("#checkbox_centerize_dst").addEventListener("change", fun
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
 document.querySelector("#input_dst_container_left_factor").addEventListener('input', function(){
 	console.log('document.querySelector("#input_dst_container_left_factor").addEventListener("input")');
 	dst_container_left_factor = document.querySelector("#input_dst_container_left_factor").value;
+	dst_container_left_factor = parseFloat(dst_container_left_factor).toFixed(3);
 	console.log('dst_container_left_factor =', dst_container_left_factor);
 	saveData('dst_container_left_factor', dst_container_left_factor);
 	video_info = getVideoPlayerInfo();
@@ -2377,9 +2407,8 @@ document.querySelector("#input_dst_container_left_factor").addEventListener('inp
 					console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -2390,10 +2419,12 @@ document.querySelector("#input_dst_container_left_factor").addEventListener('cha
 		dst_left = textarea_rect.dst_left;
 		//console.log('textarea_rect.dst_left =', textarea_rect.dst_left);
 		dst_container_left_factor = (dst_left - getRect(document.querySelector("#my_yt_iframe")).left)/getRect(document.querySelector("#my_yt_iframe")).width;
+		dst_container_left_factor = parseFloat(dst_container_left_factor).toFixed(3);
 		//console.log('dst_container_left_factor =', dst_container_left_factor);
 		document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
 	} else {
 		dst_container_left_factor = document.querySelector("#input_dst_container_left_factor").value;
+		dst_container_left_factor = parseFloat(dst_container_left_factor).toFixed(3);
 		//console.log('dst_container_left_factor =', dst_container_left_factor);
 	}
 	console.log('dst_container_left_factor =', dst_container_left_factor);
@@ -2436,15 +2467,15 @@ document.querySelector("#input_dst_container_left_factor").addEventListener('cha
 					console.log('response.status =', response.status); //GET RESPONSE FROM settings.js LISTENER
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
-document.querySelector("#input_dst_container_color").addEventListener('input', function(){
-	console.log('document.querySelector("#input_dst_container_color").addEventListener("input")');
-	dst_container_color = document.querySelector("#input_dst_container_color").value;
+document.querySelector("#slider_dst_container_color").addEventListener('input', function(){
+	console.log('document.querySelector("#slider_dst_container_color").addEventListener("input")');
+	dst_container_color = document.querySelector("#slider_dst_container_color").value;
+	document.querySelector("#label_dst_container_color").textContent = document.querySelector("#slider_dst_container_color").value;
 	console.log('dst_container_color =', dst_container_color);
 	saveData('dst_container_color', dst_container_color);
 	update_sample_text();
@@ -2470,15 +2501,15 @@ document.querySelector("#input_dst_container_color").addEventListener('input', f
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
-document.querySelector("#input_dst_container_color").addEventListener('change', function(){
-	console.log('document.querySelector("#input_dst_container_color").addEventListener("change")');
-	dst_container_color = document.querySelector("#input_dst_container_color").value;
+document.querySelector("#slider_dst_container_color").addEventListener('change', function(){
+	console.log('document.querySelector("#slider_dst_container_color").addEventListener("change")');
+	dst_container_color = document.querySelector("#slider_dst_container_color").value;
+	document.querySelector("#label_dst_container_color").textContent = document.querySelector("#slider_dst_container_color").value;
 	console.log('dst_container_color =', dst_container_color);
 	saveData('dst_container_color', dst_container_color);
 	update_sample_text();
@@ -2504,15 +2535,15 @@ document.querySelector("#input_dst_container_color").addEventListener('change', 
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
-document.querySelector("#input_dst_container_opacity").addEventListener('input', function(){
-	console.log('document.querySelector("#input_dst_container_opacity").addEventListener("input")');
-	dst_container_opacity = document.querySelector("#input_dst_container_opacity").value;
+document.querySelector("#slider_dst_container_opacity").addEventListener('input', function(){
+	console.log('document.querySelector("#slider_dst_container_opacity").addEventListener("input")');
+	dst_container_opacity = document.querySelector("#slider_dst_container_opacity").value;
+	document.querySelector("#label_dst_container_opacity").textContent = document.querySelector("#slider_dst_container_opacity").value;
 	console.log('dst_container_opacity =', dst_container_opacity);
 	saveData('dst_container_opacity', dst_container_opacity);
 	update_sample_text();
@@ -2538,15 +2569,15 @@ document.querySelector("#input_dst_container_opacity").addEventListener('input',
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
-document.querySelector("#input_dst_container_opacity").addEventListener('change', function(){
-	console.log('document.querySelector("#input_dst_container_opacity").addEventListener("change")');
-	dst_container_opacity = document.querySelector("#input_dst_container_opacity").value;
+document.querySelector("#slider_dst_container_opacity").addEventListener('change', function(){
+	console.log('document.querySelector("#slider_dst_container_opacity").addEventListener("change")');
+	dst_container_opacity = document.querySelector("#slider_dst_container_opacity").value;
+	document.querySelector("#label_dst_container_opacity").textContent = document.querySelector("#slider_dst_container_opacity").value;
 	console.log('dst_container_opacity =', dst_container_opacity);
 	saveData('dst_container_opacity', dst_container_opacity);
 	update_sample_text();
@@ -2572,9 +2603,8 @@ document.querySelector("#input_dst_container_opacity").addEventListener('change'
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -2606,9 +2636,8 @@ document.querySelector("#checkbox_save_dst").addEventListener('change', function
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -2639,9 +2668,8 @@ document.querySelector("#input_pause_threshold").addEventListener('change', func
 					console.log('response.status =', response.status);
 				}
 			});
-		} else {
-			saveAllSettings();
 		}
+		saveAllSettings();
     });
 });
 
@@ -2780,25 +2808,29 @@ function update_sample_text() {
 
 	src_selected_font_index = document.querySelector("#select_src_font").selectedIndex;
 	//console.log('src_selected_font_index =', src_selected_font_index);
-	//saveData('src_selected_font_index', src_selected_font_index);
+	//saveData('src_selected_4font_index', src_selected_font_index);
 
     src_font_size = document.querySelector("#input_src_font_size").value;
 	//console.log('src_font_size =', src_font_size);
 	//saveData('src_font_size', src_font_size);
 
-	src_font_color = document.querySelector("#input_src_font_color").value;
+	src_font_color = document.querySelector("#slider_src_font_color").value;
+	document.querySelector("#label_src_font_color").textContent = document.querySelector("#slider_src_font_color").value;
 	//console.log('src_font_color =', src_font_color);
 	//saveData('src_font_color', src_font_color);
 
 	src_container_width_factor = document.querySelector("#input_src_container_width_factor").value;
+	src_container_width_factor = parseFloat(src_container_width_factor).toFixed(3);
 	//console.log('src_container_width_factor =', src_container_width_factor);
 	//saveData('src_container_width_factor', src_container_width_factor);
 
 	src_container_height_factor = document.querySelector("#input_src_container_height_factor").value;
+	src_container_height_factor = parseFloat(src_container_height_factor).toFixed(3);
 	//console.log('src_container_height_factor =', src_container_height_factor);
 	//saveData('src_container_height_factor', src_container_height_factor);
 
 	src_container_top_factor = document.querySelector("#input_src_container_top_factor").value;
+	src_container_top_factor = parseFloat(src_container_top_factor).toFixed(3);
 	//console.log('src_container_top_factor =', src_container_top_factor);
 	//saveData('src_container_top_factor', src_container_top_factor);
 
@@ -2811,18 +2843,22 @@ function update_sample_text() {
 		src_left = textarea_rect.src_left;
 		//console.log('textarea_rect.src_left =', textarea_rect.src_left);
 		src_container_left_factor = (src_left - getRect(document.querySelector("#my_yt_iframe")).left)/getRect(document.querySelector("#my_yt_iframe")).width;
+		src_container_left_factor = parseFloat(src_container_left_factor).toFixed(3);
 		//console.log('src_container_left_factor =', src_container_left_factor);
 		document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
 	} else {
 		src_container_left_factor = document.querySelector("#input_src_container_left_factor").value;
+		src_container_left_factor = parseFloat(src_container_left_factor).toFixed(3);
 		//console.log('src_container_left_factor =', src_container_left_factor);
 	}
 
-	src_container_color = document.querySelector("#input_src_container_color").value;
+	src_container_color = document.querySelector("#slider_src_container_color").value;
+	document.querySelector("#label_src_container_color").textContent = document.querySelector("#slider_src_container_color").value;
 	//console.log('src_container_color =', src_container_color);
 	//saveData('src_container_color', src_container_color);
 
-	src_container_opacity = document.querySelector("#input_src_container_opacity").value;
+	src_container_opacity = document.querySelector("#slider_src_container_opacity").value;
+	document.querySelector("#label_src_container_opacity").textContent = document.querySelector("#slider_src_container_opacity").value;
 	//console.log('src_container_opacity =', src_container_opacity);
 	//saveData('src_container_opacity', src_container_opacity);
 
@@ -2840,19 +2876,23 @@ function update_sample_text() {
 	//console.log('dst_font_size =', dst_font_size);
 	//saveData('dst_font_size', dst_font_size);
 
-	dst_font_color = document.querySelector("#input_dst_font_color").value;
+	dst_font_color = document.querySelector("#slider_dst_font_color").value;
+	document.querySelector("#label_dst_font_color").textContent = document.querySelector("#slider_dst_font_color").value;
 	//console.log('dst_font_color =', dst_font_color);
 	//saveData('dst_font_color', dst_font_color);
 
 	dst_container_width_factor = document.querySelector("#input_dst_container_width_factor").value;
+	dst_container_width_factor = parseFloat(dst_container_width_factor).toFixed(3);
 	//console.log('dst_container_width_factor =', dst_container_width_factor);
 	//saveData('dst_container_width_factor', dst_container_width_factor);
 
 	dst_container_height_factor = document.querySelector("#input_dst_container_height_factor").value;
+	dst_container_height_factor = parseFloat(dst_container_height_factor).toFixed(3);
 	//console.log('dst_container_height_factor =', dst_container_height_factor);
 	//saveData('dst_container_height_factor', dst_container_width_factor);
 
 	dst_container_top_factor = document.querySelector("#input_dst_container_top_factor").value;
+	dst_container_top_factor = parseFloat(dst_container_top_factor).toFixed(3);
 	//console.log('dst_container_top_factor =', dst_container_top_factor);
 	//saveData('dst_container_top_factor', dst_container_top_factor);
 
@@ -2864,18 +2904,22 @@ function update_sample_text() {
 		dst_left = textarea_rect.dst_left;
 		//console.log('textarea_rect.dst_left =', textarea_rect.dst_left);
 		dst_container_left_factor = (dst_left - getRect(document.querySelector("#my_yt_iframe")).left)/getRect(document.querySelector("#my_yt_iframe")).width;
+		dst_container_left_factor = parseFloat(dst_container_left_factor).toFixed(3);
 		//console.log('dst_container_left_factor =', dst_container_left_factor);
 		document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
 	} else {
 		dst_container_left_factor = document.querySelector("#input_dst_container_left_factor").value;
+		dst_container_left_factor = parseFloat(dst_container_left_factor).toFixed(3);
 		//console.log('dst_container_left_factor =', dst_container_left_factor);
 	}
 
-	dst_container_color = document.querySelector("#input_dst_container_color").value;
+	dst_container_color = document.querySelector("#slider_dst_container_color").value;
+	document.querySelector("#label_dst_container_color").textContent = document.querySelector("#slider_dst_container_color").value;
 	//console.log('dst_container_color =', dst_container_color);
 	//saveData('dst_container_color', dst_container_color);
 
-	dst_container_opacity = document.querySelector("#input_dst_container_opacity").value;
+	dst_container_opacity = document.querySelector("#slider_dst_container_opacity").value;
+	document.querySelector("#label_dst_container_opacity").textContent = document.querySelector("#slider_dst_container_opacity").value;
 	//console.log('dst_container_opacity =', dst_container_opacity);
 	//saveData('dst_container_opacity', dst_container_opacity);
 
@@ -3002,8 +3046,8 @@ function regenerate_textarea() {
 					'position': 'absolute',
 					'fontFamily': document.querySelector("#select_src_font").value + ', sans-serif',
 					'fontSize': font_scale * document.querySelector("#input_src_font_size").value - 1,
-					'color': document.querySelector("#input_src_font_color").value,
-					'backgroundColor': hexToRgba(document.querySelector("#input_src_container_color").value, document.querySelector("#input_src_container_opacity").value),
+					'color': document.querySelector("#slider_src_font_color").value,
+					'backgroundColor': hexToRgba(document.querySelector("#slider_src_container_color").value, document.querySelector("#slider_src_container_opacity").value),
 					'border': 'none',
 					'display': 'block',
 					'overflow': 'hidden',
@@ -3045,8 +3089,8 @@ function regenerate_textarea() {
 
 			document.querySelector("#src_textarea").style.fontFamily = document.querySelector("#select_src_font").value + ", sans-serif";
 			document.querySelector("#src_textarea").style.fontSize = String(font_scale * document.querySelector("#input_src_font_size").value - 1) + 'px';
-			document.querySelector("#src_textarea").style.color = document.querySelector("#input_src_font_color").value;
-			document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_src_container_color").value, document.querySelector("#input_src_container_opacity").value);
+			document.querySelector("#src_textarea").style.color = document.querySelector("#slider_src_font_color").value;
+			document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(document.querySelector("#slider_src_container_color").value, document.querySelector("#slider_src_container_opacity").value);
 
 		} else {
 			console.log('src_textarea_container has already exist');
@@ -3085,8 +3129,8 @@ function regenerate_textarea() {
 					'position': 'absolute',
 					'fontFamily': document.querySelector("#select_dst_font").value + ', sans-serif',
 					'fontSize': font_scale * document.querySelector("#input_dst_font_size").value - 1,
-					'color': document.querySelector("#input_dst_font_color").value,
-					'backgroundColor': hexToRgba(document.querySelector("#input_dst_container_color").value, document.querySelector("#input_dst_container_opacity").value),
+					'color': document.querySelector("#slider_dst_font_color").value,
+					'backgroundColor': hexToRgba(document.querySelector("#slider_dst_container_color").value, document.querySelector("#slider_dst_container_opacity").value),
 					'border': 'none',
 					'display': 'block',
 					'overflow': 'hidden',
@@ -3128,8 +3172,8 @@ function regenerate_textarea() {
 
 			document.querySelector("#dst_textarea").style.fontFamily = document.querySelector("#select_dst_font").value + ", sans-serif";
 			document.querySelector("#dst_textarea").style.fontSize = String(font_scale * document.querySelector("#input_dst_font_size").value - 1) + 'px';
-			document.querySelector("#dst_textarea").style.color = document.querySelector("#input_dst_font_color").value;
-			document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_dst_container_color").value, document.querySelector("#input_dst_container_opacity").value);
+			document.querySelector("#dst_textarea").style.color = document.querySelector("#slider_dst_font_color").value;
+			document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(document.querySelector("#slider_dst_container_color").value, document.querySelector("#slider_dst_container_opacity").value);
 
 		} else {
 			console.log('dst_textarea_container has already exist');
@@ -3148,10 +3192,14 @@ function create_modal_text_area() {
 	console.log("Create modal text area");
 
 	src_container_width_factor = document.querySelector("#input_src_container_width_factor").value;
+	src_container_width_factor = parseFloat(src_container_width_factor).toFixed(3);
 	src_container_height_factor = document.querySelector("#input_src_container_height_factor").value;
+	src_container_height_factor = parseFloat(src_container_height_factor).toFixed(3);
 
 	dst_container_width_factor = document.querySelector("#input_dst_container_width_factor").value;
+	dst_container_width_factor = parseFloat(dst_container_width_factor).toFixed(3);
 	dst_container_height_factor = document.querySelector("#input_dst_container_height_factor").value;
+	dst_container_height_factor = parseFloat(dst_container_height_factor).toFixed(3);
 
 	var textarea_rect = get_textarea_rect();
 	video_info = getVideoPlayerInfo();
@@ -3174,8 +3222,8 @@ function create_modal_text_area() {
 				'position': 'absolute',
 				'fontFamily': document.querySelector("#select_src_font").value + ', sans-serif',
 				'fontSize': font_scale * document.querySelector("#input_src_font_size").value - 1,
-				'color': document.querySelector("#input_src_font_color").value,
-				'backgroundColor': hexToRgba(document.querySelector("#input_src_container_color").value, document.querySelector("#input_src_container_opacity").value),
+				'color': document.querySelector("#slider_src_font_color").value,
+				'backgroundColor': hexToRgba(document.querySelector("#slider_src_container_color").value, document.querySelector("#slider_src_container_opacity").value),
 				'border': 'none',
 				'display': 'block',
 				'overflow': 'hidden',
@@ -3219,7 +3267,7 @@ function create_modal_text_area() {
 
 		document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
 		document.querySelector("#src_textarea").style.color = src_font_color;
-		document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_src_container_color").value, document.querySelector("#input_src_container_opacity").value);
+		document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(document.querySelector("#slider_src_container_color").value, document.querySelector("#slider_src_container_opacity").value);
 		document.querySelector("#src_textarea").style.fontSize = String(font_scale * src_font_size - 1) + 'px';
 
 		document.querySelector("#src_textarea").offsetParent.onresize = (function(){
@@ -3235,21 +3283,25 @@ function create_modal_text_area() {
 			video_info = getVideoPlayerInfo();
 			if (video_info) {
 				src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/video_info.width;
+				src_container_width_factor = parseFloat(src_container_width_factor).toFixed(3);
 				//console.log('src_container_width_factor =', src_container_width_factor);
 				document.querySelector("#input_src_container_width_factor").value = src_container_width_factor;
 				saveData("src_container_width_factor", src_container_width_factor);
 
 				src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/video_info.height;
+				src_container_height_factor = parseFloat(src_container_height_factor).toFixed(3);
 				//console.log('src_container_height_factor =', src_container_height_factor);
 				document.querySelector("#input_src_container_height_factor").value = src_container_height_factor;
 				saveData("src_container_height_factor", src_container_height_factor);
 			} else {
 				src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/window.innerWidth;
+				src_container_width_factor = parseFloat(src_container_width_factor).toFixed(3);
 				//console.log('src_container_width_factor =', src_container_width_factor);
 				document.querySelector("#input_src_container_width_factor").value = src_container_width_factor;
 				saveData("src_container_width_factor", src_container_width_factor);
 
 				src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/window.innerHeight;
+				src_container_height_factor = parseFloat(src_container_height_factor).toFixed(3);
 				//console.log('src_container_height_factor =', src_container_height_factor);
 				document.querySelector("#input_src_container_height_factor").value = src_container_height_factor;
 				saveData("src_container_height_factor", src_container_height_factor);
@@ -3310,21 +3362,25 @@ function create_modal_text_area() {
 			video_info = getVideoPlayerInfo();
 			if (video_info) {
 				src_container_top_factor = (getRect(document.querySelector("#src_textarea_container")).top - video_info.top)/video_info.height;
+				src_container_top_factor = parseFloat(src_container_top_factor).toFixed(3);
 				document.querySelector("#input_src_container_top_factor").value = src_container_top_factor;
 				//console.log('src_container_top_factor =', src_container_top_factor);
 				saveData("src_container_top_factor", src_container_top_factor);
 
 				src_container_left_factor = (getRect(document.querySelector("#src_textarea_container")).left - video_info.left)/video_info.width;
+				src_container_left_factor = parseFloat(src_container_left_factor).toFixed(3);
 				document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
 				//console.log('src_container_left_factor =', src_container_left_factor);
 				saveData("src_container_left_factor", src_container_left_factor);
 			} else {
 				src_container_top_factor = getRect(document.querySelector("#src_textarea_container")).top/window.innerHeight;
+				src_container_top_factor = parseFloat(src_container_top_factor).toFixed(3);
 				document.querySelector("#input_src_container_top_factor").value = src_container_top_factor;
 				//console.log('src_container_top_factor =', src_container_top_factor);
 				saveData("src_container_top_factor", src_container_top_factor);
 
 				src_container_left_factor = getRect(document.querySelector("#src_textarea_container")).left/window.innerWidth;
+				src_container_left_factor = parseFloat(src_container_left_factor).toFixed(3);
 				document.querySelector("#input_src_container_left_factor").value = src_container_left_factor;
 				//console.log('src_container_left_factor =', src_container_left_factor);
 				saveData("src_container_left_factor", src_container_left_factor);
@@ -3399,8 +3455,8 @@ function create_modal_text_area() {
 				'position': 'absolute',
 				'fontFamily': document.querySelector("#select_dst_font").value + ', sans-serif',
 				'fontSize': font_scale * document.querySelector("#input_dst_font_size").value - 1,
-				'color': document.querySelector("#input_dst_font_color").value,
-				'backgroundColor': hexToRgba(document.querySelector("#input_dst_container_color").value, document.querySelector("#input_dst_container_opacity").value),
+				'color': document.querySelector("#slider_dst_font_color").value,
+				'backgroundColor': hexToRgba(document.querySelector("#slider_dst_container_color").value, document.querySelector("#slider_dst_container_opacity").value),
 				'border': 'none',
 				'display': 'block',
 				'overflow': 'hidden',
@@ -3446,7 +3502,7 @@ function create_modal_text_area() {
 
 		document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif";
 		document.querySelector("#dst_textarea").style.color = dst_font_color;
-		document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(document.querySelector("#input_dst_container_color").value, document.querySelector("#input_dst_container_opacity").value);
+		document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(document.querySelector("#slider_dst_container_color").value, document.querySelector("#slider_dst_container_opacity").value);
 		document.querySelector("#dst_textarea").style.fontSize = String(font_scale * dst_font_size - 1) + 'px';
 
 		document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
@@ -3462,21 +3518,25 @@ function create_modal_text_area() {
 			video_info = getVideoPlayerInfo();
 			if (video_info) {
 				dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/video_info.width;
+				dst_container_width_factor = parseFloat(dst_container_width_factor).toFixed(3);
 				//console.log('dst_container_width_factor =', dst_container_width_factor);
 				document.querySelector("#input_dst_container_width_factor").value = dst_container_width_factor;
 				saveData("dst_container_width_factor", dst_container_width_factor);
 
 				dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/video_info.height;
+				dst_container_height_factor = parseFloat(dst_container_height_factor).toFixed(3);
 				//console.log('dst_container_height_factor =', dst_container_height_factor);
 				document.querySelector("#input_dst_container_height_factor").value = dst_container_height_factor;
 				saveData("dst_container_height_factor", dst_container_height_factor);
 			} else {
 				dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/window.innerWidth;
+				dst_container_width_factor = parseFloat(dst_container_width_factor).toFixed(3);
 				//console.log('dst_container_width_factor =', dst_container_width_factor);
 				document.querySelector("#input_dst_container_width_factor").value = dst_container_width_factor;
 				saveData("dst_container_width_factor", dst_container_width_factor);
 
 				dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/window.innerHeight;
+				dst_container_height_factor = parseFloat(dst_container_height_factor).toFixed(3);
 				//console.log('dst_container_height_factor =', dst_container_height_factor);
 				document.querySelector("#input_dst_container_height_factor").value = dst_container_height_factor;
 				saveData("dst_container_height_factor", dst_container_height_factor);
@@ -3537,21 +3597,25 @@ function create_modal_text_area() {
 			video_info = getVideoPlayerInfo();
 			if (video_info) {
 				dst_container_top_factor = (getRect(document.querySelector("#dst_textarea_container")).top - video_info.top)/video_info.height;
+				dst_container_top_factor = parseFloat(dst_container_top_factor).toFixed(3);
 				document.querySelector("#input_dst_container_top_factor").value = dst_container_top_factor;
 				//console.log('dst_container_top_factor =', dst_container_top_factor);
 				saveData("dst_container_top_factor", dst_container_top_factor);
 
 				dst_container_left_factor = (getRect(document.querySelector("#dst_textarea_container")).left - video_info.left)/video_info.width;
+				dst_container_left_factor = parseFloat(dst_container_left_factor).toFixed(3);
 				document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
 				//console.log('dst_container_left_factor =', dst_container_left_factor);
 				saveData("dst_container_left_factor", dst_container_left_factor);
 			} else {
 				dst_container_top_factor = getRect(document.querySelector("#dst_textarea_container")).top/window.innerHeight;
+				dst_container_top_factor = parseFloat(dst_container_top_factor).toFixed(3);
 				document.querySelector("#input_dst_container_top_factor").value = dst_container_top_factor;
 				//console.log('dst_container_top_factor =', dst_container_top_factor);
 				saveData("dst_container_top_factor", dst_container_top_factor);
 
 				dst_container_left_factor = getRect(document.querySelector("#dst_textarea_container")).left/window.innerWidth;
+				dst_container_left_factor = parseFloat(dst_container_left_factor).toFixed(3);
 				document.querySelector("#input_dst_container_left_factor").value = dst_container_left_factor;
 				//console.log('dst_container_left_factor =', dst_container_left_factor);
 				saveData("dst_container_left_factor", dst_container_left_factor);
