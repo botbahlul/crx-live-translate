@@ -5,6 +5,9 @@ NOTE : Since version 0.3.2 I've added a CUSTOM FULLSCREEN BUTTON on the RIGHT BO
 
 ![image](https://github.com/user-attachments/assets/8621d5e4-15f3-4ae8-9320-b448a95f1ea4)
 
+![image](https://github.com/user-attachments/assets/c5a6cd28-5b6a-4060-b8b1-bc2ce94212cf)
+
+
 
 Just clone or download this git then enable Chrome Developer Mode and install this extension by Load Unpacked and choose that cloned folder (folder that has manifest.json on it)
 
