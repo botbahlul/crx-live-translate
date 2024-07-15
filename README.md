@@ -1,7 +1,7 @@
 # crx-live-translate
 Chrome/Edge extension that can RECOGNIZE any live audio/video streaming then TRANSLATE it for FREE!
 
-NOTE : Since version 0.3.2 I've added a CUSTOM FULLSCREEN BUTTON on the RIGHT BOTTOM CORNER of the video so we can see subtitles in fullscreen mode. And also now when you change anything in SETTINGS page, the changes wull directly applied in real time.
+NOTE : Since version 0.3.2 I've added a CUSTOM FULLSCREEN BUTTON on the RIGHT BOTTOM CORNER of the video so we can see subtitles in fullscreen mode. And also now when you change anything in SETTINGS page, the changes will directly applied in real time.
 
 Just clone or download this git then enable Chrome Developer Mode and install this extension by Load Unpacked and choose that cloned folder (folder that has manifest.json on it)
 
