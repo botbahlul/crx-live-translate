@@ -2923,7 +2923,7 @@ function update_sample_text() {
 	//console.log('dst_container_opacity =', dst_container_opacity);
 	//saveData('dst_container_opacity', dst_container_opacity);
 
-	//saveAllSettings();
+	saveAllSettings();
 
 	if (document.querySelector("#src_textarea_container") || document.querySelector("#dst_textarea_container")) {
 		regenerate_textarea();
