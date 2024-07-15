@@ -3,6 +3,9 @@ Chrome/Edge extension that can RECOGNIZE any live audio/video streaming then TRA
 
 NOTE : Since version 0.3.2 I've added a CUSTOM FULLSCREEN BUTTON on the RIGHT BOTTOM CORNER of the video so we can see subtitles in fullscreen mode. And also now when you change anything in SETTINGS page, the changes will directly applied in real time.
 
+![image](https://github.com/user-attachments/assets/8621d5e4-15f3-4ae8-9320-b448a95f1ea4)
+
+
 Just clone or download this git then enable Chrome Developer Mode and install this extension by Load Unpacked and choose that cloned folder (folder that has manifest.json on it)
 
 You need to install CORS Unblock Chrome extension before install this extension to avoid default CORS Blocking Policy of Chrome and Edge. After installing it you need to ACTIVATE IT (TURN IT ON).
