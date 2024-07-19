@@ -48,6 +48,7 @@ function onLoad() {
 	var interim_transcript = '';
 
 	var fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+	const button_ytp_fullscreen = document.querySelector('#ytp-fullscreen-button');
 
 	function formatTimestampToISOLocalString(timestamp) {
 		// Convert timestamp to string
@@ -108,6 +109,8 @@ function onLoad() {
 			if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").parentElement.removeChild(document.querySelector("#dst_textarea_container"));
 			console.log('removing fullscreen button from html body');
 			if (document.querySelector("#button_fullscreen")) document.querySelector("#button_fullscreen").parentElement.removeChild(document.querySelector("#button_fullscreen"));
+			console.log('removing mouse-move-catcher from html body');
+			if (document.querySelector(".mouse-move-catcher")) document.querySelector(".mouse-move-catcher").parentElement.removeChild(document.querySelector(".mouse-move-catcher"));
 			return;
 
 		} else {
@@ -135,7 +138,7 @@ function onLoad() {
 			if (dst_dialect === "cmn-Hant-TW") dst = "zh-TW";
 			console.log('dst =', dst);
 
-			var icon_text_listening = src.toUpperCase() + ':' + dst.toUpperCase();
+			var icon_text_listening = src.split('-')[0].toUpperCase() + ':' + dst.split('-')[0].toUpperCase();
 			chrome.runtime.sendMessage({
 				cmd: 'icon_text_listening',
 				data: {
@@ -281,7 +284,7 @@ function onLoad() {
 			if (!result.pause_threshold) pause_threshold = 5000;
 			//console.log('pause_threshold =', pause_threshold);
 
-			//saveAllChangedSettings();
+			saveAllChangedSettings();
 
 			console.log('removing src_textarea_container from html body if exist to create a fresh new one');
 			if (document.querySelector("#src_textarea_container")) document.querySelector("#src_textarea_container").parentElement.removeChild(document.querySelector("#src_textarea_container"));
@@ -289,10 +292,14 @@ function onLoad() {
 			if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").parentElement.removeChild(document.querySelector("#dst_textarea_container"));
 			console.log('removing fullscreen button from html body if exist to create a fresh new one');
 			if (document.querySelector("#button_fullscreen")) document.querySelector("#button_fullscreen").parentElement.removeChild(document.querySelector("#button_fullscreen"));
+			console.log('removing mouse-move-catcher from html body if exist to create a fresh new one');
+			if (document.querySelector(".mouse-move-catcher")) document.querySelector(".mouse-move-catcher").parentElement.removeChild(document.querySelector(".mouse-move-catcher"));
 
 			create_modal_textarea();
 
-			createbutton_fullscreen();
+			create_button_fullscreen();
+
+			//create_mouse_move_catcher();
 
 			window.addEventListener('resize', function(event){
 				regenerate_textarea();
@@ -308,8 +315,8 @@ function onLoad() {
 						document.querySelector('video').style.height = '100vh';
 						document.querySelector('video').style.left = '0px';
 						document.querySelector('video').style.top = '0px';
-						if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (get_video_player_info().left + get_video_player_info().width - 42)  + 'px';
-						if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (get_video_player_info().top + get_video_player_info().height - 36) + 'px';
+						if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (get_video_player_info().left + get_video_player_info().width - 48)  + 'px';
+						if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (get_video_player_info().top + get_video_player_info().height - 44) + 'px';
 					}
 					else if (get_video_player_info().tagName === 'iframe') {
 						console.log('get_video_player_info().tagName = iframe');
@@ -317,8 +324,8 @@ function onLoad() {
 						document.querySelector('iframe').style.height = '100vh';
 						document.querySelector('iframe').style.left = '0px';
 						document.querySelector('iframe').style.top = '0px';
-						if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (get_video_player_info().left + get_video_player_info().width - 42)  + 'px';
-						if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (get_video_player_info().top + get_video_player_info().height - 36) + 'px';
+						if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (get_video_player_info().left + get_video_player_info().width - 48)  + 'px';
+						if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (get_video_player_info().top + get_video_player_info().height - 44) + 'px';
 					}
 					regenerate_textarea();
 				} else {
@@ -338,8 +345,8 @@ function onLoad() {
 					window.onresize = (function(){
 						const video_info = get_video_player_info();
 						const button_fullscreen = document.querySelector('#button_fullscreen');
-						if (button_fullscreen) button_fullscreen.style.top = (get_video_player_info().top + get_video_player_info().height - 36) + 'px';
-						if (button_fullscreen) button_fullscreen.style.left = (get_video_player_info().left + get_video_player_info().width - 42)  + 'px';
+						if (button_fullscreen) button_fullscreen.style.top = (get_video_player_info().top + get_video_player_info().height - 44) + 'px';
+						if (button_fullscreen) button_fullscreen.style.left = (get_video_player_info().left + get_video_player_info().width - 48)  + 'px';
 						regenerate_textarea();
 					});
 				}
@@ -770,6 +777,8 @@ function onLoad() {
 						if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").parentElement.removeChild(document.querySelector("#dst_textarea_container"));
 						console.log('removing fullscreen button from html body');
 						if (document.querySelector("#button_fullscreen")) document.querySelector("#button_fullscreen").parentElement.removeChild(document.querySelector("#button_fullscreen"));
+						console.log('removing mouse-move-catcher from html body');
+						if (document.querySelector(".mouse-move-catcher")) document.querySelector(".mouse-move-catcher").parentElement.removeChild(document.querySelector(".mouse-move-catcher"));
 
 						return;
 					}
@@ -2243,8 +2252,8 @@ function onLoad() {
 				console.log('dst_textarea_container has already exist');
 			}
 
-			if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (get_video_player_info().left + get_video_player_info().width - 42)  + 'px';
-			if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (get_video_player_info().top + get_video_player_info().height - 36) + 'px';
+			if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (get_video_player_info().left + get_video_player_info().width - 48)  + 'px';
+			if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (get_video_player_info().top + get_video_player_info().height - 44) + 'px';
 
 		}
 
@@ -2437,25 +2446,7 @@ function onLoad() {
 			return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 		}
 
-/*
-		var debounceTimeout;
-		function saveData(key, data) {
-			clearTimeout(debounceTimeout);
-			debounceTimeout = setTimeout(() => {
-				// Retrieve current settings
-				chrome.storage.local.get(['settings'], (result) => {
-					let settings = result.settings || {};
-					settings[key] = data;
-					chrome.storage.local.set({ 'settings': settings }, () => {
-						console.log(key + ' = ' + data  + ' saved within settings.');
-						setTimeout(() => {
-							verifyData(key, data, 'settings');
-						}, 100);
-					});
-				});
-			}, 100);
-		}
-*/
+
 		function saveData(key, data) {
 			chrome.storage.local.get(['settings'], (result) => {
 				let settings = result.settings || {};
@@ -2532,18 +2523,13 @@ function onLoad() {
 		}
 
 
-		function createbutton_fullscreen() {
+		function create_button_fullscreen() {
 			const video_info = get_video_player_info();
-			//console.log('video_info.top =', video_info.top);
-			//console.log('video_info.left =', video_info.left);
-			//console.log('video_info.bottom =', video_info.bottom);
-			//console.log('video_info.right =', video_info.right);
 			var button_fullscreen = document.createElement('button');
 			button_fullscreen.id = 'button_fullscreen';
 			button_fullscreen.style.position = 'absolute';
-			button_fullscreen.style.top = (get_video_player_info().top + get_video_player_info().height - 36) + 'px';
-			//button_fullscreen.style.top = (get_video_player_info().top) + 'px';
-			button_fullscreen.style.left = (get_video_player_info().left + get_video_player_info().width - 42)  + 'px';
+			button_fullscreen.style.top = (video_info.top + video_info.height - 40) + 'px';
+			button_fullscreen.style.left = (video_info.left + video_info.width - 44) + 'px';
 			button_fullscreen.style.zIndex = '1000';
 			button_fullscreen.style.padding = '10px';
 			button_fullscreen.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
@@ -2551,7 +2537,8 @@ function onLoad() {
 			button_fullscreen.style.border = 'none';
 			button_fullscreen.style.cursor = 'pointer';
 			button_fullscreen.style.borderRadius = '5px';
-		
+			button_fullscreen.style.display = 'none'; // Initially hidden
+
 			// Create the SVG icon
 			var fullscreenIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 			fullscreenIcon.setAttribute('width', '12');
@@ -2559,13 +2546,13 @@ function onLoad() {
 			fullscreenIcon.setAttribute('viewBox', '0 0 24 24');
 			fullscreenIcon.setAttribute('fill', 'none');
 			fullscreenIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-		
+
 			var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 			path.setAttribute('fill-rule', 'evenodd');
 			path.setAttribute('clip-rule', 'evenodd');
 			path.setAttribute('d', 'M7 10H3V3H10V7H5V10ZM21 3H14V7H19V10H21V3ZM17 17H21V21H14V17H19V14H21V17ZM3 14H7V19H10V21H3V14Z');
 			path.setAttribute('fill', 'currentColor');
-		
+
 			fullscreenIcon.appendChild(path);
 			button_fullscreen.appendChild(fullscreenIcon);
 
@@ -2576,12 +2563,70 @@ function onLoad() {
 				toggleFullscreen(document.documentElement);
 			}
 
-			window.onresize = (function(){
-				if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (get_video_player_info().top + get_video_player_info().height - 36) + 'px';
-				if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (get_video_player_info().left + get_video_player_info().width - 42)  + 'px';
+			window.onresize = function() {
+				if (document.querySelector('#button_fullscreen')) {
+					document.querySelector('#button_fullscreen').style.top = (get_video_player_info().top + get_video_player_info().height - 44) + 'px';
+					document.querySelector('#button_fullscreen').style.left = (get_video_player_info().left + get_video_player_info().width - 48) + 'px';
+				}
 				regenerate_textarea();
+			};
+
+/*
+			document.documentElement.addEventListener('mousemove', () => {
+				var timeout;
+				if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.display = 'block';
+
+				if (timeout) {
+					clearTimeout(timeout);
+				}
+
+				timeout = setTimeout(() => {
+					if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.display = 'none';
+				}, 5000);
 			});
-		
+*/
+
+			document.documentElement.onmousemove = function(){
+				console.log('onmousemove');
+				if (document.querySelector("#button_fullscreen")) {
+					var timeout;
+					if (document.querySelector('#button_fullscreen')) document.querySelector("#button_fullscreen").style.display = 'block';
+					if (timeout) {
+						clearTimeout(timeout);
+					}
+					timeout = setTimeout(() => {
+						if (document.querySelector('#button_fullscreen')) document.querySelector("#button_fullscreen").style.display = 'none';
+					}, 5000);
+				}
+			};
+		}
+
+
+		function create_mouse_move_catcher(){
+			var mouseMoveCatcher = document.createElement('div');
+			mouseMoveCatcher.className = 'mouse-move-catcher';
+			mouseMoveCatcher.style.display = 'block';
+			mouseMoveCatcher.style.zIndex = 1;
+			mouseMoveCatcher.style.position = 'absolute';
+			mouseMoveCatcher.style.top = get_video_player_info().top;
+			mouseMoveCatcher.style.left = get_video_player_info().left;
+			mouseMoveCatcher.style.width = '100%';
+			mouseMoveCatcher.style.height = '100%';
+			document.documentElement.appendChild(mouseMoveCatcher);
+
+			document.documentElement.onmousemove = function(){
+				console.log('onmousemove');
+				if (document.querySelector("#button_fullscreen")) {
+					var timeout;
+					document.querySelector("#button_fullscreen").style.display = 'block';
+					if (timeout) {
+						clearTimeout(timeout);
+					}
+					timeout = setTimeout(() => {
+						document.querySelector("#button_fullscreen").style.display = 'none';
+					}, 5000);
+				}
+			};
 		}
 
 
@@ -2657,8 +2702,61 @@ function onLoad() {
 			};
 		}
 
+
+		function setIconWithText(text) {
+			// Create a canvas element
+			var canvas = document.createElement('canvas');
+			canvas.width = 128;
+			canvas.height = 128;
+			var context = canvas.getContext('2d');
+
+			// Create an image element
+			var img = new Image();
+			img.src = chrome.runtime.getURL('mic-listening.png'); // Path to your icon image
+
+			img.onload = function() {
+				// Draw the image
+				context.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+				// Set background color
+				context.fillStyle = '#000000'; // Red background
+				context.fillRect(0, canvas.height/4, canvas.width, canvas.height/2);
+
+				// Set text properties
+				context.font = 'Bold 48px Arial';
+				context.fillStyle = '#FFFFFF'; // White text
+				context.textAlign = 'center';
+				context.textBaseline = 'middle';
+				context.fillText(text, canvas.width / 2, canvas.height / 2);
+
+				// Get ImageData
+				var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+				// Serialize the ImageData object
+				var imageDataSerialized = {
+					width: imageData.width,
+					height: imageData.height,
+					data: Array.from(imageData.data)
+				};
+
+				// Send the serialized ImageData back to the background script
+				chrome.runtime.sendMessage({cmd: 'setIcon', data: {imageData: imageDataSerialized}});
+			};
+
+		}
+
+
+		// Listen for messages from the background script
+		chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+			if (message.cmd === 'generateIcon') {
+				setIconWithText(message.data.text);
+			}
+		});
+
 	});
 }
+
+
 
 
 chrome.action.onClicked.addListener((tab) => {
@@ -2703,6 +2801,24 @@ chrome.action.onClicked.addListener((tab) => {
 		});
 
 
+		// LISTENING MESSAGES FROM onLoad
+		chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+			if (request.cmd === 'setIcon') {
+				var imageDataSerialized = request.data.imageData;
+				// Deserialize the ImageData object
+				var imageData = new ImageData(
+					new Uint8ClampedArray(imageDataSerialized.data),
+					imageDataSerialized.width,
+					imageDataSerialized.height
+				);
+				chrome.action.setIcon({ imageData: imageData });
+				sendResponse({status: 'Icon set'});
+			}
+			return true;
+		});
+
+
+
 		// LISTENING MESSAGE FROM ONSTART
 		var icon_text_listening = '';
 		chrome.runtime.onMessage.addListener( function (request, sender, sendResponse) {
@@ -2711,7 +2827,13 @@ chrome.action.onClicked.addListener((tab) => {
 				icon_text_listening = request.data.value;
 				chrome.action.setIcon({path: 'mic-listening.png'});
 				chrome.action.setBadgeText({text: icon_text_listening});
+/*
+				chrome.tabs.sendMessage(tab.id, {
+					cmd: 'generateIcon',
+					data: { text: icon_text_listening }
+				});
 				return true;
+*/
 			}
 		});
 
@@ -3131,6 +3253,7 @@ chrome.action.onClicked.addListener((tab) => {
 		//chrome.runtime.sendMessage({ cmd: 'recognizing', data: { value: recognizing } });
 		return;
 	}
+
 });
 
 
