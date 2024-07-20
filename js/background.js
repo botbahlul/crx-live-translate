@@ -515,7 +515,7 @@ function onLoad() {
 							var translated_unique_text;
 
 							lines.forEach(line => {
-								const timestamped_line = line.match(/(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*\.$/);
+								const timestamped_line = line.match(/(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*[\.\。]$/);
 								if (timestamped_line) {
 									new_unique_lines.push(line);
 								// Give timestamp to last interim transcript
@@ -557,6 +557,7 @@ function onLoad() {
 								if (save_dst) {
 									var tt = translateText(unique_text, src, dst).then(result => {
 										timestamped_translated_final_and_interim_transcript = result + '\n';
+										//console.log('timestamped_translated_final_and_interim_transcript =', timestamped_translated_final_and_interim_transcript);
 
 										if (timestamped_translated_final_and_interim_transcript) {
 											// Move every timestamps to a new line for ISO Date format
@@ -689,8 +690,10 @@ function onLoad() {
 								last_final_transcript = array_all_final_transcripts[array_all_final_transcripts.length - 1] + '\n';
 								//console.log('last_final_transcript =', last_final_transcript);
 								transcript_to_translate = last_final_transcript + interim_transcript;
+								//console.log('transcript_to_translate =', transcript_to_translate);
 							} else {
 								transcript_to_translate = interim_transcript;
+								//console.log('transcript_to_translate =', transcript_to_translate);
 							}
 
 							if (transcript_to_translate) transcript_to_translate = transcript_to_translate.replace('undefined', '');
@@ -705,39 +708,50 @@ function onLoad() {
 
 										result = formatTranscript(result);
 
-										if (result.match(/(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*\.\n/gm)) {
+										if (result.match(/(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*[\.\。]\n/gm) 
+												|| result.match(/(\d{2})-(\d{2})-(\d{4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2})-(\d{2})-(\d{4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*[\.\。]\n/gm)) {
 											var buffer = getTimestampedLines(result);
+											//console.log('getTimestampedLines(result) =', getTimestampedLines(result));
 											buffer = arrayRemoveDuplicates(buffer);
+											//console.log('arrayRemoveDuplicates(buffer) =', arrayRemoveDuplicates(buffer));
+											//console.log('buffer[0] =', buffer[0]);
 											array_all_translated_final_transcripts.push(buffer[0]);
+											//console.log('array_all_translated_final_transcripts =', array_all_translated_final_transcripts);
 											array_all_translated_final_transcripts = arrayRemoveDuplicates(array_all_translated_final_transcripts);
+											//console.log('array_all_translated_final_transcripts =', array_all_translated_final_transcripts);
 										}
 
 										if (array_all_translated_final_transcripts.length > 0) {
 											array_all_translated_final_transcripts = arrayRemoveDuplicates(array_all_translated_final_transcripts);
 											//console.log('array_all_translated_final_transcripts =', array_all_translated_final_transcripts);
 											displayed_translation = array_all_translated_final_transcripts.join('\n') + result;
+											//console.log('displayed_translation =', displayed_translation);
 											displayed_translation = formatTranscript(displayed_translation);
+											//console.log('formatTranscript(displayed_translation) =', formatTranscript(displayed_translation));
 											displayed_translation = removeDuplicateTimestamps(displayed_translation);
+											//console.log('removeDuplicateTimestamps(displayed_translation) =', removeDuplicateTimestamps(displayed_translation));
 											var lines = displayed_translation.trim().split('\n');
 											var unique_lines = [...new Set(lines)];
 											var unique_text = unique_lines.join('\n');
-											// Remove periode only sentences
-											var interim_translation = result.replace(/^\d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*\.\n/gm, '');
+											// Remove duplicate of translated last_final_transcript to get interim_translation only
+											var interim_translation = result.replace(/^\d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3}\s*[:：] .*[\.\。]\n/gm, '');
 
 											if (!transcript_is_final) {
 												displayed_translation = unique_text + '\n' + interim_translation;
+												//console.log('!transcript_is_final: displayed_translation =', displayed_translation);
 											} else {
 												displayed_translation = unique_text;
+												//console.log('transcript_is_final: displayed_translation =', displayed_translation);
 											}
 										} else {
 											displayed_translation = result;
+											//console.log('array_all_translated_final_transcripts.length <= 0: displayed_translation =', displayed_translation);
 										}
 
 										if (show_timestamp_dst) {
 											//console.log('displayed_translation =', displayed_translation);
 											if (displayed_translation && document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = displayed_translation;
 										} else {
-											//console.log('removeTimestamps(displayed_translation) =', removeTimestamps(displayed_translation));
 											if (displayed_translation && document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = removeTimestamps(displayed_translation);
 										}
 										if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
@@ -1200,13 +1214,23 @@ function onLoad() {
 		}
 
 
+		function removeTimestampsForChinese(transcript) {
+			// Regular expression pattern to match the timestamps, accommodating Chinese full-width colon
+			//const timestampPattern = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\s*：/g;
+			const timestampPattern = /\d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3}\s*：/g;
+    
+			// Replace the matched timestamps with an empty string
+			return transcript.replace(timestampPattern, '');
+		}
+
+
 		function formatTranscript(transcript) {
 			// Replace commas with periods in timestamps
 			transcript = transcript.replace(/(\d+),(\d+)/g, '$1.$2');
 			// Remove spaces within timestamps for ISO Date format
-			transcript = transcript.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
+			transcript = transcript.replace(/(\d{4}-\d{2}-\d{2} \d{2}[:：]\d{2})[:：] (\d{2}\.\d+)/g, '$1:$2');
 			// Remove spaces within timestamps for Local Date format
-			transcript = transcript.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}): (\d{2}\.\d+)/g, '$1:$2');
+			transcript = transcript.replace(/(\d{2}-\d{2}-\d{4} \d{2}[:：]\d{2})[:：] (\d{2}\.\d+)/g, '$1:$2');
 			// Remove any spaces between the date components for ISO Date format
 			transcript = transcript.replace(/(\d{4})-\s?(\d{2})-\s?(\d{2})/g, '$1-$2-$3');
 			// Remove any spaces between the date components for Local Date format
@@ -1214,68 +1238,73 @@ function onLoad() {
 			// Ensure the timestamp format follows "yyyy-mm-dd hh:mm.ddd" format and remove spaces around the hyphens
 			transcript = transcript.replace(/(\d{4})\s*-\s*(\d{2})\s*-\s*(\d{2})/g, '$1-$2-$3');
 			// Ensure the timestamp format follows "dd-mm-yyyy hh:mm.ddd" format and remove spaces around the hyphens
-			transcript = transcript.replace(/(\d{2})\s*-\s*(\d{2})\s*-\s*(\d{5})/g, '$1-$2-$3');
-			// Remove any spaces around the colons in the time component.
-			transcript = transcript.replace(/(\d{2})\s*:\s*(\d{2})\s*:\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
+			transcript = transcript.replace(/(\d{2})\s*-\s*(\d{2})\s*-\s*(\d{4})/g, '$1-$2-$3');
+			// Remove any spaces around the colons in the time component (both half-width and full-width)
+			transcript = transcript.replace(/(\d{2})\s*[:：]\s*(\d{2})\s*[:：]\s*(\d{2}\.\d{3})/g, '$1:$2:$3');
 			// Replace the time_separator with correct strings "-->" for ISO Date format
-			transcript = transcript.replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
+			transcript = transcript.replace(/(\d{4}-\d{2}-\d{2} \d{2}[:：]\d{2}[:：]\d{2}\.\d{3})[^0-9]+(\d{4}-\d{2}-\d{2} \d{2}[:：]\d{2}[:：]\d{2}\.\d{3})/g, `$1 --> $2`);
 			// Replace the time_separator with correct strings "-->" for Local Date format
-			transcript = transcript.replace(/(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3})[^0-9]+(\d{2}-\d{2}-\d{5} \d{2}:\d{2}:\d{2}\.\d{3})/g, `$1 ${timestamp_separator} $2`);
+			transcript = transcript.replace(/(\d{2}-\d{2}-\d{4} \d{2}[:：]\d{2}[:：]\d{2}\.\d{3})[^0-9]+(\d{2}-\d{2}-\d{4} \d{2}[:：]\d{2}[:：]\d{2}\.\d{3})/g, `$1 --> $2`);
 			// Move every timestamps to a new line for Local Date format
-			transcript = transcript.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+			transcript = transcript.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}[:：]\d{2}[:：]\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}[:：]\d{2}[:：]\d{2}\.\d{3})/gm, '\n$1');
 			// Move every timestamps to a new line for ISO Date format
-			transcript = transcript.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-
+			transcript = transcript.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}[:：]\d{2}[:：]\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}[:：]\d{2}[:：]\d{2}\.\d{3})/gm, '\n$1');
+    
 			transcript = transcript.replace('.,', '.');
 			transcript = transcript.replace(',.', ',');
 			transcript = transcript.replace('. .', '.');
-
+    
 			transcript = convertDatesToISOFormat(transcript);
+    
 			// Remove last blank line
 			transcript = transcript.replace(/\n\s*$/, '');
 			transcript = removeEmptyLines(transcript);
-
 			// Replace URL-encoded spaces with regular spaces
 			transcript = transcript.replace(/%20/g, ' ');
 			transcript = transcript.trim();
+			// Give space between time part and colon (both half-width and full-width)
+			transcript = transcript.replace(/(\d{2}[:：]\d{2}[:：]\d{2}\.\d{3}[:：]) /g, '$1 ');
 			// Give space between time part and colon
-			transcript = transcript.replace(/(\d{2}:\d{2}:\d{2}\.\d{3}): /g, '$1 : ');
+			transcript = transcript.replace(/(\d{2}:\d{2}:\d{2}\.\d{3})(:)/g, '$1 :');
+
 			// Move every timestamps to a new line for Local Date format
-			transcript = transcript.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
+			transcript = transcript.replace(/(?<!^)(\d{2}-\d{2}-\d{4} \d{2}[:：]\d{2}[:：]\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}[:：]\d{2}[:：]\d{2}\.\d{3})/gm, '\n$1');
 			// Move every timestamps to a new line for ISO Date format
-			transcript = transcript.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : )/gm, '\n$1');
-
+			transcript = transcript.replace(/(?<!^)(\d{4}-\d{2}-\d{2} \d{2}[:：]\d{2}[:：]\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}[:：]\d{2}[:：]\d{2}\.\d{3})/gm, '\n$1');
+    
 			// Match timestamps in the transcript
-			const timestamps = transcript.match(/(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: /);
-
+			const timestamps = transcript.match(/(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}[:：]\d{2}[:：]\d{2}\.\d{3} *--> *(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}[:：]\d{2}[:：]\d{2}\.\d{3}\s*[:：] /);
+    
 			if (timestamps) {
 				// Split the transcript based on timestamps
 				const lines = transcript.split(timestamps);
-
+        
 				let formattedTranscript = "";
 				for (let line of lines) {
 					line = line.trim();
 					// Replace the separator format in the timestamps
 					line = line.replace(timestamps, '$1 --> $2');
-
-					const colon = line.match(/\s*: /);
+					// Replace colons
+					line = line.replace(/：/g, ": ");
+					const colon = line.match(/\s*[:：] /);
 					const parts = line.split(colon);
 					if (parts.length === 2) {
 						const capitalizedSentence = (parts[1].trimLeft()).charAt(0).toUpperCase() + (parts[1].trimLeft()).slice(1);
 						line = parts[0] + colon + capitalizedSentence;
 					}
-
+            
 					// Add the formatted line to the result
 					if (line !== '') formattedTranscript += line.trim() + "\n";
 				}
         
-				const regex = /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} : [^]+?)(?=\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} -->|\s*$)/g;
+				const regex = /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} [:：][^]+?)(?=\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} -->|\s*$)/g;
 				const matches = formattedTranscript.match(regex);
 				if (regex && formattedTranscript) formattedTranscript = matches.join('');
-
+				formattedTranscript = formattedTranscript.replace(/：/g, ": ");
 				return formattedTranscript.trim(); // Trim any leading/trailing whitespace from the final result
 
 			} else {
+				transcript = transcript.replace(/：/g, ": ");
 				return transcript.trim();
 			}
 		}
@@ -1285,7 +1314,7 @@ function onLoad() {
 			// Split the transcript into individual lines
 			const lines = transcript.split('\n');
 			// Regular expression to match lines with timestamps and periods
-			const regex = /(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*\.$/;
+			const regex = /(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2,4})-(\d{2})-(\d{2,4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*[\.\。]$/;
 			// Filter lines that match the regular expression
 			const filteredLines = lines.filter(line => regex.test(line));
 			// Return the filtered lines
@@ -1354,7 +1383,7 @@ function onLoad() {
 			// Split the transcript into individual lines
 			const lines = transcript.split('\n');
 			// Filter out empty lines and join the remaining lines back into a single string
-			const nonEmptyLines = lines.filter(line => line.trim() !== '.');
+		const nonEmptyLines = lines.filter(line => line.trim() !== ('.' || '。'));
 			return nonEmptyLines.join('\n');
 		}
 
@@ -1409,10 +1438,17 @@ function onLoad() {
 				// Add each line to the Set (Sets automatically handle duplicates)
 				lines.forEach(line => {
 					if (line !== '') {
-						//unique_transcript_array.add(line.trim());
-						const timestamp = line.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/);
-						if (timestamp) {
-							const timestampStr = timestamp[0];
+						const timestamp1 = line.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/);
+						const timestamp2 = line.match(/^\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.\d{3}/);
+						if (timestamp1) {
+							const timestampStr = timestamp1[0];
+							if (!seenTimestamps.has(timestampStr)) {
+								seenTimestamps.add(timestampStr);
+								uniqueLines.push(line);
+							}
+						}
+						else if (timestamp2) {
+							const timestampStr = timestamp2[0];
 							if (!seenTimestamps.has(timestampStr)) {
 								seenTimestamps.add(timestampStr);
 								uniqueLines.push(line);
@@ -1504,8 +1540,14 @@ function onLoad() {
 			var translatedChunks = [];
 
 			for (var chunk of chunks) {
+				//console.log('chunk =', chunk);
 				try {
 					var translatedChunk = await gtranslate(chunk, src, dst);
+					// Give space between colon and sentence
+					translatedChunk = translatedChunk.replace(/：/g, ": ");
+					translatedChunk = translatedChunk.replace(/(\d{2}[:：]\d{2}[:：]\d{2}\.\d{3}[:：]) /g, '$1 ');
+					// Give space between timestamp and colon
+					translatedChunk = translatedChunk.replace(/(\d{2}:\d{2}:\d{2}\.\d{3})(:)/g, '$1 :');
 					translatedChunk = formatTranscript(translatedChunk);
 					translatedChunks.push(translatedChunk);
 
@@ -1515,6 +1557,7 @@ function onLoad() {
 				}
 			}
 			//return translatedChunks.join(' ');
+			//console.log('translatedChunks =', translatedChunks.join('\n'));
 			return translatedChunks.join('\n');
 		};
 
@@ -2587,7 +2630,7 @@ function onLoad() {
 */
 
 			document.documentElement.onmousemove = function(){
-				console.log('onmousemove');
+				//console.log('onmousemove');
 				if (document.querySelector("#button_fullscreen")) {
 					var timeout;
 					if (document.querySelector('#button_fullscreen')) document.querySelector("#button_fullscreen").style.display = 'block';
@@ -2615,7 +2658,7 @@ function onLoad() {
 			document.documentElement.appendChild(mouseMoveCatcher);
 
 			document.documentElement.onmousemove = function(){
-				console.log('onmousemove');
+				//console.log('onmousemove');
 				if (document.querySelector("#button_fullscreen")) {
 					var timeout;
 					document.querySelector("#button_fullscreen").style.display = 'block';
