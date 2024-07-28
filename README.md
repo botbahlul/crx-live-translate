@@ -2,7 +2,7 @@
 Chrome/Edge extension that can RECOGNIZE any live audio/video streaming then TRANSLATE it for FREE!
 
 NOTE : Since version 0.3.2 I've added a CUSTOM FULLSCREEN BUTTON on the RIGHT BOTTOM CORNER of the video so we can see subtitles in fullscreen mode.
-After 5 seconds this button will be hidden, to show it again just move mouse cursor inside subtitles textarea or move the mouse go outside then inside browser window.
+After 5 seconds this button will be hidden, to show it again just move mouse cursor inside subtitles textarea or move the mouse go outside then inside browser window. You can also use F11 key to enter fullscreen mode and still see the subtitles. On some streaming website it may not working properly, just let me know.
 And also now when you change anything in SETTINGS page, the changes will directly applied in real time.
 
 ![image](https://github.com/user-attachments/assets/8621d5e4-15f3-4ae8-9320-b448a95f1ea4)
