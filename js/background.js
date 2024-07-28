@@ -47,8 +47,55 @@ function onLoad() {
 	var final_transcript = '';
 	var interim_transcript = '';
 
-	var fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+	var fullscreenElement;
 	const button_ytp_fullscreen = document.querySelector('#ytp-fullscreen-button');
+
+	var original_video_top, original_video_left, original_video_width, original_video_height;
+
+	var originalContent;
+
+
+	window.onkeydown, function(event) {
+		if (event.keyCode === 122) {
+			event.preventDefault();
+			//alert('F11 key was pressed!');
+			console.log('F11 key was pressed!');
+
+			originalContent = document.body.innerHTML;
+			//toggleFullscreen(document.documentElement);
+			//toggleFullscreen(get_video_player_info().element.parentElement);
+			if (get_video_player_info().element.src.includes('youtube' || 'youtu.be')) {
+				toggleFullscreen(document.documentElement);
+			}
+			else if (get_video_player_info().element.src.includes('www.cnnindonesia.com')) {
+				toggleFullscreen(document.body);
+				//toggleFullscreen(document.documentElement);
+			}
+			else {
+				toggleFullscreen(get_video_player_info().element.parentElement);
+			}
+
+			window.onresize = (function() {
+				console.log('window.onkeydown: window.onresize');
+				const video_info = get_video_player_info();
+				if (video_info) {
+					if (video_info.src.includes('youtube') || video_info.src.includes('youtu.be')) {
+						video_info.element.style.position = 'absolute';
+						video_info.element.style.width = '100%';
+						video_info.element.style.height = '100%';
+					}
+					else {
+						maintain_video_size();
+					}
+					if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (video_info.left + video_info.width - 48)  + 'px';
+					if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (video_info.top + video_info.height - 44) + 'px';
+					if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.zIndex = 2147483647;
+				}
+				regenerate_textarea();
+			});
+		}
+	};
+
 
 	function formatTimestampToISOLocalString(timestamp) {
 		// Convert timestamp to string
@@ -65,6 +112,7 @@ function onLoad() {
 
 	session_start_time = formatTimestampToISOLocalString(new Date());
 	console.log('session_start_time =', session_start_time);
+	//originalContent = document.body.innerHTML;
 
 	// LISTENONG MESSAGES FROM chrome.action.onClicked.addListener((tab)
 	// WITHOUT THIS LISTENER WE WILL GET THE ERROR : Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.
@@ -84,7 +132,7 @@ function onLoad() {
 	});
 
 	console.log('Reading all saved settings');
-	chrome.storage.local.get([
+	chrome.storage.local.get(['recognizing',
 			'src_dialect', 'show_src', 'show_timestamp_src', 'save_src', 
 			'src_selected_font', 'src_font_size', 'src_font_color', 'src_container_width_factor', 'src_container_height_factor', 
 			'src_container_top_factor', 'src_container_left_factor', 'centerize_src', 'src_container_color', 'src_container_opacity', 
@@ -95,6 +143,7 @@ function onLoad() {
 
 
 		console.log('onLoad: recognizing =', recognizing);
+		console.log('onLoad: result.recognizing =', result.recognizing);
 
 		if (!recognizing) {
 
@@ -301,56 +350,125 @@ function onLoad() {
 
 			//create_mouse_move_catcher();
 
-			window.addEventListener('resize', function(event){
+			window.onresize = (event) => {
+				document.documentElement.scrollTop = get_video_player_info().top; // For modern browsers
+				document.body.scrollTop = get_video_player_info().top; // For older browsers
+				console.log('Scrolling');
 				regenerate_textarea();
-			});
+			};
 
-			document.addEventListener('fullscreenchange', function(event) {
-				if (fullscreenElement) {
-					console.log('fullscreenElement =', fullscreenElement);
-					console.log('get_video_player_info().tagName =', get_video_player_info().tagName);
-					if (get_video_player_info().tagName === 'video') {
-						console.log('get_video_player_info().tagName = video');
-						document.querySelector('video').style.width = '100vw';
-						document.querySelector('video').style.height = '100vh';
-						document.querySelector('video').style.left = '0px';
-						document.querySelector('video').style.top = '0px';
-						if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (get_video_player_info().left + get_video_player_info().width - 48)  + 'px';
-						if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (get_video_player_info().top + get_video_player_info().height - 44) + 'px';
+
+			document.onfullscreenchange = (event) => {
+				console.log('document.onfullscreenchange = (event)');
+				fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+
+				var video_info = get_video_player_info();
+				console.log('video_info =', video_info);
+				if (video_info) {
+					var video_outer_info = get_video_outer_info();
+					console.log('video_outer_info =', video_outer_info);
+					console.log('(video_outer_info && !video_info.src.includes("youtube")) =', (video_outer_info && !video_info.src.includes('youtube')));
+					console.log('(video_outer_info && video_info.src.includes("youtube")) =', (video_outer_info && video_info.src.includes('youtube')));
+					if (fullscreenElement) {
+						console.log('fullscreenElement =', fullscreenElement);
+						console.log('video_info.element =', video_info.element);
+						//video_info.element.style.width = '100vw';
+						video_info.element.style.width = screen.width;
+						//video_info.element.style.height = '100vh';
+						video_info.element.style.height = screen.height;
+						video_info.element.style.left = '0px';
+						video_info.element.style.top = '0px';
+						if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (video_info.left + video_info.width - 48)  + 'px';
+						if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (video_info.top + video_info.height - 44) + 'px';
+						if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.zIndex = 2147483647;
+						regenerate_textarea();
 					}
-					else if (get_video_player_info().tagName === 'iframe') {
-						console.log('get_video_player_info().tagName = iframe');
-						document.querySelector('iframe').style.width = '100vw';
-						document.querySelector('iframe').style.height = '100vh';
-						document.querySelector('iframe').style.left = '0px';
-						document.querySelector('iframe').style.top = '0px';
-						if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (get_video_player_info().left + get_video_player_info().width - 48)  + 'px';
-						if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (get_video_player_info().top + get_video_player_info().height - 44) + 'px';
+					else {
+						video_info.element.style.width = original_video_width + 'px';
+						video_info.element.style.height = original_video_height + 'px';
+						video_info.element.style.top = video_info.element.parentElement.style.top;
+						video_info.element.style.left = video_info.element.parentElement.style.left;
+
+						if (video_info.src.includes('youtube') || video_info.src.includes('youtu.be')) {
+							video_info.element.style.width = '100%';
+							video_info.element.style.height = '100%';
+
+							window.onresize = (function(){
+								console.log('document.onfullscreenchange: window.onresize');
+								video_info.element.style.position = 'absolute';
+								video_info.element.style.width = '100%';
+								video_info.element.style.height = '100%';
+							});
+						}
+						else {
+							maintain_video_size();
+						}
 					}
-					regenerate_textarea();
-				} else {
-					setTimeout(regenerate_textarea, 1000);
+
+					if (video_info.src !== '') {
+						document.documentElement.scrollTop = get_video_player_info().top; // For modern browsers
+						document.body.scrollTop = get_video_player_info().top; // For older browsers
+						console.log('Scrolling');
+						regenerate_textarea();
+					}
 				}
-			});
+			};
 
 
-			document.addEventListener('keydown', function(event) {
+			window.onresize = (event) => {
+				console.log('window.onresize');
+				maintain_video_size();
+				video_info = get_video_player_info();
+				if (video_info && video_info.src !== '') {
+					document.documentElement.scrollTop = get_video_player_info().top; // For modern browsers
+					document.body.scrollTop = get_video_player_info().top; // For older browsers
+					console.log('Scrolling');
+					regenerate_textarea();
+				}
+			};
+
+
+			//document.addEventListener('keydown', function(event) {
+			window.onkeydown, function(event) {
 				if (event.keyCode === 122) {
 					event.preventDefault();
 					//alert('F11 key was pressed!');
 					console.log('F11 key was pressed!');
 
-					toggleFullscreen(document.documentElement);
+					originalContent = document.body.innerHTML;
+					//toggleFullscreen(document.documentElement);
+					//toggleFullscreen(get_video_player_info().element.parentElement);
+					if (get_video_player_info().element.src.includes('youtube' || 'youtu.be')) {
+						toggleFullscreen(document.documentElement);
+					}
+					else if (get_video_player_info().element.src.includes('www.cnnindonesia.com')) {
+						toggleFullscreen(document.body);
+						//toggleFullscreen(document.documentElement);
+					}
+					else {
+						toggleFullscreen(get_video_player_info().element.parentElement);
+					}
 
-					window.onresize = (function(){
+					window.onresize = (function() {
+						console.log('window.onkeydown: window.onresize');
 						const video_info = get_video_player_info();
-						const button_fullscreen = document.querySelector('#button_fullscreen');
-						if (button_fullscreen) button_fullscreen.style.top = (get_video_player_info().top + get_video_player_info().height - 44) + 'px';
-						if (button_fullscreen) button_fullscreen.style.left = (get_video_player_info().left + get_video_player_info().width - 48)  + 'px';
+						if (video_info) {
+							if (video_info.src.includes('youtube') || video_info.src.includes('youtu.be')) {
+								video_info.element.style.position = 'absolute';
+								video_info.element.style.width = '100%';
+								video_info.element.style.height = '100%';
+							}
+							else {
+								maintain_video_size();
+							}
+							if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (video_info.left + video_info.width - 48)  + 'px';
+							if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (video_info.top + video_info.height - 44) + 'px';
+							if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.zIndex = 2147483647;
+						}
 						regenerate_textarea();
 					});
 				}
-			});
+			};
 
 
 			// INTERCEPT ANY UNWANTED CHARACTERS FROM GOOGLE TRANSLATE
@@ -375,8 +493,8 @@ function onLoad() {
 
 			console.log('initializing recognition: recognizing =', recognizing);
 
-			document.documentElement.scrollTop = video_info.top; // For modern browsers
-			document.body.scrollTop = video_info.top; // For older browsers
+			document.documentElement.scrollTop = get_video_player_info().top; // For modern browsers
+			document.body.scrollTop = get_video_player_info().top; // For older browsers
 
 			document.querySelector("#src_textarea_container").style.display = 'none';
 			document.querySelector("#dst_textarea_container").style.display = 'none';
@@ -615,7 +733,6 @@ function onLoad() {
 					if (typeof(event.results) === 'undefined') {
 						recognition.onend = null;
 
-						recognition.stop();
 						try{
 							if (recognition) recognition.stop();
 							}
@@ -1225,6 +1342,11 @@ function onLoad() {
 
 
 		function formatTranscript(transcript) {
+			// Give space between colon and sentence
+			transcript = transcript.replace(/：/g, ": ");
+		//transcript = transcript.replace(/(\d{2}[:：]\d{2}[:：]\d{2}\.\d{3}\s*[:：])/g, '$1 ');
+			// Give space between timestamp and colon
+			transcript = transcript.replace(/(\d{2}:\d{2}:\d{2}\.\d{3})(:)/g, '$1 :');
 			// Replace commas with periods in timestamps
 			transcript = transcript.replace(/(\d+),(\d+)/g, '$1.$2');
 			// Remove spaces within timestamps for ISO Date format
@@ -1544,10 +1666,10 @@ function onLoad() {
 				try {
 					var translatedChunk = await gtranslate(chunk, src, dst);
 					// Give space between colon and sentence
-					translatedChunk = translatedChunk.replace(/：/g, ": ");
-					translatedChunk = translatedChunk.replace(/(\d{2}[:：]\d{2}[:：]\d{2}\.\d{3}[:：]) /g, '$1 ');
+					//translatedChunk = translatedChunk.replace(/：/g, ": ");
+					//translatedChunk = translatedChunk.replace(/(\d{2}[:：]\d{2}[:：]\d{2}\.\d{3}[:：])/g, '$1 ');
 					// Give space between timestamp and colon
-					translatedChunk = translatedChunk.replace(/(\d{2}:\d{2}:\d{2}\.\d{3})(:)/g, '$1 :');
+					//translatedChunk = translatedChunk.replace(/(\d{2}:\d{2}:\d{2}\.\d{3})(:)/g, '$1 :');
 					translatedChunk = formatTranscript(translatedChunk);
 					translatedChunks.push(translatedChunk);
 
@@ -1676,44 +1798,50 @@ function onLoad() {
 				console.log("video player found");
 				//console.log("video_info.id = ", video_info.id);
 				console.log("video_info.element = ", video_info.element);
+				original_video_top = video_info.top;
+				original_video_left = video_info.left;
+				original_video_width = video_info.width;
+				original_video_height = video_info.height;
 				//console.log("video_info.src= ", video_info.src);
-				//console.log("Top:", video_info.top);
-				//console.log("Left:", video_info.left);
-				//console.log("Width:", video_info.width);
-				//console.log("Height:", video_info.height);
+				console.log("original_video_top =", original_video_top);
+				console.log("original_video_left =", original_video_left);
+				console.log("original_video_width =", original_video_width);
+				console.log("original_video_height =", original_video_height);
 				//console.log("video_info.position = ", video_info.position);
 				//console.log("video_info.zIndex = ", video_info.zIndex);
 
 				src_width = src_container_width_factor*video_info.width;
-				//console.log('src_width =', src_width);
+				console.log('src_width =', src_width);
 
 				src_height = src_container_height_factor*video_info.height;
-				//console.log('src_height =', src_height);
+				console.log('src_height =', src_height);
 
 				src_top = video_info.top + src_container_top_factor*video_info.height;
-				//console.log('src_top =', src_top);
+				console.log('src_top =', src_top);
 
 				if (centerize_src) {
 					src_left = video_info.left + 0.5*(video_info.width-src_width);
-					//console.log('src_left =', src_left);
+					console.log('src_left =', src_left);
 				} else {
 					src_left = src_container_left_factor*video_info.width;;
+					console.log('src_left =', src_left);
 				}
 
 				dst_width = dst_container_width_factor*video_info.width;
-				//console.log('dst_width =', dst_width);
+				console.log('dst_width =', dst_width);
 
 				dst_height = dst_container_height_factor*video_info.height;
-				//console.log('dst_height =', dst_height);
+				console.log('dst_height =', dst_height);
 
 				dst_top = video_info.top + dst_container_top_factor*video_info.height;
-				//console.log('dst_top =', dst_top);
+				console.log('dst_top =', dst_top);
 
 				if (centerize_dst) {
 					dst_left = video_info.left + 0.5*(video_info.width-dst_width);
-					//console.log('dst_left =', dst_left);
+					console.log('dst_left =', dst_left);
 				} else {
 					dst_left = dst_container_left_factor*video_info.width;;
+					console.log('dst_left =', dst_left);
 				}
 
 			} else {
@@ -1778,19 +1906,38 @@ function onLoad() {
 				})
 				.offset({top:src_top, left:src_left})
 
+
+			// APPENDING src_textarea
 			if (!document.querySelector("#src_textarea_container")) {
 				console.log('appending src_textarea_container to html body');
 				//src_textarea_container$.appendTo(document.documentElement);
-				document.documentElement.appendChild(src_textarea_container$[0]);
+				//document.documentElement.appendChild(src_textarea_container$[0]);
+				//get_video_player_info().element.parentElement.appendChild(src_textarea_container$[0]);
+				if (get_video_player_info().element.src.includes('youtube' || 'youtu.be')) {
+					//document.documentElement.appendChild(src_textarea_container$[0]);
+					src_textarea_container$.appendTo(document.documentElement);
+				}
+				else if (get_video_player_info().element.src.includes('www.cnnindonesia.com')) {
+					//document.documentElement.appendChild(src_textarea_container$[0]);
+					src_textarea_container$.appendTo(document.body);
+					//src_textarea_container$.appendTo(document.documentElement);
+				}
+				else {
+					//get_video_player_info().element.parentElement.appendChild(src_textarea_container$[0]);
+					src_textarea_container$.appendTo(get_video_player_info().element.parentElement);
+				}
 			} else {
 				console.log('src_textarea_container has already exist');
-			};
+			}
 
+			//document.querySelector("#src_textarea").style.top = src_top + 'px';
+			//document.querySelector("#src_textarea").style.left = src_left + 'px';
 			document.querySelector("#src_textarea").style.width = '100%';
 			document.querySelector("#src_textarea").style.height = '100%';
 			document.querySelector("#src_textarea").style.border = 'none';
 			document.querySelector("#src_textarea").style.display = 'inline-block';
 			document.querySelector("#src_textarea").style.overflow = 'hidden';
+			//document.querySelector("#src_textarea").style.zIndex = 2147483647;
 
 			document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
 			document.querySelector("#src_textarea").style.color = src_font_color;
@@ -1817,6 +1964,7 @@ function onLoad() {
 					});
 				}
 
+				video_info = get_video_player_info();
 				if (video_info) {
 					src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/video_info.width;
 					src_container_width_factor = parseFloat(src_container_width_factor).toFixed(3);
@@ -1887,7 +2035,7 @@ function onLoad() {
 
 			document.querySelector("#src_textarea").offsetParent.ondrag = (function(){
 
-				document.querySelector("#dst_textarea").style.position='absolute';
+				document.querySelector("#src_textarea").style.position='absolute';
 
 				if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#src_textarea_container")).width)) {
 					centerize_src = false;
@@ -1903,7 +2051,7 @@ function onLoad() {
 					});
 				}
 
-				//video_info = get_video_player_info();
+				video_info = get_video_player_info();
 				if (video_info) {
 					src_container_top_factor = (getRect(document.querySelector("#src_textarea_container")).top - video_info.top)/video_info.height;
 					src_container_top_factor = parseFloat(src_container_top_factor).toFixed(3);
@@ -1997,19 +2145,38 @@ function onLoad() {
 				})
 				.offset({top:dst_top, left:dst_left})
 
+
+			// APPENDING dst_textarea
 			if (!document.querySelector("#dst_textarea_container")) {
 				console.log('appending dst_textarea_container to html body');
 				//dst_textarea_container$.appendTo(document.documentElement);
-				document.documentElement.appendChild(dst_textarea_container$[0]);
+				//document.documentElement.appendChild(dst_textarea_container$[0]);
+				//get_video_player_info().element.parentElement.appendChild(dst_textarea_container$[0]);
+				if (get_video_player_info().element.src.includes('youtube' || 'youtu.be')) {
+					//document.documentElement.appendChild(dst_textarea_container$[0]);
+					dst_textarea_container$.appendTo(document.documentElement);
+				}
+				else if (get_video_player_info().element.src.includes('www.cnnindonesia.com')) {
+					//document.documentElement.appendChild(dst_textarea_container$[0]);
+					dst_textarea_container$.appendTo(document.body);
+				//	dst_textarea_container$.appendTo(document.documentElement);
+				}
+				else {
+					//get_video_player_info().element.parentElement.appendChild(dst_textarea_container$[0]);
+					dst_textarea_container$.appendTo(get_video_player_info().element.parentElement);
+				}
 			} else {
 				console.log('dst_textarea_container has already exist');
 			};
 
+			//document.querySelector("#dst_textarea").style.top = dst_top + 'px';
+			//document.querySelector("#dst_textarea").style.left = dst_left + 'px';
 			document.querySelector("#dst_textarea").style.width = '100%';
 			document.querySelector("#dst_textarea").style.height = '100%';
 			document.querySelector("#dst_textarea").style.border = 'none';
 			document.querySelector("#dst_textarea").style.display = 'inline-block';
 			document.querySelector("#dst_textarea").style.overflow = 'hidden';
+			//document.querySelector("#dst_textarea").style.zIndex = 2147483647;
 
 			document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif"
 			document.querySelector("#dst_textarea").style.color = dst_font_color;
@@ -2036,7 +2203,7 @@ function onLoad() {
 					});
 				}
 
-				//video_info = get_video_player_info();
+				video_info = get_video_player_info();
 				if (video_info) {
 					dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/video_info.width;
 					dst_container_width_factor = parseFloat(dst_container_width_factor).toFixed(3);
@@ -2108,7 +2275,7 @@ function onLoad() {
 
 				document.querySelector("#dst_textarea").style.position='absolute';
 
-				//video_info = get_video_player_info();
+				video_info = get_video_player_info();
 				if (video_info) {
 					dst_container_top_factor = (getRect(document.querySelector("#dst_textarea_container")).top - video_info.top)/video_info.height;
 					dst_container_top_factor = parseFloat(dst_container_top_factor).toFixed(3);
@@ -2189,23 +2356,102 @@ function onLoad() {
 				// After do saveData() to save a single data into settings we need to do saveAllChangedSettings() to make them written correctly in chrome storage
 				saveAllChangedSettings();
 			});
+
+			window.onresize = (function(){
+				console.log('create_modal_text_area: window.onresize');
+				maintain_video_size();
+				regenerate_textarea();
+			});
 		}
 
 
 		function regenerate_textarea() {
 			console.log('regenerate_textarea');
-			var textarea_rect = get_textarea_rect();
+			//var textarea_rect = get_textarea_rect();
+
+			video_info = get_video_player_info();
+			//console.log("video_info = ", video_info);
+			if (video_info) {
+
+				src_width = src_container_width_factor*video_info.width;
+				//console.log('src_width =', src_width);
+
+				src_height = src_container_height_factor*video_info.height;
+				//console.log('src_height =', src_height);
+
+				src_top = video_info.top + src_container_top_factor*video_info.height;
+				//console.log('src_top =', src_top);
+
+				if (centerize_src) {
+					src_left = video_info.left + 0.5*(video_info.width-src_width);
+					//console.log('src_left =', src_left);
+				} else {
+					src_left = src_container_left_factor*video_info.width;;
+				}
+
+				dst_width = dst_container_width_factor*video_info.width;
+				//console.log('dst_width =', dst_width);
+
+				dst_height = dst_container_height_factor*video_info.height;
+				//console.log('dst_height =', dst_height);
+
+				dst_top = video_info.top + dst_container_top_factor*video_info.height;
+				//console.log('dst_top =', dst_top);
+
+				if (centerize_dst) {
+					dst_left = video_info.left + 0.5*(video_info.width-dst_width);
+					//console.log('dst_left =', dst_left);
+				} else {
+					dst_left = dst_container_left_factor*video_info.width;;
+				}
+
+			} else {
+				console.log("No video player found on this page.");
+
+				src_width = src_container_width_factor*window.innerWidth;
+				//console.log('src_width =', src_width);
+
+				src_height = src_container_height_factor*window.innerHeight;
+				//console.log('src_height =', src_height);
+
+				src_top = src_container_top_factor*window.innerHeight;
+				//console.log('src_top =', src_top);
+
+				if (centerize_src) {
+					src_left = 0.5*(window.innerWidth-src_width);
+					//console.log('src_left =', src_left);
+				} else {
+					src_left = src_container_left_factor*video_info.width;;
+				}
+
+				dst_width = dst_container_width_factor*window.innerWidth;
+				//console.log('dst_width =', dst_width);
+
+				dst_height = dst_container_height_factor*window.innerHeight;
+				//console.log('dst_height =', dst_height);
+
+				dst_top = dst_container_top_factor*window.innerHeight;
+				//console.log('dst_top =', dst_top);
+
+				if (centerize_dst) {
+					dst_left = 0.5*(window.innerWidth-dst_width);
+					//console.log('dst_left =', dst_left);
+				} else {
+					dst_left = dst_container_left_factor*video_info.width;
+				}
+			}
+
 
 			if (document.querySelector("#src_textarea_container")) {
 				document.querySelector("#src_textarea_container").style.fontFamily = src_selected_font + ", sans-serif";
-				document.querySelector("#src_textarea_container").style.width = String(textarea_rect.src_width) + 'px';
-				document.querySelector("#src_textarea_container").style.height = String(textarea_rect.src_height) + 'px';
-				document.querySelector("#src_textarea_container").style.top = String(textarea_rect.src_top) + 'px';
-				document.querySelector("#src_textarea_container").style.left = String(textarea_rect.src_left) + 'px';
+				document.querySelector("#src_textarea_container").style.width = String(src_width) + 'px';
+				document.querySelector("#src_textarea_container").style.height = String(src_height) + 'px';
+				document.querySelector("#src_textarea_container").style.top = String(src_top) + 'px';
+				document.querySelector("#src_textarea_container").style.left = String(src_left) + 'px';
 
 				var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
-					.width(textarea_rect.src_width)
-					.height(textarea_rect.src_height)
+					.width(src_width)
+					.height(src_height)
 					.resizable().draggable({
 						cancel: 'text',
 						start: function (){
@@ -2226,10 +2472,12 @@ function onLoad() {
 						'overflow': 'hidden',
 						'z-index': '2147483647'
 					})
-					.offset({top:textarea_rect.src_top, left:textarea_rect.src_left})
+					.offset({top:src_top, left:src_left})
 
-				document.querySelector("#src_textarea").style.width = String(textarea_rect.src_width) + 'px';
-				document.querySelector("#src_textarea").style.height = String(textarea_rect.src_height) + 'px';
+				//document.querySelector("#src_textarea").style.width = String(src_width) + 'px'; // DON'T USE THIS!!!
+				//document.querySelector("#src_textarea").style.height = String(src_height) + 'px'; // DON'T USE THIS!!!
+				//document.querySelector("#src_textarea").style.top = String(src_top) + 'px'; // DON'T USE THIS!!!
+				//document.querySelector("#src_textarea").style.left = String(src_left) + 'px'; // DON'T USE THIS!!!
 				document.querySelector("#src_textarea").style.width = '100%';
 				document.querySelector("#src_textarea").style.height = '100%';
 				document.querySelector("#src_textarea").style.border = 'none';
@@ -2248,14 +2496,14 @@ function onLoad() {
 
 			if (document.querySelector("#dst_textarea_container")) {
 				document.querySelector("#dst_textarea_container").style.fontFamily = dst_selected_font + ", sans-serif";
-				document.querySelector("#dst_textarea_container").style.width = String(textarea_rect.dst_width) + 'px';
-				document.querySelector("#dst_textarea_container").style.height = String(textarea_rect.dst_height) + 'px';
-				document.querySelector("#dst_textarea_container").style.top = String(textarea_rect.dst_top) + 'px';
-				document.querySelector("#dst_textarea_container").style.left = String(textarea_rect.dst_left) + 'px';
+				document.querySelector("#dst_textarea_container").style.width = String(dst_width) + 'px';
+				document.querySelector("#dst_textarea_container").style.height = String(dst_height) + 'px';
+				document.querySelector("#dst_textarea_container").style.top = String(dst_top) + 'px';
+				document.querySelector("#dst_textarea_container").style.left = String(dst_left) + 'px';
 
 				var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
-					.width(textarea_rect.dst_width)
-					.height(textarea_rect.dst_height)
+					.width(dst_width)
+					.height(dst_height)
 					.resizable().draggable({
 						cancel: 'text',
 						start: function (){
@@ -2276,10 +2524,12 @@ function onLoad() {
 						'overflow': 'hidden',
 						'z-index': '2147483647'
 					})
-					.offset({top:textarea_rect.dst_top, left:textarea_rect.dst_left})
+					.offset({top:dst_top, left:dst_left})
 
-				document.querySelector("#dst_textarea").style.width = String(textarea_rect.dst_width)+'px';
-				document.querySelector("#dst_textarea").style.height = String(textarea_rect.dst_height)+'px';
+				//document.querySelector("#dst_textarea").style.width = String(dst_width)+'px'; // DON'T USE THIS!!!
+				//document.querySelector("#dst_textarea").style.height = String(dst_height)+'px'; // DON'T USE THIS!!!
+				//document.querySelector("#dst_textarea").style.top = String(dst_top) + 'px'; // DON'T USE THIS!!!
+				//document.querySelector("#dst_textarea").style.left = String(dst_left) + 'px'; // DON'T USE THIS!!!
 				document.querySelector("#dst_textarea").style.width = '100%';
 				document.querySelector("#dst_textarea").style.height = '100%';
 				document.querySelector("#dst_textarea").style.border = 'none';
@@ -2297,6 +2547,7 @@ function onLoad() {
 
 			if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (get_video_player_info().left + get_video_player_info().width - 48)  + 'px';
 			if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (get_video_player_info().top + get_video_player_info().height - 44) + 'px';
+			if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.zIndex = 2147483647;
 
 		}
 
@@ -2317,40 +2568,74 @@ function onLoad() {
 		}
 
 
+		function isPlayableVideoElement(element) {
+			// Check if the element is a video element
+			if (element.tagName.toLowerCase() === 'video') {
+				return true;
+			}
+	
+			// Check if the element is an iframe with embedded video content
+			if (element.tagName.toLowerCase() === 'iframe') {
+				const iframeSrc = element.src || element.getAttribute('src');
+				if (iframeSrc) {
+					// Example check for common video hosting platforms (YouTube, Vimeo, etc.)
+					const videoPlatforms = ['youtube.com', 'vimeo.com', 'dailymotion.com'];
+					return videoPlatforms.some(platform => iframeSrc.includes(platform));
+				}
+			}
+	
+			// Check if the element has video-related attributes and methods
+			const videoMethods = ['play', 'pause', 'canPlayType'];
+			const hasVideoMethods = videoMethods.every(method => typeof element[method] === 'function');
+			const videoAttributes = ['src', 'currentTime', 'duration'];
+			const hasVideoAttributes = videoAttributes.every(attr => attr in element);
+	
+			return hasVideoMethods && hasVideoAttributes;
+		}
+
+
 		function get_video_player_info() {
-			var elements = document.querySelectorAll('video, iframe');
-			//console.log('elements =',  elements);
-			var largestVideoElement = null;
-			var largestSize = 0;
+			console.log('get_video_player_info()');
+			if (document.querySelector("video") || document.querySelector("iframe")) {
+				console.log('document.querySelector("video") || document.querySelector("iframe")');
+				var largestVideoElement = null;
+				var largestSize = 0;
+				var elements = document.querySelectorAll('video, iframe');
 
-			for (var i = 0; i < elements.length; i++) {
-				if (getRect(elements[i]).width > 0) {
-					var size = getRect(elements[i]).width * getRect(elements[i]).height;
-					if (size > largestSize) {
-						largestSize = size;
-						largestVideoElement = elements[i];
+				console.log('elements.length =', elements.length);
+				for (var i = 0; i < elements.length; i++) {
+					console.log('getRect(elements[' + i + ']).width =', getRect(elements[i]).width);
+					if (getRect(elements[i]).width > 0) {
+						//console.log('elements[' + i + '] =', elements[i].tagName.toLowerCase());
+						var size = getRect(elements[i]).width * getRect(elements[i]).height;
+						//console.log('size =', size);
+						if (size > largestSize) {
+							largestSize = size;
+							largestVideoElement = elements[i];
+							//console.log('largestVideoElement =', largestVideoElement);
 
-						var videoPlayerContainer = largestVideoElement.parentElement;
-						while (videoPlayerContainer && videoPlayerContainer !== document.body) {
-							var style = window.getComputedStyle(videoPlayerContainer);
-							videoPlayerContainer = videoPlayerContainer.parentElement;
+							var videoPlayerContainer = largestVideoElement.parentElement;
+							while (videoPlayerContainer && videoPlayerContainer !== document.body) {
+								var style = window.getComputedStyle(videoPlayerContainer);
+								videoPlayerContainer = videoPlayerContainer.parentElement;
+							}
+
+							// Default to the video player if no suitable container found
+							if (!videoPlayerContainer || videoPlayerContainer === document.body) {
+								videoPlayerContainer = largestVideoElement;
+							}
+
+							// Get the position and size of the container
+							var container_rect = getRect(videoPlayerContainer);
+							// Get the computed style of the container
+							var container_style = window.getComputedStyle(videoPlayerContainer);
+							// Check if position and z-index are defined, else set default values
+							var container_position = container_style.position !== 'static' ? container_style.position : 'relative';
+							var container_zIndex = container_style.zIndex !== 'auto' && container_style.zIndex !== '0' ? parseInt(container_style.zIndex) : 1;
 						}
- 
-						// Default to the video player if no suitable container found
-						if (!videoPlayerContainer || videoPlayerContainer === document.body) {
-							videoPlayerContainer = largestVideoElement;
-						}
-
-						// Get the position and size of the container
-						var container_rect = getRect(videoPlayerContainer);
-						// Get the computed style of the container
-						var container_style = window.getComputedStyle(videoPlayerContainer);
-						// Check if position and z-index are defined, else set default values
-						var container_position = container_style.position !== 'static' ? container_style.position : 'relative';
-						var container_zIndex = container_style.zIndex !== 'auto' && container_style.zIndex !== '0' ? parseInt(container_style.zIndex) : 1;
-
 					}
-
+				}
+				if (largestVideoElement) {
 					return {
 						element: largestVideoElement,
 						id: largestVideoElement.id,
@@ -2377,8 +2662,10 @@ function onLoad() {
 					};
 				}
 			}
-			//console.log('No video player found');
-			return null;
+			else if (!document.querySelector("video") && !document.querySelector("iframe")) {
+				console.log('No video player found');
+				return null;
+			}
 		}
 
 
@@ -2573,7 +2860,7 @@ function onLoad() {
 			button_fullscreen.style.position = 'absolute';
 			button_fullscreen.style.top = (video_info.top + video_info.height - 40) + 'px';
 			button_fullscreen.style.left = (video_info.left + video_info.width - 44) + 'px';
-			button_fullscreen.style.zIndex = '1000';
+			button_fullscreen.style.zIndex = 2147483647;
 			button_fullscreen.style.padding = '10px';
 			button_fullscreen.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
 			button_fullscreen.style.color = '#fff';
@@ -2599,37 +2886,141 @@ function onLoad() {
 			fullscreenIcon.appendChild(path);
 			button_fullscreen.appendChild(fullscreenIcon);
 
-			document.documentElement.appendChild(button_fullscreen);
+			//document.documentElement.appendChild(button_fullscreen);
+			//get_video_player_info().element.parentElement.appendChild(button_fullscreen);
+			if (get_video_player_info().element.src.includes('youtube' || 'youtu.be')) {
+				document.documentElement.appendChild(button_fullscreen);
+			}
+			else if (get_video_player_info().element.src.includes('www.cnnindonesia.com')) {
+				document.body.appendChild(button_fullscreen);
+			}
+			else {
+				get_video_player_info().element.parentElement.appendChild(button_fullscreen);
+			}
 
 			document.querySelector('#button_fullscreen').onclick = () => {
 				console.log('button_fullscreen clicked');
-				toggleFullscreen(document.documentElement);
+				originalContent = document.body.innerHTML;
+				//toggleFullscreen(document.documentElement);
+				//toggleFullscreen(get_video_player_info().element.parentElement);
+				if (get_video_player_info().element.src.includes('youtube' || 'youtu.be')) {
+					toggleFullscreen(document.documentElement);
+				}
+				else if (get_video_player_info().element.src.includes('www.cnnindonesia.com')) {
+					toggleFullscreen(document.body);
+					//toggleFullscreen(document.documentElement);
+				}
+				else {
+					toggleFullscreen(get_video_player_info().element.parentElement);
+				}
 			}
+
+			window.onkeydown = (event) => {
+				console.log('create_button_fullscreen: document.onkeydown: event.keyCode =', event.keyCode);
+				if (event.keyCode === 122) {
+					event.preventDefault();
+					console.log('F11 key was pressed');
+					if (get_video_player_info().element.src.includes('youtube') || get_video_player_info().element.src.includes('youtu.be')) {
+						toggleFullscreen(document.documentElement);
+					}
+					else if (get_video_player_info().element.src.includes('www.cnnindonesia.com')) {
+						toggleFullscreen(document.body);
+					}
+					else {
+						toggleFullscreen(get_video_player_info().element.parentElement);
+					}
+
+					window.onresize = (function(){
+					console.log('create_button_fullscreen: document.onkeydown: window.onresize');
+						maintain_video_size();
+					});
+				}
+			};
 
 			window.onresize = function() {
 				if (document.querySelector('#button_fullscreen')) {
 					document.querySelector('#button_fullscreen').style.top = (get_video_player_info().top + get_video_player_info().height - 44) + 'px';
 					document.querySelector('#button_fullscreen').style.left = (get_video_player_info().left + get_video_player_info().width - 48) + 'px';
+					document.querySelector('#button_fullscreen').style.zIndex = 2147483647;
 				}
+				maintain_video_size();
 				regenerate_textarea();
 			};
 
-/*
-			document.documentElement.addEventListener('mousemove', () => {
-				var timeout;
-				if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.display = 'block';
-
-				if (timeout) {
-					clearTimeout(timeout);
-				}
-
-				timeout = setTimeout(() => {
-					if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.display = 'none';
-				}, 5000);
-			});
-*/
 
 			document.documentElement.onmousemove = function(){
+				//console.log('onmousemove');
+				if (document.querySelector("#button_fullscreen")) {
+					var timeout;
+					if (document.querySelector('#button_fullscreen')) document.querySelector("#button_fullscreen").style.display = 'block';
+					if (timeout) {
+						clearTimeout(timeout);
+					}
+					timeout = setTimeout(() => {
+						if (document.querySelector('#button_fullscreen')) document.querySelector("#button_fullscreen").style.display = 'none';
+					}, 5000);
+				}
+			};
+
+			document.body.onmousemove = function(){
+				//console.log('onmousemove');
+				if (document.querySelector("#button_fullscreen")) {
+					var timeout;
+					if (document.querySelector('#button_fullscreen')) document.querySelector("#button_fullscreen").style.display = 'block';
+					if (timeout) {
+						clearTimeout(timeout);
+					}
+					timeout = setTimeout(() => {
+						if (document.querySelector('#button_fullscreen')) document.querySelector("#button_fullscreen").style.display = 'none';
+					}, 5000);
+				}
+			};
+
+			var video_element = get_video_player_info().element;
+			video_element.onmousemove = function() {
+				//console.log('onmousemove');
+				if (document.querySelector("#button_fullscreen")) {
+					var timeout;
+					if (document.querySelector('#button_fullscreen')) document.querySelector("#button_fullscreen").style.display = 'block';
+					if (timeout) {
+						clearTimeout(timeout);
+					}
+					timeout = setTimeout(() => {
+						if (document.querySelector('#button_fullscreen')) document.querySelector("#button_fullscreen").style.display = 'none';
+					}, 5000);
+				}
+			};
+
+			video_element.parentElement.onmousemove = function() {
+				//console.log('onmousemove');
+				if (document.querySelector("#button_fullscreen")) {
+					var timeout;
+					if (document.querySelector('#button_fullscreen')) document.querySelector("#button_fullscreen").style.display = 'block';
+					if (timeout) {
+						clearTimeout(timeout);
+					}
+					timeout = setTimeout(() => {
+						if (document.querySelector('#button_fullscreen')) document.querySelector("#button_fullscreen").style.display = 'none';
+					}, 5000);
+				}
+			};
+
+
+			document.querySelector("#src_textarea").onmousemove = function() {
+				//console.log('onmousemove');
+				if (document.querySelector("#button_fullscreen")) {
+					var timeout;
+					if (document.querySelector('#button_fullscreen')) document.querySelector("#button_fullscreen").style.display = 'block';
+					if (timeout) {
+						clearTimeout(timeout);
+					}
+					timeout = setTimeout(() => {
+						if (document.querySelector('#button_fullscreen')) document.querySelector("#button_fullscreen").style.display = 'none';
+					}, 5000);
+				}
+			};
+
+			document.querySelector("#dst_textarea").onmousemove = function() {
 				//console.log('onmousemove');
 				if (document.querySelector("#button_fullscreen")) {
 					var timeout;
@@ -2681,34 +3072,159 @@ function onLoad() {
 				exitFullscreen();
 			}
 		}
-	
+
+
 		// Function to enter fullscreen mode for the video
 		function enterFullscreen(element) {
 			console.log('enterFullscreen for element =', element);
 			if (element.requestFullscreen) {
 				element.requestFullscreen();
-				} else if (element.mozRequestFullScreen) { // Firefox
+			} else if (element.mozRequestFullScreen) { // Firefox
 				element.mozRequestFullScreen();
-				} else if (element.webkitRequestFullscreen) { // Chrome, Safari, and Opera
+			} else if (element.webkitRequestFullscreen) { // Chrome, Safari, and Opera
 				element.webkitRequestFullscreen();
-				} else if (element.msRequestFullscreen) { // IE/Edge
+			} else if (element.msRequestFullscreen) { // IE/Edge
 				element.msRequestFullscreen();
 			}
 		}
-	
+
+
 		function exitFullscreen() {
-			console.log('exitFullscreen');
+			console.log('exitFullscreen()');
+			var video_info = get_video_player_info();
 			if (document.exitFullscreen) {
 				document.exitFullscreen();
+
+				if (video_info) {
+					video_info.element.style.width = original_video_width + 'px';
+					video_info.element.style.height = original_video_height + 'px';
+					video_info.element.style.top = video_info.element.parentElement.style.top;
+					video_info.element.style.left = video_info.element.parentElement.style.left;
+
+					if (video_info.src.includes('youtube') || video_info.src.includes('youtu.be')) {
+						// Maintain video size when window resized or entering fullscreen mode
+						video_info.element.style.width = '100%';
+						video_info.element.style.height = '100%';
+
+						window.onresize = (function(){
+							console.log('exitFullscreen: window.onresize');
+							if (video_info) {
+								video_info.element.style.position = 'absolute';
+								video_info.element.style.width = '100%';
+								video_info.element.style.height = '100%';
+							}
+						});
+					}
+					else {
+						maintain_video_size();
+					}
+
+					if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (video_info.left + video_info.width - 48)  + 'px';
+					if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (video_info.top + video_info.height - 44) + 'px';
+					if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.zIndex = 2147483647;
+				}
+
 			} else if (document.mozCancelFullScreen) { // Firefox
 				document.mozCancelFullScreen();
+
+				if (video_info) {
+					video_info.element.style.width = original_video_width + 'px';
+					video_info.element.style.height = original_video_height + 'px';
+					video_info.element.style.top = video_info.element.parentElement.style.top;
+					video_info.element.style.left = video_info.element.parentElement.style.left;
+
+					if (video_info.src.includes('youtube') || video_info.src.includes('youtu.be')) {
+						// Maintain video size when window resized or entering fullscreen mode
+						video_info.element.style.width = '100%';
+						video_info.element.style.height = '100%';
+						window.onresize = (function(){
+							if (video_info) {
+								video_info.element.style.position = 'absolute';
+								video_info.element.style.width = '100%';
+								video_info.element.style.height = '100%';
+							}
+						});
+					}
+					else {
+						maintain_video_size();
+					}
+
+					if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (video_info.left + video_info.width - 48)  + 'px';
+					if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (video_info.top + video_info.height - 44) + 'px';
+					if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.zIndex = 2147483647;
+				}
+
 			} else if (document.webkitExitFullscreen) { // Chrome, Safari, and Opera
 				document.webkitExitFullscreen();
+
+				if (video_info) {
+					video_info.element.style.width = original_video_width + 'px';
+					video_info.element.style.height = original_video_height + 'px';
+					video_info.element.style.top = video_info.element.parentElement.style.top;
+					video_info.element.style.left = video_info.element.parentElement.style.left;
+
+					if (video_info.src.includes('youtube') || video_info.src.includes('youtu.be')) {
+						// Maintain video size when window resized or entering fullscreen mode
+						video_info.element.style.width = '100%';
+						video_info.element.style.height = '100%';
+						window.onresize = (function(){
+							if (video_info) {
+								video_info.element.style.position = 'absolute';
+								video_info.element.style.width = '100%';
+								video_info.element.style.height = '100%';
+							}
+						});
+					}
+					else {
+						maintain_video_size();
+					}
+
+					if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (video_info.left + video_info.width - 48)  + 'px';
+					if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (video_info.top + video_info.height - 44) + 'px';
+					if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.zIndex = 2147483647;
+				}
+
 			} else if (document.msExitFullscreen) { // IE/Edge
 				document.msExitFullscreen();
+
+				if (video_info) {
+					video_info.element.style.width = original_video_width + 'px';
+					video_info.element.style.height = original_video_height + 'px';
+					video_info.element.style.top = video_info.element.parentElement.style.top;
+					video_info.element.style.left = video_info.element.parentElement.style.left;
+
+					if (video_info.src.includes('youtube') || video_info.src.includes('youtu.be')) {
+						// Maintain video size when window resized or entering fullscreen mode
+						video_info.element.style.width = '100%';
+						video_info.element.style.height = '100%';
+						window.onresize = (function(){
+							if (video_info) {
+								video_info.element.style.position = 'absolute';
+								video_info.element.style.width = '100%';
+								video_info.element.style.height = '100%';
+							}
+						});
+					}
+					else {
+						maintain_video_size();
+					}
+
+					if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (video_info.left + video_info.width - 48)  + 'px';
+					if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (video_info.top + video_info.height - 44) + 'px';
+					if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.zIndex = 2147483647;
+				}
 			}
+
+			if (video_info.src !== '') {
+				document.documentElement.scrollTop = get_video_player_info().top; // For modern browsers
+				document.body.scrollTop = get_video_player_info().top; // For older browsers
+				console.log('Scrolling');
+				regenerate_textarea();
+			}
+
 		}
-	
+
+
 		function get_video_outer_info() {
 			const video_info = get_video_player_info();
 			const videoElement = video_info.element;
@@ -2731,18 +3247,167 @@ function onLoad() {
 						break;
 					}
 				}
+				return {
+					element: video_outer_info,
+					id: video_outer_info_id,
+					width: video_outer_info_width,
+					height: video_outer_info_height,
+					top: video_outer_info_top,
+					left: video_outer_info_left,
+					position: video_outer_info_position,
+					zIndex: video_outer_info_zIndex,
+				};
+			} else {
+				console.log('No video player found');
+				return null;
 			}
-			//return video_outer_info;
-			return {
-				element: video_outer_info,
-				id: video_outer_info_id,
-				width: video_outer_info_width,
-				height: video_outer_info_height,
-				top: video_outer_info_top,
-				left: video_outer_info_left,
-				position: video_outer_info_position,
-				zIndex: video_outer_info_zIndex,
-			};
+		}
+
+
+		function maintain_video_size() {
+			console.log('Maintain video size when window resized or entering fullscreen mode');
+			var video_info = get_video_player_info();
+			if (video_info) {
+				var video_outer_info = get_video_outer_info();
+			}
+
+			if (video_info && video_info.src !== '' && !video_info.src.includes('youtube' || 'youtu.be')) {
+				if (video_outer_info) video_outer_info.element.style.textAlign = 'center';
+				if (video_info) video_info.element.style.position = 'absolute';
+				if (window.innerWidth/window.innerHeight >= 16/9) {
+					console.log('window.innerWidth/window.innerHeight >= 16/9');
+					video_info.element.style.height = (window.innerHeight) + 'px';
+					video_info.element.style.width = (((16/9) * window.innerHeight)) + 'px';
+					video_info.element.style.left = (0.5 * (window.innerWidth - getRect(video_info.element).width)) + 'px';
+					video_info.element.style.top = video_info.element.parentElement.style.top;
+					regenerate_textarea();
+				}
+				else {
+					console.log('window.innerWidth/window.innerHeight < 16/9');
+					video_info.element.style.width = window.innerWidth + 'px';
+					video_info.element.style.height = ((9/16) * window.innerWidth) + 'px';
+					video_info.element.style.left = '0px';
+					video_info.element.style.top = video_info.element.parentElement.style.top;
+					regenerate_textarea();
+				}
+
+				window.onresize = (function(){
+					if (video_info && video_outer_info) {
+						console.log('maintain_video_size: window.onresize');
+
+						var maxHeight = window.screen.height,
+							maxWidth = window.screen.width,
+							curHeight = window.innerHeight,
+							curWidth = window.innerWidth;
+
+						var isFullscreen = false;
+						if (maxWidth == curWidth && maxHeight == curHeight) {
+							//alert('maxWidth == curWidth && maxHeight == curHeight');
+							isFullscreen = !isFullscreen;
+							if (get_video_player_info().element.src.includes('youtube') || get_video_player_info().element.src.includes('youtu.be')) {
+								enterFullscreen(document.documentElement);
+							}
+							else if (get_video_player_info().element.src.includes('www.cnnindonesia.com')) {
+								enterFullscreen(document.body);
+							}
+							else {
+								enterFullscreen(get_video_player_info().element.parentElement);
+							}
+						}
+						else {
+							isFullscreen = false;
+						}
+
+						if (!isFullscreen) {
+							if (video_outer_info) video_outer_info.element.style.textAlign = 'center';
+							if (video_info) video_info.element.style.position = 'absolute';
+							if (window.innerWidth/window.innerHeight >= 16/9) {
+								console.log('resize event: window.innerWidth/window.innerHeight >= 16/9');
+								video_info.element.style.height = (window.innerHeight) + 'px';
+								video_info.element.style.width = (((16/9) * window.innerHeight)) + 'px';
+								video_info.element.style.left = (0.5 * (window.innerWidth - getRect(video_info.element).width)) + 'px';
+								video_info.element.style.top = video_info.element.parentElement.style.top;
+								regenerate_textarea();
+							}
+							else {
+								console.log('resize event: window.innerWidth/window.innerHeight < 16/9');
+								video_info.element.style.width = window.innerWidth + 'px';
+								//video_info.element.style.width = video_info.element.parentElement.style.width;
+								//video_info.element.style.width = original_video_width + 'px';
+								video_info.element.style.height = ((9/16) * window.innerWidth) + 'px';
+								//video_info.element.style.height = ((9/16) * get_video_player_info().width) + 'px';
+								//video_info.element.style.height = ((9/16) * original_video_width) + 'px';;
+								//video_info.element.style.left = '0px';
+								video_info.element.style.left = video_info.element.parentElement.style.left;
+								video_info.element.style.top = video_info.element.parentElement.style.top;
+								regenerate_textarea();
+							}
+						}
+
+						if (video_info.element.src !== '') {
+							document.documentElement.scrollTop = get_video_player_info().top; // For modern browsers
+							document.body.scrollTop = get_video_player_info().top; // For older browsers
+							console.log('Scrolling');
+							regenerate_textarea();
+						}
+					}
+				});
+			}
+
+			else if (video_info && video_info.src !== '' && video_info.src.includes('youtube' || 'youtu.be')) {
+				video_info.element.style.width = '100%';
+				video_info.element.style.height = '100%';
+				regenerate_textarea();
+
+				window.onresize = (function(){
+					console.log('maintain_video_size: window.onresize');
+
+					var maxHeight = window.screen.height,
+						maxWidth = window.screen.width,
+						curHeight = window.innerHeight,
+						curWidth = window.innerWidth;
+
+					var isFullscreen = false;
+					if (maxWidth == curWidth && maxHeight == curHeight) {
+						//alert('maxWidth == curWidth && maxHeight == curHeight');
+						console.log('maxWidth == curWidth && maxHeight == curHeight');
+						isFullscreen = !isFullscreen;
+						if (get_video_player_info().element.src.includes('youtube') || get_video_player_info().element.src.includes('youtu.be')) {
+							enterFullscreen(document.documentElement);
+						}
+						else if (get_video_player_info().element.src.includes('www.cnnindonesia.com')) {
+							enterFullscreen(document.body);
+						}
+						else {
+							enterFullscreen(get_video_player_info().element.parentElement);
+						}
+					}
+					else {
+						isFullscreen = false;
+					}
+
+					if (!isFullscreen) {
+						video_info.element.style.position = 'absolute';
+						video_info.element.style.width = '100%';
+						video_info.element.style.height = '100%';
+						if (video_info.src !== '') {
+							document.documentElement.scrollTop = get_video_player_info().top; // For modern browsers
+							document.body.scrollTop = get_video_player_info().top; // For older browsers
+							console.log('Scrolling');
+							regenerate_textarea();
+						}
+					}
+				});
+			}
+
+			// DON'T CHANGE THIS!
+			if (video_info.src !== '') {
+				document.documentElement.scrollTop = get_video_player_info().top; // For modern browsers
+				document.body.scrollTop = get_video_player_info().top; // For older browsers
+				console.log('Scrolling');
+				regenerate_textarea();
+			}
+
 		}
 
 
@@ -2803,32 +3468,6 @@ function onLoad() {
 
 
 chrome.action.onClicked.addListener((tab) => {
-/*
-	chrome.scripting.insertCSS({
-		target: {tabId:tab.id},
-		files: ['js/jquery-ui.css']
-	});
-
-	chrome.scripting.executeScript({
-		target: {tabId:tab.id},
-		files: ['js/jquery.min.js']
-	});
-
-	chrome.scripting.executeScript({
-		target: {tabId:tab.id},
-		files: ['js/jquery-ui.min.js']
-	});
-
-	chrome.scripting.executeScript({
-		target: {tabId:tab.id},
-		files: ['js/moment.min.js']
-	});
-
-	chrome.scripting.executeScript({
-		target: {tabId: tab.id},
-		func: onLoad
-	});
-*/
 
 	recognizing = !recognizing; //CLICKING ON EXTENSION ICON WILL TOGGLE RECOGNIZING STATUS
 
@@ -2870,13 +3509,6 @@ chrome.action.onClicked.addListener((tab) => {
 				icon_text_listening = request.data.value;
 				chrome.action.setIcon({path: 'mic-listening.png'});
 				chrome.action.setBadgeText({text: icon_text_listening});
-/*
-				chrome.tabs.sendMessage(tab.id, {
-					cmd: 'generateIcon',
-					data: { text: icon_text_listening }
-				});
-				return true;
-*/
 			}
 		});
 

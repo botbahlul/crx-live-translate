@@ -3879,6 +3879,13 @@ function capitalizeSentences(transcription) {
 
 
 function formatTranscript(transcript) {
+	// Give space between colon and sentence
+	transcript = transcript.replace(/：/g, ": ");
+	//transcript = transcript.replace(/(\d{2}[:：]\d{2}[:：]\d{2}\.\d{3}\s*[:：])/g, '$1 ');
+	// Give space between timestamp and colon
+	transcript = transcript.replace(/(\d{2}:\d{2}:\d{2}\.\d{3})(:)/g, '$1 :');
+	// Replace commas with periods in timestamps
+	transcript = transcript.replace(/(\d+),(\d+)/g, '$1.$2');
     // Replace commas with periods in timestamps
     transcript = transcript.replace(/(\d+),(\d+)/g, '$1.$2');
     // Remove spaces within timestamps for ISO Date format
