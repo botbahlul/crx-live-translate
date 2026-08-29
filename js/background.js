@@ -25,6 +25,10 @@ function onLoad() {
 	var pause_timeout, pause_threshold = 5000, input_pause_threshold; // 5 seconds artificial pause threshold;
 	var array_all_final_transcripts = [], array_all_translated_final_transcripts = [];
 	var displayed_translation;
+	// 1 = translate1 / translate.googleapis.com
+	// 2 = translate2 / clients5.google.com
+	var translate_endpoint = 0;
+	var translate_endpoint_testing = false;
 
 	var video_info;
 
@@ -372,10 +376,10 @@ function onLoad() {
 					if (fullscreenElement) {
 						console.log('fullscreenElement =', fullscreenElement);
 						console.log('video_info.element =', video_info.element);
-						//video_info.element.style.width = '100vw';
-						video_info.element.style.width = screen.width;
-						//video_info.element.style.height = '100vh';
-						video_info.element.style.height = screen.height;
+						video_info.element.style.width = '100vw';
+						//video_info.element.style.width = screen.width;
+						video_info.element.style.height = '100vh';
+						//video_info.element.style.height = screen.height;
 						video_info.element.style.left = '0px';
 						video_info.element.style.top = '0px';
 						if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (video_info.left + video_info.width - 48)  + 'px';
@@ -817,9 +821,10 @@ function onLoad() {
 
 							//var  t = unique_text; // CAN'T BE USED BECAUSE GOOGLE TRANSLATE SERVER WILL RESPOND WITH 400 AFTER SOME REQUESTS
 							var t = transcript_to_translate;
-							if ((Date.now() - translate_time > 1000) && recognizing) {
+							/*if ((Date.now() - translate_time > 1000) && recognizing) {
 								if (t) {
-									var tt = gtranslate(t, src, dst).then(result => {
+									//var tt = translate1(t, src, dst).then(result => {
+									var tt = translate2(t, src, dst).then(result => {
 										if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'block';
 										if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").style.display = 'inline-block';
 
@@ -878,7 +883,126 @@ function onLoad() {
 									});
 									translate_time = Date.now();
 								}
-							};
+							};*/
+
+							if ((Date.now() - translate_time > 1000) && recognizing) {
+
+								if (t) {
+
+									var tt = getTranslateFunction(t, src, dst).then(translateFunction => {
+
+										if (!translateFunction) {
+											console.log('No translation endpoint available.');
+											return null;
+										}
+
+										console.log(
+											'Executing translation using:',
+											translateFunction === translate1 ? 'translate1' : 'translate2'
+										);
+
+										return translateFunction(t, src, dst);
+
+									}).then(result => {
+
+										if (!result) {
+											return;
+										}
+
+										if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'block';
+										if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").style.display = 'inline-block';
+
+										result = formatTranscript(result);
+
+										if (result.match(/(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*[\.\。]\n/gm) 
+												|| result.match(/(\d{2})-(\d{2})-(\d{4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2})-(\d{2})-(\d{4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*[\.\。]\n/gm)) {
+
+											var buffer = getTimestampedLines(result);
+
+											buffer = arrayRemoveDuplicates(buffer);
+
+											array_all_translated_final_transcripts.push(buffer[0]);
+
+											array_all_translated_final_transcripts = arrayRemoveDuplicates(
+												array_all_translated_final_transcripts
+											);
+										}
+
+										if (array_all_translated_final_transcripts.length > 0) {
+
+											array_all_translated_final_transcripts =
+												arrayRemoveDuplicates(array_all_translated_final_transcripts);
+
+											displayed_translation =
+												array_all_translated_final_transcripts.join('\n') + result;
+
+											displayed_translation = formatTranscript(displayed_translation);
+
+											displayed_translation =
+												removeDuplicateTimestamps(displayed_translation);
+
+											var lines = displayed_translation.trim().split('\n');
+											var unique_lines = [...new Set(lines)];
+											var unique_text = unique_lines.join('\n');
+
+											// Remove duplicate of translated last_final_transcript
+											// to get interim_translation only
+											var interim_translation = result.replace(
+												/^\d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3}\s*[:：] .*[\.\。]\n/gm,
+												''
+											);
+
+											if (!transcript_is_final) {
+
+												displayed_translation =
+													unique_text + '\n' + interim_translation;
+
+											} else {
+
+												displayed_translation = unique_text;
+
+											}
+
+										} else {
+
+											displayed_translation = result;
+
+										}
+
+										if (show_timestamp_dst) {
+
+											if (displayed_translation &&
+												document.querySelector("#dst_textarea")) {
+
+												document.querySelector("#dst_textarea").value =
+													displayed_translation;
+											}
+
+										} else {
+
+											if (displayed_translation &&
+												document.querySelector("#dst_textarea")) {
+
+												document.querySelector("#dst_textarea").value =
+													removeTimestamps(displayed_translation);
+											}
+										}
+
+										if (document.querySelector("#dst_textarea")) {
+											document.querySelector("#dst_textarea").scrollTop =
+												document.querySelector("#dst_textarea").scrollHeight;
+										}
+
+									}).catch(error => {
+
+										console.log('Translation error =', error);
+
+									});
+
+									translate_time = Date.now();
+								}
+							}
+
 						} else {
 							if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'none';
 						}
@@ -1223,7 +1347,7 @@ function onLoad() {
 
 
 		// FUNCTIONS
-		var translate = async (t, src, dst) => {
+		var translate2 = async (t, src, dst) => {
 			return new Promise((resolve, reject) => {
 				const url = 'https://clients5.google.com/translate_a/single?dj=1&dt=t&dt=sp&dt=ld&dt=bd&client=dict-chrome-ex&sl=' 
 							+ src + '&tl=' + dst + '&q=' + encodeURIComponent(t);
@@ -1251,7 +1375,7 @@ function onLoad() {
 		};
 
 
-		var gtranslate = async (t, src, dst) => {
+		var translate1 = async (t, src, dst) => {
 			return new Promise((resolve, reject) => {
 				const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=' + src + '&tl=' + dst + '&dt=t&q=' + encodeURIComponent(t);
 				var xmlHttp = new XMLHttpRequest();
@@ -1277,6 +1401,66 @@ function onLoad() {
 			});
 		};
 
+
+		var getTranslateFunction = async (t, src, dst) => {
+
+			if (translate_endpoint === 1) {
+				console.log('Using translate1');
+				return translate1;
+			}
+
+			if (translate_endpoint === 2) {
+				console.log('Using translate2');
+				return translate2;
+			}
+
+			if (translate_endpoint_testing) {
+				return null;
+			}
+
+			translate_endpoint_testing = true;
+			console.log('Testing translate1...');
+
+			try {
+				var result1 = await translate1(t, src, dst);
+
+				if (result1 && result1.trim() !== '') {
+					translate_endpoint = 1;
+					translate_endpoint_testing = false;
+
+					console.log('translate1 is OK.');
+					console.log('Selected endpoint = translate1');
+
+					return translate1;
+				}
+			} catch (error) {
+				console.log('translate1 failed:', error);
+			}
+
+			console.log('Testing translate2...');
+
+			try {
+				var result2 = await translate2(t, src, dst);
+
+				if (result2 && result2.trim() !== '') {
+					translate_endpoint = 2;
+					translate_endpoint_testing = false;
+
+					console.log('translate2 is OK.');
+					console.log('Selected endpoint = translate2');
+
+					return translate2;
+				}
+			} catch (error) {
+				console.log('translate2 failed:', error);
+			}
+
+			translate_endpoint = 0;
+			translate_endpoint_testing = false;
+			console.log('Both translation endpoints failed.');
+
+			return null;
+		};
 
 		var two_line = /\n\n/g;
 		var one_line = /\n/g;
@@ -1664,7 +1848,8 @@ function onLoad() {
 			for (var chunk of chunks) {
 				//console.log('chunk =', chunk);
 				try {
-					var translatedChunk = await gtranslate(chunk, src, dst);
+					//var translatedChunk = await translate1(chunk, src, dst);
+					var translatedChunk = await translate2(chunk, src, dst);
 					// Give space between colon and sentence
 					//translatedChunk = translatedChunk.replace(/：/g, ": ");
 					//translatedChunk = translatedChunk.replace(/(\d{2}[:：]\d{2}[:：]\d{2}\.\d{3}[:：])/g, '$1 ');
