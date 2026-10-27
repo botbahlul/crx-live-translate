@@ -388,23 +388,15 @@ function onLoad() {
 						regenerate_textarea();
 					}
 					else {
-						video_info.element.style.width = original_video_width + 'px';
-						video_info.element.style.height = original_video_height + 'px';
-						video_info.element.style.top = video_info.element.parentElement.style.top;
-						video_info.element.style.left = video_info.element.parentElement.style.left;
-
-						if (video_info.src.includes('youtube') || video_info.src.includes('youtu.be')) {
-							video_info.element.style.width = '100%';
-							video_info.element.style.height = '100%';
-
-							window.onresize = (function(){
-								console.log('document.onfullscreenchange: window.onresize');
-								video_info.element.style.position = 'absolute';
-								video_info.element.style.width = '100%';
-								video_info.element.style.height = '100%';
-							});
+						if (is_youtube_page()) {
+							// LET YOUTUBE AUTOMATICALLY ADJUST THE VIDEO SIZE
+							regenerate_textarea();
 						}
 						else {
+							video_info.element.style.width = original_video_width + 'px';
+							video_info.element.style.height = original_video_height + 'px';
+							video_info.element.style.top = video_info.element.parentElement.style.top;
+							video_info.element.style.left = video_info.element.parentElement.style.left;
 							maintain_video_size();
 						}
 					}
@@ -821,69 +813,6 @@ function onLoad() {
 
 							//var  t = unique_text; // CAN'T BE USED BECAUSE GOOGLE TRANSLATE SERVER WILL RESPOND WITH 400 AFTER SOME REQUESTS
 							var t = transcript_to_translate;
-							/*if ((Date.now() - translate_time > 1000) && recognizing) {
-								if (t) {
-									//var tt = translate1(t, src, dst).then(result => {
-									var tt = translate2(t, src, dst).then(result => {
-										if (document.querySelector("#dst_textarea_container")) document.querySelector("#dst_textarea_container").style.display = 'block';
-										if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").style.display = 'inline-block';
-
-										result = formatTranscript(result);
-
-										if (result.match(/(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{4})-(\d{2})-(\d{2}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*[\.\。]\n/gm) 
-												|| result.match(/(\d{2})-(\d{2})-(\d{4}) \d{2}:\d{2}:\d{2}\.\d{3} *--> *(\d{2})-(\d{2})-(\d{4}) \d{2}:\d{2}:\d{2}\.\d{3}\s*: .*[\.\。]\n/gm)) {
-											var buffer = getTimestampedLines(result);
-											//console.log('getTimestampedLines(result) =', getTimestampedLines(result));
-											buffer = arrayRemoveDuplicates(buffer);
-											//console.log('arrayRemoveDuplicates(buffer) =', arrayRemoveDuplicates(buffer));
-											//console.log('buffer[0] =', buffer[0]);
-											array_all_translated_final_transcripts.push(buffer[0]);
-											//console.log('array_all_translated_final_transcripts =', array_all_translated_final_transcripts);
-											array_all_translated_final_transcripts = arrayRemoveDuplicates(array_all_translated_final_transcripts);
-											//console.log('array_all_translated_final_transcripts =', array_all_translated_final_transcripts);
-										}
-
-										if (array_all_translated_final_transcripts.length > 0) {
-											array_all_translated_final_transcripts = arrayRemoveDuplicates(array_all_translated_final_transcripts);
-											//console.log('array_all_translated_final_transcripts =', array_all_translated_final_transcripts);
-											displayed_translation = array_all_translated_final_transcripts.join('\n') + result;
-											//console.log('displayed_translation =', displayed_translation);
-											displayed_translation = formatTranscript(displayed_translation);
-											//console.log('formatTranscript(displayed_translation) =', formatTranscript(displayed_translation));
-											displayed_translation = removeDuplicateTimestamps(displayed_translation);
-											//console.log('removeDuplicateTimestamps(displayed_translation) =', removeDuplicateTimestamps(displayed_translation));
-											var lines = displayed_translation.trim().split('\n');
-											var unique_lines = [...new Set(lines)];
-											var unique_text = unique_lines.join('\n');
-											// Remove duplicate of translated last_final_transcript to get interim_translation only
-											var interim_translation = result.replace(/^\d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3} *--> *\d{2,4}-\d{2}-\d{2,4} \d{2}:\d{2}:\d{2}\.\d{3}\s*[:：] .*[\.\。]\n/gm, '');
-
-											if (!transcript_is_final) {
-												displayed_translation = unique_text + '\n' + interim_translation;
-												//console.log('!transcript_is_final: displayed_translation =', displayed_translation);
-											} else {
-												displayed_translation = unique_text;
-												//console.log('transcript_is_final: displayed_translation =', displayed_translation);
-											}
-										} else {
-											displayed_translation = result;
-											//console.log('array_all_translated_final_transcripts.length <= 0: displayed_translation =', displayed_translation);
-										}
-
-										if (show_timestamp_dst) {
-											//console.log('displayed_translation =', displayed_translation);
-											if (displayed_translation && document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = displayed_translation;
-										} else {
-											if (displayed_translation && document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").value = removeTimestamps(displayed_translation);
-										}
-										if (document.querySelector("#dst_textarea")) document.querySelector("#dst_textarea").scrollTop=document.querySelector("#dst_textarea").scrollHeight;
-
-									}).catch(error => {
-										console.log('error =', error);
-									});
-									translate_time = Date.now();
-								}
-							};*/
 
 							if ((Date.now() - translate_time > 1000) && recognizing) {
 
@@ -1347,6 +1276,10 @@ function onLoad() {
 
 
 		// FUNCTIONS
+		function is_youtube_page() {
+			return location.hostname.includes('youtube.com') || location.hostname.includes('youtu.be');
+		}
+
 		var translate2 = async (t, src, dst) => {
 			return new Promise((resolve, reject) => {
 				const url = 'https://clients5.google.com/translate_a/single?dj=1&dt=t&dt=sp&dt=ld&dt=bd&client=dict-chrome-ex&sl=' 
@@ -1878,6 +1811,7 @@ function onLoad() {
 			// Create a URL for the Blob
 			const url = URL.createObjectURL(blob);
 
+			// Create an anchor element
 			// Create an anchor element
 			const a = document.createElement('a');
 			a.href = url;
@@ -2542,6 +2476,11 @@ function onLoad() {
 				saveAllChangedSettings();
 			});
 
+			// Prevent jQuery UI resize/drag events from bubbling up to window.onresize
+			$('#src_textarea_container, #dst_textarea_container').on('resize drag', function(e) {
+				e.stopPropagation();
+			});
+
 			window.onresize = (function(){
 				console.log('create_modal_text_area: window.onresize');
 				maintain_video_size();
@@ -2550,7 +2489,7 @@ function onLoad() {
 		}
 
 
-		function regenerate_textarea() {
+		function regenerate_textarea_bak() {
 			console.log('regenerate_textarea');
 			//var textarea_rect = get_textarea_rect();
 
@@ -2734,6 +2673,100 @@ function onLoad() {
 			if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (get_video_player_info().top + get_video_player_info().height - 44) + 'px';
 			if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.zIndex = 2147483647;
 
+		}
+
+
+		function regenerate_textarea() {
+			console.log('regenerate_textarea');
+
+			video_info = get_video_player_info();
+			if (video_info) {
+
+				src_width = src_container_width_factor*video_info.width;
+				src_height = src_container_height_factor*video_info.height;
+				src_top = video_info.top + src_container_top_factor*video_info.height;
+
+				if (centerize_src) {
+					src_left = video_info.left + 0.5*(video_info.width-src_width);
+				} else {
+					src_left = src_container_left_factor*video_info.width;
+				}
+
+				dst_width = dst_container_width_factor*video_info.width;
+				dst_height = dst_container_height_factor*video_info.height;
+				dst_top = video_info.top + dst_container_top_factor*video_info.height;
+
+				if (centerize_dst) {
+					dst_left = video_info.left + 0.5*(video_info.width-dst_width);
+				} else {
+					dst_left = dst_container_left_factor*video_info.width;
+				}
+
+			} else {
+				console.log("No video player found on this page.");
+
+				src_width = src_container_width_factor*window.innerWidth;
+				src_height = src_container_height_factor*window.innerHeight;
+				src_top = src_container_top_factor*window.innerHeight;
+
+				if (centerize_src) {
+					src_left = 0.5*(window.innerWidth-src_width);
+				} else {
+					src_left = src_container_left_factor*window.innerWidth;
+				}
+
+				dst_width = dst_container_width_factor*window.innerWidth;
+				dst_height = dst_container_height_factor*window.innerHeight;
+				dst_top = dst_container_top_factor*window.innerHeight;
+
+				if (centerize_dst) {
+					dst_left = 0.5*(window.innerWidth-dst_width);
+				} else {
+					dst_left = dst_container_left_factor*window.innerWidth;
+				}
+			}
+
+			if (document.querySelector("#src_textarea_container")) {
+				document.querySelector("#src_textarea_container").style.fontFamily = src_selected_font + ", sans-serif";
+				document.querySelector("#src_textarea_container").style.width = String(src_width) + 'px';
+				document.querySelector("#src_textarea_container").style.height = String(src_height) + 'px';
+				document.querySelector("#src_textarea_container").style.top = String(src_top) + 'px';
+				document.querySelector("#src_textarea_container").style.left = String(src_left) + 'px';
+
+				document.querySelector("#src_textarea").style.width = '100%';
+				document.querySelector("#src_textarea").style.height = '100%';
+				document.querySelector("#src_textarea").style.border = 'none';
+				document.querySelector("#src_textarea").style.display = 'inline-block';
+				document.querySelector("#src_textarea").style.overflow = 'hidden';
+				document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
+				document.querySelector("#src_textarea").style.fontSize = String(src_font_size)+'px';
+				document.querySelector("#src_textarea").style.color = src_font_color;
+				document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(src_container_color, src_container_opacity);
+			}
+
+			if (document.querySelector("#dst_textarea_container")) {
+				document.querySelector("#dst_textarea_container").style.fontFamily = dst_selected_font + ", sans-serif";
+				document.querySelector("#dst_textarea_container").style.width = String(dst_width) + 'px';
+				document.querySelector("#dst_textarea_container").style.height = String(dst_height) + 'px';
+				document.querySelector("#dst_textarea_container").style.top = String(dst_top) + 'px';
+				document.querySelector("#dst_textarea_container").style.left = String(dst_left) + 'px';
+
+				document.querySelector("#dst_textarea").style.width = '100%';
+				document.querySelector("#dst_textarea").style.height = '100%';
+				document.querySelector("#dst_textarea").style.border = 'none';
+				document.querySelector("#dst_textarea").style.display = 'inline-block';
+				document.querySelector("#dst_textarea").style.overflow = 'hidden';
+				document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif";
+				document.querySelector("#dst_textarea").style.fontSize = String(dst_font_size)+'px';
+				document.querySelector("#dst_textarea").style.color = dst_font_color;
+				document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(dst_container_color, dst_container_opacity);
+			}
+
+			if (document.querySelector('#button_fullscreen') && get_video_player_info()) {
+				document.querySelector('#button_fullscreen').style.left = (get_video_player_info().left + get_video_player_info().width - 48)  + 'px';
+				document.querySelector('#button_fullscreen').style.top = (get_video_player_info().top + get_video_player_info().height - 44) + 'px';
+				document.querySelector('#button_fullscreen').style.zIndex = 2147483647;
+			}
 		}
 
 
@@ -3277,6 +3310,12 @@ function onLoad() {
 		function exitFullscreen() {
 			console.log('exitFullscreen()');
 			var video_info = get_video_player_info();
+			if (is_youtube_page()) {
+				if (document.exitFullscreen) document.exitFullscreen();
+				else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+				regenerate_textarea();
+				return;
+			}
 			if (document.exitFullscreen) {
 				document.exitFullscreen();
 
@@ -3451,6 +3490,13 @@ function onLoad() {
 
 		function maintain_video_size() {
 			console.log('Maintain video size when window resized or entering fullscreen mode');
+
+			// YOUTUBE MANAGES THE <video> SIZE ITSELF; DO NOT TOUCH IT (THIS CAUSES A BLACK IMAGE)
+			if (is_youtube_page()) {
+				regenerate_textarea();
+				return;
+			}
+
 			var video_info = get_video_player_info();
 			if (video_info) {
 				var video_outer_info = get_video_outer_info();
