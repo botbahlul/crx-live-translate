@@ -13,7 +13,8 @@ And also now when you change anything in SETTINGS page, the changes will directl
 
 Just clone or download this git then enable Chrome Developer Mode and install this extension by Load Unpacked and choose that cloned folder (folder that has manifest.json on it)
 
-You need to install CORS Unblock Chrome extension before install this extension to avoid default CORS Blocking Policy of Chrome and Edge. After installing it you need to ACTIVATE IT (TURN IT ON).
+You may need to install CORS Unblock Chrome extension before install this extension to avoid default CORS Blocking Policy of Chrome and Edge, and after install it you need to ACTIVATE IT (TURN IT ON), but it seems not mandatory now (28 October 2026).
+
 
 ![image](https://github.com/botbahlul/crx-live-translate/assets/88623122/059b5ce2-2c4f-4ebf-ad06-6916bbfa73dd)
 
