@@ -2049,25 +2049,35 @@ function onLoad() {
 				console.log('src_textarea_container has already exist');
 			}
 
-			//document.querySelector("#src_textarea").style.top = src_top + 'px';
-			//document.querySelector("#src_textarea").style.left = src_left + 'px';
 			document.querySelector("#src_textarea").style.width = '100%';
+			document.querySelector("#src_textarea").style.maxWidth = 'none';
+			document.querySelector("#src_textarea").style.boxSizing = 'border-box';
+			document.querySelector("#src_textarea").style.margin = '0';
 			document.querySelector("#src_textarea").style.height = '100%';
+			document.querySelector("#src_textarea").style.maxHeight = 'none';
 			document.querySelector("#src_textarea").style.border = 'none';
-			document.querySelector("#src_textarea").style.display = 'inline-block';
+			document.querySelector("#src_textarea").style.display = 'block';
 			document.querySelector("#src_textarea").style.overflow = 'hidden';
+			document.querySelector("#src_textarea").style.allow = "fullscreen";
 			//document.querySelector("#src_textarea").style.zIndex = 2147483647;
 
 			document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
 			document.querySelector("#src_textarea").style.color = src_font_color;
-			document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(src_container_color, src_container_opacity);
-			document.querySelector("#src_textarea").style.fontSize = String(src_font_size)+'px';
+			document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(document.querySelector("#slider_src_container_color").value, document.querySelector("#slider_src_container_opacity").value);
+			document.querySelector("#src_textarea").style.fontSize = String(src_font_size) + 'px';
 
 			document.querySelector("#src_textarea").offsetParent.onresize = (function(){
 
-				document.querySelector("#src_textarea").style.position='absolute';
+				document.querySelector("#src_textarea").style.position = 'absolute';
+				document.querySelector("#src_textarea").style.top = '0';
+				document.querySelector("#src_textarea").style.left = '0';
+				document.querySelector("#src_textarea").style.boxSizing = 'border-box';
 				document.querySelector("#src_textarea").style.width = '100%';
+				document.querySelector("#src_textarea").style.maxWidth = 'none';
+				document.querySelector("#src_textarea").style.boxSizing = 'border-box';
+				document.querySelector("#src_textarea").style.margin = '0';
 				document.querySelector("#src_textarea").style.height = '100%';
+				document.querySelector("#src_textarea").style.maxHeight = 'none';
 
 				if (getRect(document.querySelector("#src_textarea_container")).left !== video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#src_textarea_container")).width)) {
 					centerize_src = false;
@@ -2085,12 +2095,12 @@ function onLoad() {
 
 				video_info = get_video_player_info();
 				if (video_info) {
-					src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/video_info.width;
+					src_container_width_factor = getRect(document.querySelector("#src_textarea_container")).width/video_info.width;
 					src_container_width_factor = parseFloat(src_container_width_factor).toFixed(3);
 					//console.log('onresize: src_container_width_factor =', src_container_width_factor);
 					saveData('src_container_width_factor', src_container_width_factor);
 
-					src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/video_info.height;
+					src_container_height_factor = getRect(document.querySelector("#src_textarea_container")).height/video_info.height;
 					src_container_height_factor = parseFloat(src_container_height_factor).toFixed(3);
 					//console.log('src_container_height_factor =', src_container_height_factor);
 					saveData('src_container_height_factor', src_container_width_factor);
@@ -2116,12 +2126,12 @@ function onLoad() {
 					}, 1000);
 
 				} else {
-					src_container_width_factor = getRect(document.querySelector("#src_textarea")).width/window.innerWidth;
+					src_container_width_factor = getRect(document.querySelector("#src_textarea_container")).width/window.innerWidth;
 					src_container_width_factor = parseFloat(src_container_width_factor).toFixed(3);
 					//console.log('src_container_width_factor =', src_container_width_factor);
 					saveData('src_container_width_factor', src_container_width_factor);
 
-					src_container_height_factor = getRect(document.querySelector("#src_textarea")).height/window.innerHeight;
+					src_container_height_factor = getRect(document.querySelector("#src_textarea_container")).height/window.innerHeight;
 					src_container_height_factor = parseFloat(src_container_height_factor).toFixed(3);
 					//console.log('src_container_height_factor =', src_container_height_factor);
 					saveData('src_container_height_factor', src_container_height_factor);
@@ -2155,6 +2165,9 @@ function onLoad() {
 			document.querySelector("#src_textarea").offsetParent.ondrag = (function(){
 
 				document.querySelector("#src_textarea").style.position='absolute';
+				document.querySelector("#src_textarea").style.top = '0';
+				document.querySelector("#src_textarea").style.left = '0';
+				document.querySelector("#src_textarea").style.boxSizing = 'border-box';
 
 				if (getRect(document.querySelector("#src_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#src_textarea_container")).width)) {
 					centerize_src = false;
@@ -2288,25 +2301,35 @@ function onLoad() {
 				console.log('dst_textarea_container has already exist');
 			};
 
-			//document.querySelector("#dst_textarea").style.top = dst_top + 'px';
-			//document.querySelector("#dst_textarea").style.left = dst_left + 'px';
 			document.querySelector("#dst_textarea").style.width = '100%';
+			document.querySelector("#dst_textarea").style.maxWidth = 'none';
+			document.querySelector("#dst_textarea").style.boxSizing = 'border-box';
+			document.querySelector("#dst_textarea").style.margin = '0';
 			document.querySelector("#dst_textarea").style.height = '100%';
+			document.querySelector("#dst_textarea").style.maxHeight = 'none';
 			document.querySelector("#dst_textarea").style.border = 'none';
-			document.querySelector("#dst_textarea").style.display = 'inline-block';
+			document.querySelector("#dst_textarea").style.display = 'block';
 			document.querySelector("#dst_textarea").style.overflow = 'hidden';
-			//document.querySelector("#dst_textarea").style.zIndex = 2147483647;
+			document.querySelector("#dst_textarea").style.allow = "fullscreen";
+			document.querySelector("#dst_textarea").style.zIndex = 2147483647;
 
-			document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif"
+			document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif";
 			document.querySelector("#dst_textarea").style.color = dst_font_color;
-			document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(dst_container_color, dst_container_opacity);
-			document.querySelector("#dst_textarea").style.fontSize = String(dst_font_size)+'px';
+			document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(document.querySelector("#slider_dst_container_color").value, document.querySelector("#slider_dst_container_opacity").value);
+			document.querySelector("#dst_textarea").style.fontSize = String(dst_font_size) + 'px';
 
 			document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
 
-				document.querySelector("#dst_textarea").style.position='absolute';
+				document.querySelector("#dst_textarea").style.position = 'absolute';
+				document.querySelector("#dst_textarea").style.top = '0';
+				document.querySelector("#dst_textarea").style.left = '0';
+				document.querySelector("#dst_textarea").style.boxSizing = 'border-box';
 				document.querySelector("#dst_textarea").style.width = '100%';
+				document.querySelector("#dst_textarea").style.maxWidth = 'none';
+				document.querySelector("#dst_textarea").style.boxSizing = 'border-box';
+				document.querySelector("#dst_textarea").style.margin = '0';
 				document.querySelector("#dst_textarea").style.height = '100%';
+				document.querySelector("#dst_textarea").style.maxHeight = 'none';
 
 				if (getRect(document.querySelector("#dst_textarea_container")).left != video_info.left + 0.5 * (video_info.width - getRect(document.querySelector("#dst_textarea_container")).width)) {
 					centerize_dst = false;
@@ -2324,12 +2347,12 @@ function onLoad() {
 
 				video_info = get_video_player_info();
 				if (video_info) {
-					dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/video_info.width;
+					dst_container_width_factor = getRect(document.querySelector("#dst_textarea_container")).width/video_info.width;
 					dst_container_width_factor = parseFloat(dst_container_width_factor).toFixed(3);
 					//console.log('dst_container_width_factor =', dst_container_width_factor);
 					saveData('dst_container_width_factor', dst_container_width_factor);
 
-					dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/video_info.height;
+					dst_container_height_factor = getRect(document.querySelector("#dst_textarea_container")).height/video_info.height;
 					dst_container_height_factor = parseFloat(dst_container_height_factor).toFixed(3);
 					//console.log('dst_container_height_factor =', dst_container_height_factor);
 					saveData('dst_container_height_factor', dst_container_height_factor);
@@ -2355,12 +2378,12 @@ function onLoad() {
 					}, 1000);
 
 				} else {
-					dst_container_width_factor = getRect(document.querySelector("#dst_textarea")).width/window.innerWidth;
+					dst_container_width_factor = getRect(document.querySelector("#dst_textarea_container")).width/window.innerWidth;
 					dst_container_width_factor = parseFloat(dst_container_width_factor).toFixed(3);
 					//console.log('dst_container_width_factor =', dst_container_width_factor);
 					saveData('dst_container_width_factor', dst_container_width_factor);
 
-					dst_container_height_factor = getRect(document.querySelector("#dst_textarea")).height/window.innerHeight;
+					dst_container_height_factor = getRect(document.querySelector("#dst_textarea_container")).height/window.innerHeight;
 					dst_container_height_factor = parseFloat(dst_container_height_factor).toFixed(3);
 					//console.log('dst_container_height_factor =', dst_container_height_factor);
 					saveData('dst_container_height_factor', dst_container_height_factor);
@@ -2392,7 +2415,10 @@ function onLoad() {
 
 			document.querySelector("#dst_textarea").offsetParent.ondrag = (function(){
 
-				document.querySelector("#dst_textarea").style.position='absolute';
+				document.querySelector("#dst_textarea").style.position = 'absolute';
+				document.querySelector("#dst_textarea").style.top = '0';
+				document.querySelector("#dst_textarea").style.left = '0';
+				document.querySelector("#dst_textarea").style.boxSizing = 'border-box';
 
 				video_info = get_video_player_info();
 				if (video_info) {
@@ -2489,193 +2515,6 @@ function onLoad() {
 		}
 
 
-		function regenerate_textarea_bak() {
-			console.log('regenerate_textarea');
-			//var textarea_rect = get_textarea_rect();
-
-			video_info = get_video_player_info();
-			//console.log("video_info = ", video_info);
-			if (video_info) {
-
-				src_width = src_container_width_factor*video_info.width;
-				//console.log('src_width =', src_width);
-
-				src_height = src_container_height_factor*video_info.height;
-				//console.log('src_height =', src_height);
-
-				src_top = video_info.top + src_container_top_factor*video_info.height;
-				//console.log('src_top =', src_top);
-
-				if (centerize_src) {
-					src_left = video_info.left + 0.5*(video_info.width-src_width);
-					//console.log('src_left =', src_left);
-				} else {
-					src_left = src_container_left_factor*video_info.width;;
-				}
-
-				dst_width = dst_container_width_factor*video_info.width;
-				//console.log('dst_width =', dst_width);
-
-				dst_height = dst_container_height_factor*video_info.height;
-				//console.log('dst_height =', dst_height);
-
-				dst_top = video_info.top + dst_container_top_factor*video_info.height;
-				//console.log('dst_top =', dst_top);
-
-				if (centerize_dst) {
-					dst_left = video_info.left + 0.5*(video_info.width-dst_width);
-					//console.log('dst_left =', dst_left);
-				} else {
-					dst_left = dst_container_left_factor*video_info.width;;
-				}
-
-			} else {
-				console.log("No video player found on this page.");
-
-				src_width = src_container_width_factor*window.innerWidth;
-				//console.log('src_width =', src_width);
-
-				src_height = src_container_height_factor*window.innerHeight;
-				//console.log('src_height =', src_height);
-
-				src_top = src_container_top_factor*window.innerHeight;
-				//console.log('src_top =', src_top);
-
-				if (centerize_src) {
-					src_left = 0.5*(window.innerWidth-src_width);
-					//console.log('src_left =', src_left);
-				} else {
-					src_left = src_container_left_factor*video_info.width;;
-				}
-
-				dst_width = dst_container_width_factor*window.innerWidth;
-				//console.log('dst_width =', dst_width);
-
-				dst_height = dst_container_height_factor*window.innerHeight;
-				//console.log('dst_height =', dst_height);
-
-				dst_top = dst_container_top_factor*window.innerHeight;
-				//console.log('dst_top =', dst_top);
-
-				if (centerize_dst) {
-					dst_left = 0.5*(window.innerWidth-dst_width);
-					//console.log('dst_left =', dst_left);
-				} else {
-					dst_left = dst_container_left_factor*video_info.width;
-				}
-			}
-
-
-			if (document.querySelector("#src_textarea_container")) {
-				document.querySelector("#src_textarea_container").style.fontFamily = src_selected_font + ", sans-serif";
-				document.querySelector("#src_textarea_container").style.width = String(src_width) + 'px';
-				document.querySelector("#src_textarea_container").style.height = String(src_height) + 'px';
-				document.querySelector("#src_textarea_container").style.top = String(src_top) + 'px';
-				document.querySelector("#src_textarea_container").style.left = String(src_left) + 'px';
-
-				var src_textarea_container$=$('<div id="src_textarea_container"><textarea id="src_textarea"></textarea></div>')
-					.width(src_width)
-					.height(src_height)
-					.resizable().draggable({
-						cancel: 'text',
-						start: function (){
-							$('#src_textarea').focus();
-						},
-						stop: function (){
-							$('#src_textarea').focus();
-						}
-					})
-					.css({
-						'position': 'absolute',
-						'fontFamily': src_selected_font + ', sans-serif',
-						'fontSize': src_font_size,
-						'color': src_font_color,
-						'backgroundColor': hexToRgba(src_container_color, src_container_opacity),
-						'border': 'none',
-						'display': 'block',
-						'overflow': 'hidden',
-						'z-index': '2147483647'
-					})
-					.offset({top:src_top, left:src_left})
-
-				//document.querySelector("#src_textarea").style.width = String(src_width) + 'px'; // DON'T USE THIS!!!
-				//document.querySelector("#src_textarea").style.height = String(src_height) + 'px'; // DON'T USE THIS!!!
-				//document.querySelector("#src_textarea").style.top = String(src_top) + 'px'; // DON'T USE THIS!!!
-				//document.querySelector("#src_textarea").style.left = String(src_left) + 'px'; // DON'T USE THIS!!!
-				document.querySelector("#src_textarea").style.width = '100%';
-				document.querySelector("#src_textarea").style.height = '100%';
-				document.querySelector("#src_textarea").style.border = 'none';
-				document.querySelector("#src_textarea").style.display = 'inline-block';
-				document.querySelector("#src_textarea").style.overflow = 'hidden';
-
-				document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
-				document.querySelector("#src_textarea").style.fontSize = String(src_font_size)+'px';
-				document.querySelector("#src_textarea").style.color = src_font_color;
-				document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(src_container_color, src_container_opacity);
-
-			} else {
-				console.log('src_textarea_container has already exist');
-			}
-
-
-			if (document.querySelector("#dst_textarea_container")) {
-				document.querySelector("#dst_textarea_container").style.fontFamily = dst_selected_font + ", sans-serif";
-				document.querySelector("#dst_textarea_container").style.width = String(dst_width) + 'px';
-				document.querySelector("#dst_textarea_container").style.height = String(dst_height) + 'px';
-				document.querySelector("#dst_textarea_container").style.top = String(dst_top) + 'px';
-				document.querySelector("#dst_textarea_container").style.left = String(dst_left) + 'px';
-
-				var dst_textarea_container$=$('<div id="dst_textarea_container"><textarea id="dst_textarea"></textarea></div>')
-					.width(dst_width)
-					.height(dst_height)
-					.resizable().draggable({
-						cancel: 'text',
-						start: function (){
-							$('#dst_textarea').focus();
-						},
-						stop: function (){
-							$('#dst_textarea').focus();
-						}
-					})
-					.css({
-						'position': 'absolute',
-						'fontFamily': dst_selected_font + ', sans-serif',
-						'fontSize': dst_font_size,
-						'color': dst_font_color,
-						'backgroundColor': hexToRgba(dst_container_color, dst_container_opacity),
-						'border': 'none',
-						'display': 'block',
-						'overflow': 'hidden',
-						'z-index': '2147483647'
-					})
-					.offset({top:dst_top, left:dst_left})
-
-				//document.querySelector("#dst_textarea").style.width = String(dst_width)+'px'; // DON'T USE THIS!!!
-				//document.querySelector("#dst_textarea").style.height = String(dst_height)+'px'; // DON'T USE THIS!!!
-				//document.querySelector("#dst_textarea").style.top = String(dst_top) + 'px'; // DON'T USE THIS!!!
-				//document.querySelector("#dst_textarea").style.left = String(dst_left) + 'px'; // DON'T USE THIS!!!
-				document.querySelector("#dst_textarea").style.width = '100%';
-				document.querySelector("#dst_textarea").style.height = '100%';
-				document.querySelector("#dst_textarea").style.border = 'none';
-				document.querySelector("#dst_textarea").style.display = 'inline-block';
-				document.querySelector("#dst_textarea").style.overflow = 'hidden';
-
-				document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif";
-				document.querySelector("#dst_textarea").style.fontSize = String(dst_font_size)+'px';
-				document.querySelector("#dst_textarea").style.color = dst_font_color;
-				document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(dst_container_color, dst_container_opacity);
-
-			} else {
-				console.log('dst_textarea_container has already exist');
-			}
-
-			if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.left = (get_video_player_info().left + get_video_player_info().width - 48)  + 'px';
-			if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.top = (get_video_player_info().top + get_video_player_info().height - 44) + 'px';
-			if (document.querySelector('#button_fullscreen')) document.querySelector('#button_fullscreen').style.zIndex = 2147483647;
-
-		}
-
-
 		function regenerate_textarea() {
 			console.log('regenerate_textarea');
 
@@ -2736,7 +2575,7 @@ function onLoad() {
 				document.querySelector("#src_textarea").style.width = '100%';
 				document.querySelector("#src_textarea").style.height = '100%';
 				document.querySelector("#src_textarea").style.border = 'none';
-				document.querySelector("#src_textarea").style.display = 'inline-block';
+				document.querySelector("#src_textarea").style.display = 'block';
 				document.querySelector("#src_textarea").style.overflow = 'hidden';
 				document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
 				document.querySelector("#src_textarea").style.fontSize = String(src_font_size)+'px';
@@ -2754,7 +2593,7 @@ function onLoad() {
 				document.querySelector("#dst_textarea").style.width = '100%';
 				document.querySelector("#dst_textarea").style.height = '100%';
 				document.querySelector("#dst_textarea").style.border = 'none';
-				document.querySelector("#dst_textarea").style.display = 'inline-block';
+				document.querySelector("#dst_textarea").style.display = 'block';
 				document.querySelector("#dst_textarea").style.overflow = 'hidden';
 				document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif";
 				document.querySelector("#dst_textarea").style.fontSize = String(dst_font_size)+'px';
