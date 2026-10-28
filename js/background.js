@@ -579,7 +579,7 @@ function onLoad() {
 									console.log('response.status =', response.status);
 								}
 							});
-							alert('Permission to use microphone is blocked, go to chrome://settings/contentExceptions#media-stream to change it');
+							alert('Permission to use microphone is blocked, go to chrome://settings/content/microphone to change it');
 						} else {
 							var icon_text_denied = 'DENIED';
 							chrome.runtime.sendMessage({
