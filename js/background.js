@@ -2311,7 +2311,7 @@ function onLoad() {
 			document.querySelector("#dst_textarea").style.display = 'block';
 			document.querySelector("#dst_textarea").style.overflow = 'hidden';
 			document.querySelector("#dst_textarea").style.allow = "fullscreen";
-			document.querySelector("#dst_textarea").style.zIndex = 2147483647;
+			//document.querySelector("#dst_textarea").style.zIndex = 2147483647;
 
 			document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif";
 			document.querySelector("#dst_textarea").style.color = dst_font_color;
