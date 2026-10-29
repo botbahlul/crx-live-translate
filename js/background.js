@@ -2063,7 +2063,8 @@ function onLoad() {
 
 			document.querySelector("#src_textarea").style.fontFamily = src_selected_font + ", sans-serif";
 			document.querySelector("#src_textarea").style.color = src_font_color;
-			document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(document.querySelector("#slider_src_container_color").value, document.querySelector("#slider_src_container_opacity").value);
+			//document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(document.querySelector("#slider_src_container_color").value, document.querySelector("#slider_src_container_opacity").value);
+			document.querySelector("#src_textarea").style.backgroundColor = hexToRgba(src_container_color, src_container_opacity);
 			document.querySelector("#src_textarea").style.fontSize = String(src_font_size) + 'px';
 
 			document.querySelector("#src_textarea").offsetParent.onresize = (function(){
@@ -2315,7 +2316,8 @@ function onLoad() {
 
 			document.querySelector("#dst_textarea").style.fontFamily = dst_selected_font + ", sans-serif";
 			document.querySelector("#dst_textarea").style.color = dst_font_color;
-			document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(document.querySelector("#slider_dst_container_color").value, document.querySelector("#slider_dst_container_opacity").value);
+			//document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(document.querySelector("#slider_dst_container_color").value, document.querySelector("#slider_dst_container_opacity").value);
+			document.querySelector("#dst_textarea").style.backgroundColor = hexToRgba(dst_container_color, dst_container_opacity);
 			document.querySelector("#dst_textarea").style.fontSize = String(dst_font_size) + 'px';
 
 			document.querySelector("#dst_textarea").offsetParent.onresize = (function(){
