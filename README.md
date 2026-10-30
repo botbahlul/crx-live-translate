@@ -31,7 +31,7 @@ On linux you willl need PAVUCONTROL (by choosing MONITOR of your audio device as
 
 Or simply you can just use that [route_audio.sh](https://github.com/botbahlul/crx-live-translate/blob/main/route_audio.sh) script
 
-I just tested this on Edge and Chrome only
+I tested this extension on Edge and Chrome only
 
 https://user-images.githubusercontent.com/88623122/182270149-420fe789-814c-4a0d-b8ff-c3fb437d1cb2.mp4
 
