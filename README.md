@@ -45,7 +45,7 @@ If you're using MacPorts
 sudo port install BlackHole SwitchAudio-osx
 ```
 
-After that you need to create Multi-Output Device named "Mixed Output" so you can use that vmic-mac script
+After that you need to create Multi-Output Device named "Mixed Output" so you can use that vmic-mac script to route the audio
 
 Open Audio MIDI Setup (Applications → Utilities)
 
