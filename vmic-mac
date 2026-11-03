@@ -1,0 +1,80 @@
+#!/bin/bash
+set -e
+
+SINK_NAME="Mixed Output"          # Multi-Output Device (speaker + BlackHole)
+MIC_NAME="BlackHole 2ch"
+FALLBACK_OUTPUT="Built-in Output"
+FALLBACK_INPUT="Built-in Microphone"
+STATE_FILE="$HOME/.vmic_state"
+
+command -v SwitchAudioSource >/dev/null 2>&1 || {
+    echo "ERROR: SwitchAudioSource not found"
+    exit 1
+}
+
+has_device() {  # has_device <input|output> <nama>
+    SwitchAudioSource -a -t "$1" | grep -Fxq "$2"
+}
+
+is_virtual() {
+    [ "$1" = "$SINK_NAME" ] || [ "$1" = "$MIC_NAME" ] || [ "$1" = "Mixed Input" ]
+}
+
+reset_routing() {
+    echo "Resetting old audio routing if exist..."
+    local out="" in=""
+
+    if [ -f "$STATE_FILE" ]; then
+        out=$(sed -n 's/^OUTPUT=//p' "$STATE_FILE")
+        in=$(sed -n 's/^INPUT=//p' "$STATE_FILE")
+    fi
+
+    if [ -z "$out" ] || is_virtual "$out" || ! has_device output "$out"; then
+        out="$FALLBACK_OUTPUT"
+    fi
+    if [ -z "$in" ] || is_virtual "$in" || ! has_device input "$in"; then
+        in="$FALLBACK_INPUT"
+    fi
+
+    SwitchAudioSource -s "$out" -t output >/dev/null
+    SwitchAudioSource -s "$in" -t input >/dev/null
+    rm -f "$STATE_FILE"
+
+    echo "Default playback : $out"
+    echo "Default input    : $in"
+}
+
+apply_routing() {
+    has_device output "$SINK_NAME" || {
+        echo "ERROR: Multi-Output Device '$SINK_NAME' belum dibuat di Audio MIDI Setup"
+        exit 1
+    }
+    has_device input "$MIC_NAME" || {
+        echo "ERROR: $MIC_NAME belum terpasang"
+        exit 1
+    }
+
+    # Simpan perangkat asli hanya kalau belum dalam kondisi routing virtual
+    local cur_out cur_in
+    cur_out=$(SwitchAudioSource -c -t output)
+    cur_in=$(SwitchAudioSource -c -t input)
+    if ! is_virtual "$cur_out" && ! is_virtual "$cur_in"; then
+        printf 'OUTPUT=%s\nINPUT=%s\n' "$cur_out" "$cur_in" > "$STATE_FILE"
+    fi
+
+    echo "Set output -> $SINK_NAME"
+    SwitchAudioSource -s "$SINK_NAME" -t output >/dev/null
+    echo "Set input  -> $MIC_NAME"
+    SwitchAudioSource -s "$MIC_NAME" -t input >/dev/null
+
+    echo
+    echo "Audio routing finished"
+    echo "Playback : $SINK_NAME (speaker + BlackHole)"
+    echo "Input    : $MIC_NAME"
+}
+
+case "${1:-start}" in
+    start) apply_routing ;;
+    reset|stop|off) reset_routing ;;
+    *) echo "Usage: $0 [start|reset]"; exit 1 ;;
+esac
